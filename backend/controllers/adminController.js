@@ -3,7 +3,14 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const fs = require('fs');
 
-const VALID_STATUSES = ['placed', 'accepted', 'preparing', 'ready', 'completed'];
+const VALID_STATUSES = ['placed', 'accepted', 'preparing', 'ready', 'completed', 'cancelled'];
+const SETTINGS_PATH = path.join(__dirname, '../settings.json');
+
+const readSettings = () => {
+  try { return JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf8')); }
+  catch { return { googleReviewLink: '', showReviewBanner: false }; }
+};
+const writeSettings = (data) => fs.writeFileSync(SETTINGS_PATH, JSON.stringify(data, null, 2));
 
 // POST /api/admin/login
 const login = async (req, res, next) => {
@@ -272,6 +279,19 @@ const getDashboardStats = async (req, res, next) => {
   }
 };
 
+// GET /api/admin/settings  (also used publicly)
+const getSettings = (req, res) => {
+  res.json({ settings: readSettings() });
+};
+
+// PUT /api/admin/settings
+const updateSettings = (req, res) => {
+  const current = readSettings();
+  const updated = { ...current, ...req.body };
+  writeSettings(updated);
+  res.json({ settings: updated });
+};
+
 module.exports = {
   login,
   getOrders,
@@ -285,4 +305,6 @@ module.exports = {
   updateCategory,
   deleteCategory,
   getDashboardStats,
+  getSettings,
+  updateSettings,
 };

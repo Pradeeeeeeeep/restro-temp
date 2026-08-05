@@ -33,6 +33,10 @@ app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Public settings (no auth — used by customer-facing pages)
+const { getSettings } = require('./controllers/adminController');
+app.get('/api/settings', getSettings);
+
 // 404
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });

@@ -1,26 +1,32 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// Compute derived values after every mutation
+const derived = (items) => ({
+  total: items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+  count: items.reduce((sum, i) => sum + i.quantity, 0),
+});
+
 const useCartStore = create(
   persist(
     (set, get) => ({
-      items: [], // { menuItemId, name, price, quantity, image }
+      items: [],
+      total: 0,
+      count: 0,
 
       addItem: (item) => {
         const existing = get().items.find((i) => i.menuItemId === item.menuItemId);
-        if (existing) {
-          set((state) => ({
-            items: state.items.map((i) =>
+        const newItems = existing
+          ? get().items.map((i) =>
               i.menuItemId === item.menuItemId ? { ...i, quantity: i.quantity + 1 } : i
-            ),
-          }));
-        } else {
-          set((state) => ({ items: [...state.items, { ...item, quantity: 1 }] }));
-        }
+            )
+          : [...get().items, { ...item, quantity: 1 }];
+        set({ items: newItems, ...derived(newItems) });
       },
 
       removeItem: (menuItemId) => {
-        set((state) => ({ items: state.items.filter((i) => i.menuItemId !== menuItemId) }));
+        const newItems = get().items.filter((i) => i.menuItemId !== menuItemId);
+        set({ items: newItems, ...derived(newItems) });
       },
 
       updateQuantity: (menuItemId, quantity) => {
@@ -28,22 +34,13 @@ const useCartStore = create(
           get().removeItem(menuItemId);
           return;
         }
-        set((state) => ({
-          items: state.items.map((i) =>
-            i.menuItemId === menuItemId ? { ...i, quantity } : i
-          ),
-        }));
+        const newItems = get().items.map((i) =>
+          i.menuItemId === menuItemId ? { ...i, quantity } : i
+        );
+        set({ items: newItems, ...derived(newItems) });
       },
 
-      clearCart: () => set({ items: [] }),
-
-      get total() {
-        return get().items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-      },
-
-      get count() {
-        return get().items.reduce((sum, i) => sum + i.quantity, 0);
-      },
+      clearCart: () => set({ items: [], total: 0, count: 0 }),
     }),
     { name: 'cafe-cart' }
   )

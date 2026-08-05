@@ -17,6 +17,8 @@ const {
   updateCategory,
   deleteCategory,
   getDashboardStats,
+  getSettings,
+  updateSettings,
 } = require('../controllers/adminController');
 
 // Multer config for image uploads
@@ -58,5 +60,8 @@ router.get('/categories', getCategories);
 router.post('/categories', createCategory);
 router.put('/categories/:id', updateCategory);
 router.delete('/categories/:id', deleteCategory);
+
+router.get('/settings', getSettings);
+router.put('/settings', updateSettings);
 
 module.exports = router;

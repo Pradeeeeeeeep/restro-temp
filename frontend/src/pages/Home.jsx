@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Coffee, User, Phone, ArrowRight, ChevronRight,
-  Clock, CheckCircle, ChefHat, Bell, ShoppingBag, RefreshCw, LogOut
+  Clock, CheckCircle, ChefHat, Bell, ShoppingBag, RefreshCw, LogOut, Star, X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
@@ -87,10 +87,19 @@ export default function Home() {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [reviewSettings, setReviewSettings] = useState(null);
+  const [reviewDismissed, setReviewDismissed] = useState(() =>
+    localStorage.getItem('review_dismissed') === 'true'
+  );
 
   const navigate = useNavigate();
   const { customer, setCustomer, clearCustomer } = useCustomerStore();
   const clearCart = useCartStore((s) => s.clearCart);
+
+  // Fetch public settings for review banner
+  useEffect(() => {
+    api.get('/settings').then(({ data }) => setReviewSettings(data.settings)).catch(() => {});
+  }, []);
 
   /* fetch orders whenever we have a customer */
   useEffect(() => {
@@ -360,6 +369,57 @@ export default function Home() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* ── Google Review Banner ── */}
+        <AnimatePresence>
+          {reviewSettings?.showReviewBanner && reviewSettings?.googleReviewLink && !reviewDismissed && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }} transition={{ delay: 0.4, duration: 0.4 }}
+              style={{ marginTop: 20 }}
+            >
+              <a
+                href={reviewSettings.googleReviewLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none', display: 'block' }}
+              >
+                <div style={{
+                  background: 'linear-gradient(135deg, #fef3e2, #fff8f0)',
+                  border: '1.5px solid #f9d89a',
+                  borderRadius: 16, padding: '16px 18px',
+                  display: 'flex', alignItems: 'center', gap: 14,
+                  boxShadow: '0 2px 12px rgba(194,112,15,0.1)',
+                  position: 'relative',
+                }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 14, background: 'linear-gradient(135deg, #e8901f, #c2700f)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Star size={22} color="#fff" fill="#fff" />
+                  </div>
+                  <div>
+                    <p style={{ fontWeight: 800, fontSize: 15, color: '#92400e', marginBottom: 3 }}>
+                      Enjoyed your visit? ☕
+                    </p>
+                    <p style={{ fontSize: 12, color: '#b45309', fontWeight: 500 }}>
+                      Leave us a Google review — it means the world!
+                    </p>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setReviewDismissed(true);
+                      localStorage.setItem('review_dismissed', 'true');
+                    }}
+                    style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#b45309', opacity: 0.6, display: 'flex' }}
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              </a>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </div>
     </div>
   );

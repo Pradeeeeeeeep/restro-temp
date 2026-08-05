@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Coffee, ShoppingBag, UtensilsCrossed, TrendingUp, Clock, LogOut, ChevronRight } from 'lucide-react';
+import { Coffee, ShoppingBag, UtensilsCrossed, TrendingUp, Clock, LogOut, ChevronRight, Settings } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 
@@ -15,9 +15,10 @@ export function AdminNav({ active }) {
   const navigate = useNavigate();
   const logout = () => { localStorage.removeItem('admin_token'); navigate('/admin/login'); toast.success('Logged out'); };
   const links = [
-    { path: '/admin',        label: 'Dashboard', icon: TrendingUp },
-    { path: '/admin/orders', label: 'Orders',    icon: ShoppingBag },
-    { path: '/admin/menu',   label: 'Menu',      icon: UtensilsCrossed },
+    { path: '/admin',          label: 'Dashboard', icon: TrendingUp },
+    { path: '/admin/orders',   label: 'Orders',    icon: ShoppingBag },
+    { path: '/admin/menu',     label: 'Menu',      icon: UtensilsCrossed },
+    { path: '/admin/settings', label: 'Settings',  icon: Settings },
   ];
   return (
     <div style={{ background: '#fff', borderBottom: '1px solid var(--color-border)', padding: '10px 20px', position: 'sticky', top: 0, zIndex: 50 }}>
