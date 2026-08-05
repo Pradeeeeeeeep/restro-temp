@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Search, Plus, ArrowLeft, X, Minus, ArrowRight, Coffee, Utensils, ClipboardList, Star, Sparkles } from 'lucide-react';
+import { ShoppingCart, Search, Plus, ArrowLeft, X, Minus, ArrowRight, Coffee, Utensils, ClipboardList, Star, Sparkles, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 import useCartStore from '../store/useCartStore';
@@ -279,22 +279,26 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
                 {item.description || 'Freshly prepared using premium quality ingredients. Served hot & fresh for the best café experience.'}
               </p>
             </div>
-            {/* Customizations & Add-ons selection */}
+            {/* Customizations & Add-ons Checkbox List */}
             {(() => {
               const custArray = parseCustomizations(item.customizations);
               if (custArray.length === 0) return null;
               return (
-                <div style={{ background: 'var(--color-surface)', borderRadius: 14, padding: 12, border: '1.5px solid var(--color-accent-border)' }}>
-                  <p style={{ fontWeight: 800, fontSize: 12, color: 'var(--color-accent-dark)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
-                    Customize &amp; Add-ons
-                  </p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                <div style={{ background: 'var(--color-surface)', borderRadius: 16, padding: '14px 16px', border: '1.5px solid var(--color-accent-border)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <p style={{ fontWeight: 800, fontSize: 13, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Sparkles size={15} color="var(--color-accent)" />
+                      <span>Add Extra Customizations</span>
+                    </p>
+                    <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 600 }}>Optional</span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {custArray.map((addon, i) => {
                       const isSelected = selectedAddons.some((a) => a.name === addon.name);
                       return (
-                        <button
+                        <div
                           key={i}
-                          type="button"
                           onClick={() => {
                             if (isSelected) {
                               setSelectedAddons(selectedAddons.filter((a) => a.name !== addon.name));
@@ -303,17 +307,33 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
                             }
                           }}
                           style={{
-                            padding: '6px 12px', borderRadius: 99, border: 'none', cursor: 'pointer',
-                            fontFamily: 'Outfit', fontWeight: 700, fontSize: 12,
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '10px 14px', borderRadius: 12, cursor: 'pointer',
+                            background: isSelected ? 'var(--color-accent-bg)' : 'var(--color-card)',
+                            border: isSelected ? '1.5px solid var(--color-accent)' : '1px solid var(--color-border)',
                             transition: 'all 0.15s',
-                            background: isSelected ? 'var(--color-accent)' : 'var(--color-card)',
-                            color: isSelected ? '#ffffff' : 'var(--color-text)',
-                            border: isSelected ? 'none' : '1px solid var(--color-border)',
-                            boxShadow: isSelected ? '0 2px 8px var(--btn-shadow)' : 'none',
                           }}
                         >
-                          {isSelected ? '✓ ' : '+ '}{addon.name} {addon.price > 0 ? `(+₹${addon.price})` : '(Free)'}
-                        </button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            {/* Checkbox box */}
+                            <div style={{
+                              width: 20, height: 20, borderRadius: 6,
+                              border: isSelected ? 'none' : '2px solid var(--color-muted)',
+                              background: isSelected ? 'var(--color-accent)' : 'transparent',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: '#ffffff', transition: 'all 0.15s', flexShrink: 0
+                            }}>
+                              {isSelected && <Check size={14} strokeWidth={3} />}
+                            </div>
+                            <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-text)' }}>
+                              {addon.name}
+                            </span>
+                          </div>
+
+                          <span style={{ fontWeight: 800, fontSize: 13, color: isSelected ? 'var(--color-accent-dark)' : 'var(--color-muted)' }}>
+                            {addon.price > 0 ? `+₹${addon.price}` : 'Free'}
+                          </span>
+                        </div>
                       );
                     })}
                   </div>
@@ -429,87 +449,6 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
   );
 }
 
-/* ─── Customization Prompt Modal ─── */
-function CustomizationPromptModal({ item, onAddBase, onCustomize, onClose }) {
-  if (!item) return null;
-
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0, background: 'rgba(26,15,5,0.55)',
-          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
-          zIndex: 160,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
-        }}
-      >
-        <motion.div
-          onClick={(e) => e.stopPropagation()}
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          style={{
-            width: '100%', maxWidth: 380,
-            background: 'var(--color-card)',
-            border: '2px solid var(--color-accent-border)',
-            borderRadius: 28, padding: '26px 22px',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
-            textAlign: 'center', position: 'relative'
-          }}
-        >
-          <button onClick={onClose} style={{ position: 'absolute', top: 14, right: 14, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 99, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-muted)' }}>
-            <X size={16} />
-          </button>
-
-          <div style={{ width: 58, height: 58, borderRadius: 20, background: 'var(--color-accent-bg)', border: '1.5px solid var(--color-accent-border)', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Sparkles size={28} color="var(--color-accent)" />
-          </div>
-
-          <h3 style={{ fontWeight: 800, fontSize: 20, marginBottom: 6, color: 'var(--color-text)' }}>
-            Customize {item.name}?
-          </h3>
-          <p style={{ fontSize: 13, color: 'var(--color-muted)', marginBottom: 22, lineHeight: 1.5 }}>
-            This item has extra add-ons available! Would you like to customize it with toppings or add standard?
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {/* Customize button */}
-            <button
-              onClick={onCustomize}
-              style={{
-                width: '100%', padding: '14px 18px', borderRadius: 14, border: 'none', cursor: 'pointer',
-                background: 'var(--color-accent)', color: '#ffffff',
-                fontFamily: 'Outfit', fontWeight: 800, fontSize: 15,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                boxShadow: '0 4px 16px var(--btn-shadow)'
-              }}
-            >
-              <Sparkles size={16} />
-              <span>Customize &amp; Add-ons →</span>
-            </button>
-
-            {/* Standard button */}
-            <button
-              onClick={onAddBase}
-              style={{
-                width: '100%', padding: '12px 18px', borderRadius: 14,
-                background: 'var(--color-surface)', border: '1.5px solid var(--color-border)',
-                color: 'var(--color-text)', fontFamily: 'Outfit', fontWeight: 700, fontSize: 14,
-                cursor: 'pointer'
-              }}
-            >
-              Add Standard (₹{item.price})
-            </button>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
-}
-
 /* ─── Cart drawer ─── */
 function CartDrawer({ open, onClose, cartItems, updateQuantity, addItem, total, navigate }) {
   return (
@@ -581,7 +520,6 @@ export default function Menu() {
   const [lastAdded, setLastAdded] = useState(null);
   const [snackTimer, setSnackTimer] = useState(null);
   const [selectedItemData, setSelectedItemData] = useState(null);
-  const [promptItem, setPromptItem] = useState(null);
 
   const navigate = useNavigate();
   const customer = useCustomerStore((s) => s.customer);
@@ -610,10 +548,11 @@ export default function Menu() {
   );
 
   const handleAdd = (item) => {
-    // If item has customizations available and customer clicked add directly (without custom addons attached):
+    // If item has customizations available and customer clicked add directly on card, open detail card modal:
     const custArray = parseCustomizations(item.customizations);
     if (custArray.length > 0 && !item.selectedAddons) {
-      setPromptItem(item);
+      const cat = categories.find((c) => c.items.some((i) => i.id === item.id));
+      setSelectedItemData({ item, catName: cat?.name || '', categoryItems: cat?.items || [] });
       return;
     }
 
@@ -845,25 +784,6 @@ export default function Menu() {
         cartQty={selectedItemData ? getQty(selectedItemData.item.id) : 0}
         cornerStyle={siteSettings?.menuItemCornerStyle || siteSettings?.cardCornerStyle}
         onSelectItem={(item) => {
-          const cat = categories.find((c) => c.items.some((i) => i.id === item.id));
-          setSelectedItemData({ item, catName: cat?.name || '', categoryItems: cat?.items || [] });
-        }}
-      />
-
-      {/* ── CUSTOMIZATION PROMPT MODAL ── */}
-      <CustomizationPromptModal
-        item={promptItem}
-        onClose={() => setPromptItem(null)}
-        onAddBase={() => {
-          const item = promptItem;
-          setPromptItem(null);
-          addItem({ menuItemId: item.id, name: item.name, price: item.price, image: item.image });
-          setLastAdded(item.name);
-          toast.success(`Added ${item.name} to cart!`);
-        }}
-        onCustomize={() => {
-          const item = promptItem;
-          setPromptItem(null);
           const cat = categories.find((c) => c.items.some((i) => i.id === item.id));
           setSelectedItemData({ item, catName: cat?.name || '', categoryItems: cat?.items || [] });
         }}
