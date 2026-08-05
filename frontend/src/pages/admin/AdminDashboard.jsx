@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Coffee, ShoppingBag, UtensilsCrossed, TrendingUp, Clock, LogOut, ChevronRight, Settings } from 'lucide-react';
+import { Coffee, ShoppingBag, UtensilsCrossed, TrendingUp, Clock, LogOut, ChevronRight, Settings, CheckCircle, ChefHat, Bell, Check, Banknote, House, CreditCard } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 
 const STATUS_COLOR = { placed: '#c2700f', accepted: '#1d4ed8', preparing: '#7c3aed', ready: '#15803d', completed: '#6b7280' };
 const STATUS_BG    = { placed: '#fef3e2', accepted: '#eff6ff', preparing: '#f5f3ff', ready: '#f0fdf4', completed: '#f9fafb' };
-const STATUS_EMOJI = { placed: '☕', accepted: '✅', preparing: '👨‍🍳', ready: '🔔', completed: '✓' };
-const METHOD_LABEL = { cash: '💵 Cash', cafe: '🏠 Café', online: '💳 Online' };
+const STATUS_ICON  = { placed: Coffee, accepted: CheckCircle, preparing: ChefHat, ready: Bell, completed: Check };
+const METHOD_LABEL = { cash: 'Cash', cafe: 'Café', online: 'Online' };
 
 /* ─── Shared Admin Nav ─── */
 export function AdminNav({ active }) {
@@ -124,8 +124,8 @@ export default function AdminDashboard() {
                 {recentOrders.map((order) => (
                   <motion.div key={order.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
                     style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 12, background: STATUS_BG[order.status], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
-                      {STATUS_EMOJI[order.status]}
+                    <div style={{ width: 42, height: 42, borderRadius: 12, background: STATUS_BG[order.status], border: `1px solid ${STATUS_BG[order.status]}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {(() => { const Icon = STATUS_ICON[order.status] || Coffee; return <Icon size={18} color={STATUS_COLOR[order.status]} />; })()}
                     </div>
                     <div style={{ flex: 1 }}>
                       <p style={{ fontWeight: 700, fontSize: 14 }}>{order.customer.name} — Order #{order.id}</p>

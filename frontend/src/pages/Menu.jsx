@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Search, Plus, ArrowLeft, X, Minus, ArrowRight } from 'lucide-react';
+import { ShoppingCart, Search, Plus, ArrowLeft, X, Minus, ArrowRight, Coffee, Utensils } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 import useCartStore from '../store/useCartStore';
@@ -37,9 +37,9 @@ function CartSnackbar({ count, total, lastAdded, onCheckout }) {
               padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 10,
               boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
             }}>
-            <span style={{ fontSize: 20 }}>☕</span>
+            <Coffee size={18} color="var(--color-accent)" />
             <p style={{ flex: 1, fontWeight: 600, fontSize: 14 }}>
-              <span style={{ color: '#f9c34d' }}>{lastAdded}</span> added to cart
+              <span style={{ color: 'var(--color-accent-light)' }}>{lastAdded}</span> added to cart
             </p>
             <span style={{
               background: 'rgba(255,255,255,0.12)', borderRadius: 99,
@@ -57,10 +57,10 @@ function CartSnackbar({ count, total, lastAdded, onCheckout }) {
             style={{
               width: '100%', maxWidth: 440,
               pointerEvents: 'auto',
-              background: 'linear-gradient(135deg, #e8901f, #c2700f)', color: '#fff',
+              background: 'var(--color-accent)', color: '#fff',
               borderRadius: 16, padding: '14px 20px', border: 'none', cursor: 'pointer',
               display: 'flex', alignItems: 'center',
-              boxShadow: '0 8px 24px rgba(194,112,15,0.4)', fontFamily: 'Outfit',
+              boxShadow: '0 8px 24px var(--btn-shadow)', fontFamily: 'Outfit',
             }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <ShoppingCart size={18} />
@@ -94,7 +94,7 @@ function MenuCard({ item, onAdd, onUpdate, cartQty }) {
       <div style={{ height: 130, background: 'var(--color-surface)', overflow: 'hidden', borderRadius: '14px 14px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {imgSrc
           ? <img src={imgSrc} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <span style={{ fontSize: 42 }}>🍴</span>}
+          : <Utensils size={34} color="var(--color-muted-light)" />}
       </div>
 
       <div style={{ padding: '12px 14px 14px', display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -115,8 +115,8 @@ function MenuCard({ item, onAdd, onUpdate, cartQty }) {
                 style={{
                   width: 36, height: 36, borderRadius: 10, border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #e8901f, #c2700f)',
-                  boxShadow: '0 3px 10px rgba(194,112,15,0.3)',
+                  background: 'var(--color-accent)',
+                  boxShadow: '0 3px 10px var(--btn-shadow)',
                 }}>
                 <Plus size={18} color="#fff" strokeWidth={2.5} />
               </motion.button>
@@ -126,9 +126,9 @@ function MenuCard({ item, onAdd, onUpdate, cartQty }) {
                 transition={{ type: 'spring', stiffness: 400, damping: 22 }}
                 style={{
                   display: 'flex', alignItems: 'center',
-                  background: 'linear-gradient(135deg, #e8901f, #c2700f)',
+                  background: 'var(--color-accent)',
                   borderRadius: 10, overflow: 'hidden',
-                  boxShadow: '0 3px 10px rgba(194,112,15,0.3)',
+                  boxShadow: '0 3px 10px var(--btn-shadow)',
                 }}>
                 <motion.button whileTap={{ scale: 0.85 }} onClick={() => onUpdate(item.id, cartQty - 1)}
                   style={{ width: 32, height: 36, border: 'none', cursor: 'pointer', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
@@ -174,7 +174,7 @@ function CartDrawer({ open, onClose, cartItems, updateQuantity, addItem, total, 
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: 14 }}>
               {cartItems.length === 0
-                ? <div style={{ textAlign: 'center', padding: '50px 0', color: 'var(--color-muted)' }}><span style={{ fontSize: 40, display: 'block', marginBottom: 10 }}>🛒</span><p>Cart is empty</p></div>
+                ? <div style={{ textAlign: 'center', padding: '50px 0', color: 'var(--color-muted)' }}><ShoppingCart size={38} style={{ margin: '0 auto 10px', display: 'block' }} /><p>Cart is empty</p></div>
                 : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {cartItems.map((item) => (
@@ -275,7 +275,7 @@ export default function Menu() {
               <ArrowLeft size={20} />
             </button>
             <div style={{ flex: 1 }}>
-              <h1 style={{ fontWeight: 800, fontSize: 18 }}><span className="gradient-text">Menu</span></h1>
+              <h1 style={{ fontWeight: 800, fontSize: 18 }}>Menu</h1>
               <p style={{ color: 'var(--color-muted)', fontSize: 12 }}>Hey {customer?.name}! 👋</p>
             </div>
             {/* Cart icon — only shown when items in cart, opens drawer */}
@@ -332,7 +332,7 @@ export default function Menu() {
           </div>
         ) : displayCategories.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--color-muted)' }}>
-            <div style={{ fontSize: 40, marginBottom: 10 }}>🔍</div>
+            <Search size={36} style={{ margin: '0 auto 10px', display: 'block' }} />
             <p>No items found for "{search}"</p>
           </div>
         ) : (

@@ -84,17 +84,14 @@ body {
    GRADIENT TEXT
 ══════════════════════════════════════════ */
 .gradient-text {
-  background: linear-gradient(135deg, var(--color-accent-light), var(--color-accent-dark));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--color-accent);
 }
 
 /* ══════════════════════════════════════════
    BUTTONS
 ══════════════════════════════════════════ */
 .btn-primary {
-  background: linear-gradient(135deg, var(--color-accent-light), var(--color-accent-dark));
+  background: var(--color-accent);
   color: #ffffff;
   font-weight: 700;
   border-radius: 12px;

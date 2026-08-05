@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Coffee, CheckCircle, ChefHat, Bell, Home, RefreshCw, Clock, Star, X } from 'lucide-react';
+import { Coffee, CheckCircle, ChefHat, Bell, Home, RefreshCw, Clock, Star, X, Check, Banknote, House, CreditCard, Frown, ArrowRight } from 'lucide-react';
 import api from '../api/axios';
 
 const STEPS = [
   { key: 'placed',    label: 'Order Placed',  icon: Coffee,       desc: 'Your order has been received' },
   { key: 'accepted',  label: 'Accepted',       icon: CheckCircle,  desc: 'Café accepted your order' },
   { key: 'preparing', label: 'Preparing',      icon: ChefHat,      desc: 'Your order is being prepared' },
-  { key: 'ready',     label: 'Ready!',         icon: Bell,         desc: 'Come collect your order 🎉' },
+  { key: 'ready',     label: 'Ready!',    icon: Bell,         desc: 'Come collect your order!' },
   { key: 'completed', label: 'Completed',      icon: CheckCircle,  desc: 'Enjoy your meal!' },
 ];
 
@@ -20,8 +20,12 @@ const STATUS_STYLE = {
   completed: { color: '#6b7280', bg: '#f9fafb', border: '#e5e7eb' },
 };
 
-const METHOD_LABEL = { cash: '💵 Cash on Pickup', cafe: '🏠 Order in Café', online: '💳 Online' };
-const STEP_EMOJI   = { placed: '☕', accepted: '✅', preparing: '👨‍🍳', ready: '🔔', completed: '🎉' };
+const METHOD_LABEL = {
+  cash:   { icon: Banknote,    label: 'Cash on Pickup' },
+  cafe:   { icon: House,       label: 'Order in Café' },
+  online: { icon: CreditCard,  label: 'Online Payment' },
+};
+const STEP_ICON = { placed: Coffee, accepted: CheckCircle, preparing: ChefHat, ready: Bell, completed: Check };
 
 export default function OrderStatus() {
   const { id } = useParams();
@@ -66,7 +70,7 @@ export default function OrderStatus() {
   if (!order) return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ textAlign: 'center', color: 'var(--color-muted)' }}>
-        <div style={{ fontSize: 48, marginBottom: 12 }}>😕</div>
+        <Frown size={48} style={{ margin: '0 auto 12px', display: 'block' }} />
         <p style={{ marginBottom: 16 }}>Order not found</p>
         <button className="btn-primary" onClick={() => navigate('/')}>Go Home</button>
       </div>
@@ -80,7 +84,7 @@ export default function OrderStatus() {
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg)', paddingBottom: 40 }}>
       {/* Top accent bar */}
-      <div style={{ height: 4, background: `linear-gradient(90deg, ${ss.color}, ${ss.color}88)` }} />
+      <div style={{ height: 4, background: ss.color }} />
 
       <div style={{ maxWidth: 540, margin: '0 auto', padding: '20px 16px', }}>
         {/* Nav bar */}
@@ -109,10 +113,10 @@ export default function OrderStatus() {
           </motion.div>
 
           <h1 style={{ fontWeight: 800, fontSize: 24, marginBottom: 6 }}>
-            {order.status === 'placed' && 'Order Placed!'}
-            {order.status === 'accepted' && 'Order Accepted!'}
+            {order.status === 'placed'    && 'Order Placed!'}
+            {order.status === 'accepted'  && 'Order Accepted!'}
             {order.status === 'preparing' && 'Being Prepared…'}
-            {order.status === 'ready' && 'Ready for Pickup! 🎉'}
+            {order.status === 'ready'     && 'Ready for Pickup!'}
             {order.status === 'completed' && 'Completed!'}
           </h1>
           <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>{STEPS[stepIdx]?.desc}</p>
@@ -120,7 +124,7 @@ export default function OrderStatus() {
           {isReady && (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
               style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 8, background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 99, padding: '7px 14px', color: '#15803d', fontWeight: 600, fontSize: 13 }}>
-              🏃 Please collect your order at the counter
+              <ArrowRight size={14} /> Please collect your order at the counter
             </motion.div>
           )}
         </motion.div>
@@ -134,13 +138,14 @@ export default function OrderStatus() {
             {/* grey track */}
             <div style={{ position: 'absolute', left: 19, top: 8, bottom: 8, width: 2, background: 'var(--color-border)' }} />
             {/* filled track */}
-            <div style={{ position: 'absolute', left: 19, top: 8, width: 2, height: `${(stepIdx / (STEPS.length - 1)) * 100}%`, background: `linear-gradient(to bottom, ${ss.color}, #15803d)`, transition: 'height 0.5s ease' }} />
+            <div style={{ position: 'absolute', left: 19, top: 8, width: 2, height: `${(stepIdx / (STEPS.length - 1)) * 100}%`, background: ss.color, transition: 'height 0.5s ease' }} />
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
               {STEPS.map((step, idx) => {
                 const Icon = step.icon;
                 const done = idx < stepIdx;
                 const active = idx === stepIdx;
+                const StepIcon = STEP_ICON[step.key] || Coffee;
                 const sc = STATUS_STYLE[step.key];
                 return (
                   <div key={step.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, position: 'relative', zIndex: 1 }}>
@@ -177,8 +182,8 @@ export default function OrderStatus() {
               {new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
-          <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 99, background: ss.bg, color: ss.color, fontWeight: 600, border: `1px solid ${ss.border}`, display: 'inline-block', marginBottom: 12 }}>
-            {METHOD_LABEL[order.paymentMethod]}
+          <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 99, background: ss.bg, color: ss.color, fontWeight: 600, border: `1px solid ${ss.border}`, display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 12 }}>
+            {(() => { const M = METHOD_LABEL[order.paymentMethod]; return M ? <><M.icon size={11} />{M.label}</> : order.paymentMethod; })()}
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 12 }}>
             {order.items.map((item) => (
@@ -218,12 +223,12 @@ export default function OrderStatus() {
                   padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14,
                   boxShadow: '0 2px 12px rgba(194,112,15,0.1)', position: 'relative',
                 }}>
-                  <div style={{ width: 46, height: 46, borderRadius: 14, background: 'linear-gradient(135deg, #e8901f, #c2700f)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 14, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Star size={22} color="#fff" fill="#fff" />
                   </div>
                   <div>
                     <p style={{ fontWeight: 800, fontSize: 15, color: '#92400e', marginBottom: 3 }}>
-                      Enjoyed your order? ☕
+                      Enjoyed your order?
                     </p>
                     <p style={{ fontSize: 12, color: '#b45309', fontWeight: 500 }}>
                       Leave us a Google review — it means the world!

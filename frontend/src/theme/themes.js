@@ -4,7 +4,7 @@
 export const THEMES = {
   'warm-cafe': {
     id: 'warm-cafe',
-    name: '☕ Warm Café',
+    name: 'Warm Café',
     desc: 'Cozy amber & cream',
     dark: false,
     preview: { bg: '#faf7f3', accent: '#e8901f', surface: '#f3ede5', text: '#1a0f05' },
@@ -35,7 +35,7 @@ export const THEMES = {
 
   'midnight': {
     id: 'midnight',
-    name: '🌙 Midnight',
+    name: 'Midnight',
     desc: 'Bold dark elegance',
     dark: true,
     preview: { bg: '#111111', accent: '#f5c842', surface: '#1c1c1c', text: '#f0f0f0' },
@@ -66,7 +66,7 @@ export const THEMES = {
 
   'clean-pro': {
     id: 'clean-pro',
-    name: '🤍 Clean Pro',
+    name: 'Clean Pro',
     desc: 'Minimal & professional',
     dark: false,
     preview: { bg: '#f4f6f8', accent: '#2563eb', surface: '#eef1f5', text: '#111827' },
@@ -97,7 +97,7 @@ export const THEMES = {
 
   'forest': {
     id: 'forest',
-    name: '🌿 Forest',
+    name: 'Forest',
     desc: 'Fresh & natural',
     dark: false,
     preview: { bg: '#f0faf0', accent: '#16a34a', surface: '#e4f5e4', text: '#1a2e1a' },
@@ -128,7 +128,7 @@ export const THEMES = {
 
   'sweet-pink': {
     id: 'sweet-pink',
-    name: '🌸 Sweet Pink',
+    name: 'Sweet Pink',
     desc: 'Playful & delightful',
     dark: false,
     preview: { bg: '#fff0f5', accent: '#e11d48', surface: '#fce7f3', text: '#1a0a0a' },

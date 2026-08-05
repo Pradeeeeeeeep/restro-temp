@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, RefreshCw, Printer, MessageCircle, XCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, RefreshCw, Printer, MessageCircle, XCircle, Coffee, CheckCircle, ChefHat, Bell, Check, X, ClipboardList, FileText, Banknote, House, CreditCard } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 import { AdminNav } from './AdminDashboard';
@@ -9,8 +9,8 @@ const STATUSES = ['placed', 'accepted', 'preparing', 'ready', 'completed'];
 const STATUS_COLOR  = { placed:'#c2700f', accepted:'#1d4ed8', preparing:'#7c3aed', ready:'#15803d', completed:'#6b7280', cancelled:'#dc2626' };
 const STATUS_BG     = { placed:'#fef3e2', accepted:'#eff6ff', preparing:'#f5f3ff', ready:'#f0fdf4', completed:'#f9fafb', cancelled:'#fef2f2' };
 const STATUS_BORDER = { placed:'#f9d89a', accepted:'#bfdbfe', preparing:'#ddd6fe', ready:'#86efac', completed:'#e5e7eb', cancelled:'#fecaca' };
-const STATUS_EMOJI  = { placed:'☕', accepted:'✅', preparing:'👨‍🍳', ready:'🔔', completed:'✓', cancelled:'✗' };
-const METHOD_LABEL  = { cash:'💵 Cash', cafe:'🏠 Café', online:'💳 Online' };
+const STATUS_ICON   = { placed: Coffee, accepted: CheckCircle, preparing: ChefHat, ready: Bell, completed: Check, cancelled: X };
+const METHOD_LABEL  = { cash: 'Cash', cafe: 'Café', online: 'Online' };
 const NEXT_STATUS   = { placed:'accepted', accepted:'preparing', preparing:'ready', ready:'completed' };
 const CAN_CANCEL    = ['placed', 'accepted', 'preparing'];
 
@@ -47,7 +47,7 @@ function printInvoice(order) {
 </head>
 <body>
   <div class="header">
-    <h1>☕ Café</h1>
+    <h1>Cafe</h1>
     <p>Order Receipt</p>
   </div>
   <hr class="divider">
@@ -76,7 +76,7 @@ function printInvoice(order) {
     </tfoot>
   </table>
   ${order.note ? `<hr class="divider"><div class="section"><div class="label">Note</div><div class="value" style="font-size:13px">${order.note}</div></div>` : ''}
-  <div class="footer"><p>Thank you for visiting! ☕</p><p style="margin-top:4px">Please come again</p></div>
+  <div class="footer"><p>Thank you for visiting!</p><p style="margin-top:4px">Please come again</p></div>
 </body>
 </html>`;
 
@@ -91,12 +91,12 @@ function printInvoice(order) {
 function sendWhatsApp(order) {
   const date = new Date(order.createdAt).toLocaleString('en-IN');
   const lines = order.items.map((i) => `  • ${i.menuItem.name} × ${i.quantity} = ₹${(i.price * i.quantity).toFixed(0)}`).join('\n');
-  const note = order.note ? `\n📝 Note: ${order.note}` : '';
-  const text = `☕ *Café Order Invoice*\n\n` +
-    `📋 Order #${order.id}\n` +
-    `📅 ${date}\n` +
-    `👤 ${order.customer.name} (${order.customer.phone})\n` +
-    `💳 ${METHOD_LABEL[order.paymentMethod] || order.paymentMethod}\n\n` +
+  const note = order.note ? `\nNote: ${order.note}` : '';
+  const text = `*Cafe Order Invoice*\n\n` +
+    `Order #${order.id}\n` +
+    `Date: ${date}\n` +
+    `Customer: ${order.customer.name} (${order.customer.phone})\n` +
+    `Payment: ${METHOD_LABEL[order.paymentMethod] || order.paymentMethod}\n\n` +
     `*Items:*\n${lines}\n` +
     `────────────────\n` +
     `*Total: ₹${order.total.toFixed(0)}*` +
@@ -180,12 +180,12 @@ export default function AdminOrders() {
               style={{
                 padding: '6px 13px', borderRadius: 99, border: 'none', cursor: 'pointer',
                 fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, transition: 'all 0.15s',
-                background: filter === s ? (s ? STATUS_COLOR[s] || '#c2700f' : 'linear-gradient(135deg,#e8901f,#c2700f)') : '#fff',
+                background: filter === s ? (s ? STATUS_COLOR[s] || 'var(--color-accent)' : 'var(--color-accent)') : '#fff',
                 color: filter === s ? '#fff' : 'var(--color-text-secondary)',
                 border: filter === s ? 'none' : '1px solid var(--color-border)',
-                boxShadow: filter === s ? `0 3px 10px ${(STATUS_COLOR[s] || '#c2700f')}44` : 'none',
+                boxShadow: filter === s ? `0 3px 10px ${(STATUS_COLOR[s] || 'var(--color-accent)')}44` : 'none',
               }}>
-              {s ? `${STATUS_EMOJI[s] || '•'} ${s}` : '🗂 All'}
+              {s ? (() => { const Icon = STATUS_ICON[s]; return <><Icon size={12} style={{ display: 'inline', verticalAlign: 'middle' }} /> {s}</>; })() : 'All'}
             </button>
           ))}
         </div>
@@ -197,7 +197,7 @@ export default function AdminOrders() {
           </div>
         ) : orders.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--color-muted)' }}>
-            <div style={{ fontSize: 44, marginBottom: 12 }}>📋</div>
+            <ClipboardList size={44} style={{ margin: '0 auto 12px', display: 'block' }} />
             <p>No {filter || ''} orders</p>
           </div>
         ) : (
@@ -218,8 +218,8 @@ export default function AdminOrders() {
                     {/* Header row */}
                     <div onClick={() => setExpanded(open ? null : order.id)}
                       style={{ padding: '14px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 44, height: 44, borderRadius: 12, background: bg, border: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19, flexShrink: 0 }}>
-                        {STATUS_EMOJI[order.status] || '•'}
+                      <div style={{ width: 44, height: 44, borderRadius: 12, background: bg, border: `1px solid ${border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {(() => { const Icon = STATUS_ICON[order.status] || Coffee; return <Icon size={19} color={color} />; })()}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 3 }}>
@@ -260,8 +260,8 @@ export default function AdminOrders() {
 
                             {/* Note */}
                             {order.note && (
-                              <div style={{ background: 'var(--color-surface)', borderRadius: 10, padding: '9px 13px', marginBottom: 14, fontSize: 13, color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)' }}>
-                                📝 {order.note}
+                              <div style={{ background: 'var(--color-surface)', borderRadius: 10, padding: '9px 13px', marginBottom: 14, fontSize: 13, color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)', display: 'flex', alignItems: 'flex-start', gap: 7 }}>
+                                <FileText size={14} style={{ flexShrink: 0, marginTop: 1 }} /> {order.note}
                               </div>
                             )}
 
@@ -274,10 +274,10 @@ export default function AdminOrders() {
                                     style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                                     {updating === order.id
                                       ? <><div className="spinner" style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} /> Updating…</>
-                                      : `Mark as ${next} ${STATUS_EMOJI[next]}`}
+                                      : (() => { const Icon = STATUS_ICON[next]; return <><Icon size={15} /> Mark as {next}</>; })()}
                                   </button>
                                 ) : (
-                                  <div style={{ textAlign: 'center', color: '#15803d', fontWeight: 700, fontSize: 14 }}>✅ Order Completed</div>
+                                  <div style={{ textAlign: 'center', color: '#15803d', fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><CheckCircle size={16} color="#15803d" /> Order Completed</div>
                                 )
                               )}
 

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag, Utensils } from 'lucide-react';
 import useCartStore from '../store/useCartStore';
 import useCustomerStore from '../store/useCustomerStore';
 
@@ -43,7 +43,7 @@ export default function Cart() {
                 <motion.div key={item.menuItemId} layout initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20, height: 0 }}
                   className="card" style={{ padding: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
                   <div style={{ width: 52, height: 52, borderRadius: 12, background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0, overflow: 'hidden' }}>
-                    {item.image ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '🍴'}
+                    {item.image ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Utensils size={22} color="var(--color-muted-light)" />}
                   </div>
                   <div style={{ flex: 1 }}>
                     <p style={{ fontWeight: 700, fontSize: 14 }}>{item.name}</p>

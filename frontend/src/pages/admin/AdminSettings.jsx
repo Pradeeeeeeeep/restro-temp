@@ -166,7 +166,7 @@ export default function AdminSettings() {
               style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
               {/* Section header */}
               <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, var(--color-accent-light), var(--color-accent-dark))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Palette size={20} color="#fff" />
                 </div>
                 <div>
@@ -213,7 +213,7 @@ export default function AdminSettings() {
               style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, var(--color-accent-light), var(--color-accent-dark))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Pipette size={20} color="#fff" />
                   </div>
                   <div>
@@ -242,7 +242,7 @@ export default function AdminSettings() {
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
               style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'linear-gradient(135deg, var(--color-accent-light), var(--color-accent-dark))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Star size={20} color="#fff" fill="#fff" />
                 </div>
                 <div>
@@ -294,7 +294,7 @@ export default function AdminSettings() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
                 padding: '15px 24px', borderRadius: 14, border: 'none',
                 cursor: saving ? 'not-allowed' : 'pointer',
-                background: 'linear-gradient(135deg, var(--color-accent-light), var(--color-accent-dark))',
+                background: 'var(--color-accent)',
                 color: '#fff', fontFamily: 'Outfit', fontWeight: 800, fontSize: 16,
                 boxShadow: '0 4px 16px var(--btn-shadow)',
               }}>

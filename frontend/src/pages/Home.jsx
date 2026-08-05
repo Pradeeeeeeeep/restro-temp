@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Coffee, User, Phone, ArrowRight, ChevronRight,
-  Clock, CheckCircle, ChefHat, Bell, ShoppingBag, RefreshCw, LogOut, Star, X
+  Clock, CheckCircle, ChefHat, Bell, ShoppingBag, RefreshCw, LogOut, Star, X,
+  Banknote, House, CreditCard, Check, Lock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
@@ -12,22 +13,23 @@ import useCartStore from '../store/useCartStore';
 
 /* ─── Status config ─── */
 const STATUS_CONFIG = {
-  placed:    { label: 'Order Placed',  emoji: '☕', color: '#c2700f', bg: '#fef3e2', border: '#f9d89a' },
-  accepted:  { label: 'Accepted',      emoji: '✅', color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe' },
-  preparing: { label: 'Preparing',     emoji: '👨‍🍳', color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' },
-  ready:     { label: 'Ready! 🎉',    emoji: '🔔', color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
-  completed: { label: 'Completed',     emoji: '✓',  color: '#6b7280', bg: '#f9fafb', border: '#e5e7eb' },
+  placed:    { label: 'Order Placed', icon: Coffee,       color: '#c2700f', bg: '#fef3e2', border: '#f9d89a' },
+  accepted:  { label: 'Accepted',     icon: CheckCircle,  color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe' },
+  preparing: { label: 'Preparing',    icon: ChefHat,      color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' },
+  ready:     { label: 'Ready!',       icon: Bell,         color: '#15803d', bg: '#f0fdf4', border: '#bbf7d0' },
+  completed: { label: 'Completed',    icon: Check,        color: '#6b7280', bg: '#f9fafb', border: '#e5e7eb' },
 };
 
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.placed;
+  const Icon = cfg.icon;
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: '5px',
       padding: '4px 10px', borderRadius: '99px', fontSize: '12px', fontWeight: 700,
       color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}`
     }}>
-      <span style={{ fontSize: '10px' }}>{cfg.emoji}</span>
+      <Icon size={11} />
       {cfg.label}
     </span>
   );
@@ -51,9 +53,10 @@ function OrderCard({ order, onClick }) {
     >
       <div style={{
         width: 44, height: 44, borderRadius: '12px', flexShrink: 0,
-        background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px'
+        background: cfg.bg, border: `1px solid ${cfg.border}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        {cfg.emoji}
+        {(() => { const Icon = cfg.icon; return <Icon size={20} color={cfg.color} />; })()}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
@@ -66,7 +69,11 @@ function OrderCard({ order, onClick }) {
         </div>
         <p style={{ color: 'var(--color-muted)', fontSize: '12px' }}>
           {order.items.length} item{order.items.length !== 1 ? 's' : ''} ·&nbsp;
-          {order.paymentMethod === 'cash' ? '💵 Cash' : order.paymentMethod === 'cafe' ? '🏠 Café' : '💳 Online'} ·&nbsp;
+          {order.paymentMethod === 'cash'
+            ? <><Banknote size={11} style={{ display: 'inline', verticalAlign: 'middle' }} /> Cash</>  
+            : order.paymentMethod === 'cafe'
+            ? <><House size={11} style={{ display: 'inline', verticalAlign: 'middle' }} /> Café</>
+            : <><CreditCard size={11} style={{ display: 'inline', verticalAlign: 'middle' }} /> Online</>} ·&nbsp;
           ₹{order.total.toFixed(0)}
         </p>
       </div>
@@ -177,16 +184,16 @@ export default function Home() {
         >
           <div style={{
             width: 76, height: 76, borderRadius: '22px', margin: '0 auto 16px',
-            background: 'linear-gradient(135deg, #e8901f, #c2700f)',
+            background: 'var(--color-accent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 12px 32px rgba(194,112,15,0.25)',
+            boxShadow: '0 12px 32px var(--btn-shadow)',
           }}>
             <Coffee size={38} color="#fff" />
           </div>
           <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 4 }}>
             <span className="gradient-text">Brew & Bites</span>
           </h1>
-          <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>Your neighbourhood café ☕</p>
+          <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>Your neighbourhood café</p>
         </motion.div>
 
         {/* ── RETURNING CUSTOMER VIEW ── */}
@@ -209,7 +216,7 @@ export default function Home() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{
                       width: 46, height: 46, borderRadius: 14,
-                      background: 'linear-gradient(135deg, #e8901f, #c2700f)',
+                      background: 'var(--color-accent)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       color: '#fff', fontWeight: 800, fontSize: 20
                     }}>
@@ -363,8 +370,8 @@ export default function Home() {
                 </form>
               </div>
 
-              <p style={{ marginTop: 16, color: 'var(--color-muted)', fontSize: 12, textAlign: 'center' }}>
-                🔒 We only use your number to track your order
+              <p style={{ marginTop: 16, color: 'var(--color-muted)', fontSize: 12, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+                <Lock size={12} /> We only use your number to track your order
               </p>
             </motion.div>
           )}
@@ -392,12 +399,12 @@ export default function Home() {
                   boxShadow: '0 2px 12px rgba(194,112,15,0.1)',
                   position: 'relative',
                 }}>
-                  <div style={{ width: 46, height: 46, borderRadius: 14, background: 'linear-gradient(135deg, #e8901f, #c2700f)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 14, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Star size={22} color="#fff" fill="#fff" />
                   </div>
                   <div>
                     <p style={{ fontWeight: 800, fontSize: 15, color: '#92400e', marginBottom: 3 }}>
-                      Enjoyed your visit? ☕
+                      Enjoyed your visit?
                     </p>
                     <p style={{ fontSize: 12, color: '#b45309', fontWeight: 500 }}>
                       Leave us a Google review — it means the world!

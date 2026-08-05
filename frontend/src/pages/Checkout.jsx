@@ -43,7 +43,7 @@ export default function Checkout() {
         note: note.trim() || undefined,
       });
       clearCart();
-      toast.success('Order placed! ☕');
+      toast.success('Order placed! Your coffee is on the way.');
       navigate(`/order/${data.order.id}`);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to place order');
@@ -68,7 +68,7 @@ export default function Checkout() {
         {/* Customer */}
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="card"
           style={{ padding: '14px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, #e8901f, #c2700f)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 17 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 17 }}>
             {customer.name[0].toUpperCase()}
           </div>
           <div>

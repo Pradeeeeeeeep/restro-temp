@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Edit3, Trash2, X, Check, ToggleLeft, ToggleRight,
-  Upload, UtensilsCrossed, Tag, GripVertical
+  Upload, UtensilsCrossed, Tag, GripVertical, Utensils
 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
@@ -10,7 +10,8 @@ import { AdminNav } from './AdminDashboard';
 
 /* ─────────────────────────── constants ─────────────────────────── */
 const EMPTY_ITEM = { name: '', description: '', price: '', categoryId: '', available: true };
-const CATEGORY_EMOJIS = ['☕', '🧋', '🥪', '🍰', '🍽️', '🍜', '🥗', '🍕', '🍔', '🥤', '🍩', '🧃', '🫖', '🍱', '🥐'];
+// No more emoji array — categories use UtensilsCrossed icon as default
+const CATEGORY_ICON = UtensilsCrossed;
 
 /* ═══════════════════════════════════════════════════════════════════
    ADMIN MENU PAGE
@@ -265,7 +266,7 @@ export default function AdminMenu() {
                       <div style={{ width: 50, height: 50, borderRadius: 11, background: 'var(--color-surface)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
                         {item.image
                           ? <img src={item.image.startsWith('/') ? `http://localhost:5001${item.image}` : item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          : '🍴'}
+                          : <Utensils size={22} color="var(--color-muted-light)" />}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontWeight: 700, fontSize: 14 }}>{item.name}</p>
