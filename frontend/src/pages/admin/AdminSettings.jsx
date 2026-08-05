@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Star, Link, ToggleLeft, ToggleRight, Save, ExternalLink,
-  Palette, Check, RefreshCw, Pipette, Upload, Image, Edit3, Coffee, Sparkles, Tag, ArrowRight, ShoppingBag, X
+  Palette, Check, RefreshCw, Pipette, Upload, Image, Edit3, Coffee, Sparkles, Tag, ArrowRight, ShoppingBag, X, Plus, Trash2, Gift, Percent
 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
@@ -126,6 +126,16 @@ export default function AdminSettings() {
   const [logoUploading, setLogoUploading] = useState(false);
   const [showPopupPreview, setShowPopupPreview] = useState(false);
 
+  // Coupon management state
+  const [coupons, setCoupons] = useState([]);
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [editingCoupon, setEditingCoupon] = useState(null);
+  const [couponForm, setCouponForm] = useState({
+    code: '', discountType: 'fixed', discountValue: '', minOrderAmount: '0', maxDiscount: '', active: true,
+  });
+  const [savingCoupon, setSavingCoupon] = useState(false);
+  const [deletingCouponId, setDeletingCouponId] = useState(null);
+
   useEffect(() => {
     api.get('/admin/settings')
       .then(({ data }) => setSettings({
@@ -136,7 +146,91 @@ export default function AdminSettings() {
       }))
       .catch(() => toast.error('Failed to load settings'))
       .finally(() => setLoading(false));
+
+    fetchCoupons();
   }, []);
+
+  const fetchCoupons = async () => {
+    try {
+      const { data } = await api.get('/admin/coupons');
+      setCoupons(data.coupons || []);
+    } catch {}
+  };
+
+  const openAddCoupon = () => {
+    setEditingCoupon(null);
+    setCouponForm({ code: '', discountType: 'fixed', discountValue: '', minOrderAmount: '0', maxDiscount: '', active: true });
+    setShowCouponModal(true);
+  };
+
+  const openEditCoupon = (c) => {
+    setEditingCoupon(c);
+    setCouponForm({
+      code: c.code,
+      discountType: c.discountType,
+      discountValue: String(c.discountValue),
+      minOrderAmount: String(c.minOrderAmount || 0),
+      maxDiscount: c.maxDiscount ? String(c.maxDiscount) : '',
+      active: c.active,
+    });
+    setShowCouponModal(true);
+  };
+
+  const saveCoupon = async () => {
+    if (!couponForm.code.trim()) return toast.error('Coupon code is required');
+    if (!couponForm.discountValue || isNaN(couponForm.discountValue)) return toast.error('Valid discount value is required');
+
+    setSavingCoupon(true);
+    try {
+      const payload = {
+        code: couponForm.code.trim().toUpperCase(),
+        discountType: couponForm.discountType,
+        discountValue: parseFloat(couponForm.discountValue),
+        minOrderAmount: parseFloat(couponForm.minOrderAmount) || 0,
+        maxDiscount: couponForm.maxDiscount ? parseFloat(couponForm.maxDiscount) : null,
+        active: couponForm.active,
+      };
+
+      if (editingCoupon) {
+        await api.put(`/admin/coupons/${editingCoupon.id}`, payload);
+        toast.success('Coupon updated!');
+      } else {
+        await api.post('/admin/coupons', payload);
+        toast.success('Coupon created!');
+      }
+
+      setShowCouponModal(false);
+      fetchCoupons();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to save coupon');
+    } finally {
+      setSavingCoupon(false);
+    }
+  };
+
+  const toggleCouponActive = async (c) => {
+    try {
+      await api.put(`/admin/coupons/${c.id}`, { active: !c.active });
+      toast.success(`Coupon ${c.code} ${!c.active ? 'activated' : 'deactivated'}`);
+      fetchCoupons();
+    } catch {
+      toast.error('Failed to toggle coupon status');
+    }
+  };
+
+  const deleteCoupon = async (c) => {
+    if (!window.confirm(`Delete coupon ${c.code}?`)) return;
+    setDeletingCouponId(c.id);
+    try {
+      await api.delete(`/admin/coupons/${c.id}`);
+      toast.success(`Coupon ${c.code} deleted`);
+      fetchCoupons();
+    } catch {
+      toast.error('Failed to delete coupon');
+    } finally {
+      setDeletingCouponId(null);
+    }
+  };
 
   // Live preview when hovering a theme swatch
   const handleSwatchHover = (id) => {
@@ -631,6 +725,70 @@ export default function AdminSettings() {
                 </div>
               </div>
             </motion.div>
+
+            {/* ════ COUPON CODES MANAGEMENT ════ */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Tag size={20} color="#fff" />
+                  </div>
+                  <div>
+                    <p style={{ fontWeight: 800, fontSize: 16 }}>Coupon Codes &amp; Discounts</p>
+                    <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Create promo codes with minimum purchase limits &amp; discount rules</p>
+                  </div>
+                </div>
+                <button onClick={openAddCoupon} className="btn-primary" style={{ padding: '8px 14px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Plus size={14} /> Add Coupon
+                </button>
+              </div>
+
+              <div style={{ padding: 20 }}>
+                {coupons.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--color-muted)' }}>
+                    <Gift size={36} style={{ margin: '0 auto 8px', display: 'block' }} />
+                    <p style={{ fontWeight: 600 }}>No coupon codes added yet</p>
+                    <button onClick={openAddCoupon} className="btn-primary" style={{ marginTop: 12, padding: '8px 16px', fontSize: 13 }}>
+                      + Create your first coupon
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {coupons.map((c) => (
+                      <div key={c.id} style={{ padding: '12px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, opacity: c.active ? 1 : 0.6 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                          <span style={{ fontWeight: 800, fontSize: 14, background: 'var(--color-accent-bg)', color: 'var(--color-accent-dark)', border: '1px solid var(--color-accent-border)', padding: '4px 10px', borderRadius: 8 }}>
+                            {c.code}
+                          </span>
+                          <div>
+                            <p style={{ fontWeight: 700, fontSize: 13 }}>
+                              {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `Flat ₹${c.discountValue} OFF`}
+                              {c.maxDiscount ? ` (Max ₹${c.maxDiscount})` : ''}
+                            </p>
+                            <p style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                              {c.minOrderAmount > 0 ? `Min purchase limit: ₹${c.minOrderAmount}` : 'No min limit'}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                          <button onClick={() => toggleCouponActive(c)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: c.active ? '#15803d' : 'var(--color-muted)', padding: 0 }} title={c.active ? 'Deactivate coupon' : 'Activate coupon'}>
+                            {c.active ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
+                          </button>
+                          <button onClick={() => openEditCoupon(c)} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 8, padding: 6, cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex' }}>
+                            <Edit3 size={14} />
+                          </button>
+                          <button onClick={() => deleteCoupon(c)} disabled={deletingCouponId === c.id} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: 6, cursor: 'pointer', color: '#dc2626', display: 'flex' }}>
+                            {deletingCouponId === c.id ? <div className="spinner" style={{ width: 14, height: 14 }} /> : <Trash2 size={14} />}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
           </div>
         )}
         {/* ── Save Settings Button Floating Bar ── */}
@@ -680,6 +838,93 @@ export default function AdminSettings() {
             </motion.div>
           );
         })()}
+      </AnimatePresence>
+
+      {/* ── Add / Edit Coupon Modal ── */}
+      <AnimatePresence>
+        {showCouponModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setShowCouponModal(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', zIndex: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              style={{ width: '100%', maxWidth: 440, background: 'var(--color-card)', border: '1.5px solid var(--color-border)', borderRadius: 20, padding: 22, boxShadow: '0 20px 50px rgba(0,0,0,0.25)' }}>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                <h3 style={{ fontWeight: 800, fontSize: 17 }}>{editingCoupon ? 'Edit Coupon Code' : 'New Coupon Code'}</h3>
+                <button onClick={() => setShowCouponModal(false)} style={{ background: 'var(--color-surface)', border: 'none', borderRadius: 99, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {/* Coupon Code */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                    Coupon Code *
+                  </label>
+                  <input className="input-field" type="text" placeholder="e.g. WELCOME50, FESTIVAL100"
+                    value={couponForm.code} onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })}
+                    style={{ textTransform: 'uppercase', fontWeight: 700 }} />
+                </div>
+
+                {/* Discount Type */}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                      Discount Type
+                    </label>
+                    <select className="input-field" value={couponForm.discountType}
+                      onChange={(e) => setCouponForm({ ...couponForm, discountType: e.target.value })}>
+                      <option value="fixed">Flat Amount (₹)</option>
+                      <option value="percentage">Percentage (%)</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                      Discount Value *
+                    </label>
+                    <input className="input-field" type="number" placeholder={couponForm.discountType === 'fixed' ? '50' : '20'}
+                      value={couponForm.discountValue} onChange={(e) => setCouponForm({ ...couponForm, discountValue: e.target.value })} />
+                  </div>
+                </div>
+
+                {/* Minimum Purchase Limit */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                    Minimum Purchase Order Limit (₹)
+                  </label>
+                  <input className="input-field" type="number" placeholder="e.g. 150 (Leave 0 for no limit)"
+                    value={couponForm.minOrderAmount} onChange={(e) => setCouponForm({ ...couponForm, minOrderAmount: e.target.value })} />
+                  <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 4 }}>
+                    Customers must order at least this amount to apply the coupon.
+                  </p>
+                </div>
+
+                {/* Max Discount (if percentage) */}
+                {couponForm.discountType === 'percentage' && (
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                      Max Discount Cap (₹) (Optional)
+                    </label>
+                    <input className="input-field" type="number" placeholder="e.g. 80"
+                      value={couponForm.maxDiscount} onChange={(e) => setCouponForm({ ...couponForm, maxDiscount: e.target.value })} />
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                  <button type="button" onClick={() => setShowCouponModal(false)} className="btn-secondary" style={{ flex: 1, padding: 12 }}>
+                    Cancel
+                  </button>
+                  <button type="button" onClick={saveCoupon} disabled={savingCoupon} className="btn-primary" style={{ flex: 1, padding: 12 }}>
+                    {savingCoupon ? 'Saving…' : (editingCoupon ? 'Update Coupon' : 'Create Coupon')}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );
