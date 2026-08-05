@@ -1,34 +1,27 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Coffee, CheckCircle, Clock, ChefHat, Bell, Home, RefreshCw } from 'lucide-react';
+import { Coffee, CheckCircle, ChefHat, Bell, Home, RefreshCw, Clock } from 'lucide-react';
 import api from '../api/axios';
 
-const STATUS_STEPS = [
-  { key: 'placed', label: 'Order Placed', icon: Coffee, description: 'Your order has been received' },
-  { key: 'accepted', label: 'Accepted', icon: CheckCircle, description: 'Café accepted your order' },
-  { key: 'preparing', label: 'Preparing', icon: ChefHat, description: 'Your order is being prepared' },
-  { key: 'ready', label: 'Ready!', icon: Bell, description: 'Come pick up your order 🎉' },
-  { key: 'completed', label: 'Completed', icon: CheckCircle, description: 'Enjoy your meal!' },
+const STEPS = [
+  { key: 'placed',    label: 'Order Placed',  icon: Coffee,       desc: 'Your order has been received' },
+  { key: 'accepted',  label: 'Accepted',       icon: CheckCircle,  desc: 'Café accepted your order' },
+  { key: 'preparing', label: 'Preparing',      icon: ChefHat,      desc: 'Your order is being prepared' },
+  { key: 'ready',     label: 'Ready!',         icon: Bell,         desc: 'Come collect your order 🎉' },
+  { key: 'completed', label: 'Completed',      icon: CheckCircle,  desc: 'Enjoy your meal!' },
 ];
 
-const METHOD_LABELS = {
-  cash: '💵 Cash on Pickup',
-  cafe: '🏠 Order in Café',
-  online: '💳 Online',
+const STATUS_STYLE = {
+  placed:    { color: '#c2700f', bg: '#fef3e2', border: '#f9d89a' },
+  accepted:  { color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe' },
+  preparing: { color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' },
+  ready:     { color: '#15803d', bg: '#f0fdf4', border: '#86efac' },
+  completed: { color: '#6b7280', bg: '#f9fafb', border: '#e5e7eb' },
 };
 
-const STATUS_COLORS = {
-  placed: { color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-  accepted: { color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
-  preparing: { color: '#a855f7', bg: 'rgba(168,85,247,0.1)' },
-  ready: { color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
-  completed: { color: '#6b7280', bg: 'rgba(107,114,128,0.1)' },
-};
-
-function getStepIndex(status) {
-  return STATUS_STEPS.findIndex((s) => s.key === status);
-}
+const METHOD_LABEL = { cash: '💵 Cash on Pickup', cafe: '🏠 Order in Café', online: '💳 Online' };
+const STEP_EMOJI   = { placed: '☕', accepted: '✅', preparing: '👨‍🍳', ready: '🔔', completed: '🎉' };
 
 export default function OrderStatus() {
   const { id } = useParams();
@@ -42,182 +35,123 @@ export default function OrderStatus() {
       const { data } = await api.get(`/orders/${id}`);
       setOrder(data.order);
       setLastUpdated(new Date());
-    } catch (err) {
-      console.error('Failed to fetch order:', err);
-    } finally {
-      setLoading(false);
-    }
+    } catch { /* silent */ }
+    finally { setLoading(false); }
   }, [id]);
 
   useEffect(() => {
     fetchOrder();
-    // Poll every 5 seconds
-    const interval = setInterval(fetchOrder, 5000);
-    return () => clearInterval(interval);
+    const iv = setInterval(fetchOrder, 5000);
+    return () => clearInterval(iv);
   }, [fetchOrder]);
 
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="spinner" style={{ margin: '0 auto 16px' }} />
-          <p style={{ color: 'var(--color-muted)' }}>Loading your order...</p>
-        </div>
+  if (loading) return (
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div className="spinner" style={{ margin: '0 auto 14px', width: 28, height: 28 }} />
+        <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>Loading your order…</p>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (!order) {
-    return (
-      <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', color: 'var(--color-muted)' }}>
-          <div style={{ fontSize: '48px', marginBottom: '12px' }}>😕</div>
-          <p>Order not found</p>
-          <button className="btn-primary" style={{ marginTop: '16px' }} onClick={() => navigate('/')}>Go Home</button>
-        </div>
+  if (!order) return (
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center', color: 'var(--color-muted)' }}>
+        <div style={{ fontSize: 48, marginBottom: 12 }}>😕</div>
+        <p style={{ marginBottom: 16 }}>Order not found</p>
+        <button className="btn-primary" onClick={() => navigate('/')}>Go Home</button>
       </div>
-    );
-  }
+    </div>
+  );
 
-  const currentStepIdx = getStepIndex(order.status);
-  const statusStyle = STATUS_COLORS[order.status] || STATUS_COLORS.placed;
-  const isCompleted = order.status === 'completed';
+  const stepIdx = STEPS.findIndex((s) => s.key === order.status);
+  const ss = STATUS_STYLE[order.status] || STATUS_STYLE.placed;
   const isReady = order.status === 'ready';
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', paddingBottom: '40px' }}>
-      {/* Top glow for ready/completed */}
-      {(isReady || isCompleted) && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, height: '200px', zIndex: 0,
-          background: `radial-gradient(ellipse at 50% 0%, ${statusStyle.color}22 0%, transparent 70%)`,
-          pointerEvents: 'none'
-        }} />
-      )}
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', paddingBottom: 40 }}>
+      {/* Top accent bar */}
+      <div style={{ height: 4, background: `linear-gradient(90deg, ${ss.color}, ${ss.color}88)` }} />
 
-      <div style={{ maxWidth: '560px', margin: '0 auto', padding: '24px 20px', position: 'relative', zIndex: 1 }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-          <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
+      <div style={{ maxWidth: 540, margin: '0 auto', padding: '20px 16px', }}>
+        {/* Nav bar */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+          <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600 }}>
             <Home size={16} /> Home
           </button>
-          <button onClick={fetchOrder} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+          <button onClick={fetchOrder} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
             <RefreshCw size={14} /> Refresh
           </button>
         </div>
 
-        {/* Status Hero */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{ textAlign: 'center', marginBottom: '32px' }}
-        >
+        {/* Hero status */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          style={{ textAlign: 'center', marginBottom: 24 }}>
           <motion.div
-            animate={isReady ? { scale: [1, 1.08, 1] } : {}}
-            transition={{ repeat: Infinity, duration: 2 }}
+            animate={isReady ? { scale: [1, 1.1, 1] } : {}}
+            transition={{ repeat: Infinity, duration: 1.8 }}
             style={{
-              width: 90, height: 90, borderRadius: '28px', margin: '0 auto 20px',
-              background: statusStyle.bg, border: `2px solid ${statusStyle.color}44`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: isReady ? `0 0 32px ${statusStyle.color}44` : 'none'
-            }}
-          >
-            <span style={{ fontSize: '40px' }}>
-              {order.status === 'placed' && '☕'}
-              {order.status === 'accepted' && '✅'}
-              {order.status === 'preparing' && '👨‍🍳'}
-              {order.status === 'ready' && '🔔'}
-              {order.status === 'completed' && '🎉'}
-            </span>
+              width: 88, height: 88, borderRadius: 26, margin: '0 auto 18px',
+              background: ss.bg, border: `2px solid ${ss.border}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40,
+              boxShadow: isReady ? `0 4px 24px ${ss.color}30` : '0 2px 12px rgba(100,60,20,0.1)'
+            }}>
+            {STEP_EMOJI[order.status]}
           </motion.div>
 
-          <h1 style={{ fontWeight: 800, fontSize: '26px', marginBottom: '8px' }}>
+          <h1 style={{ fontWeight: 800, fontSize: 24, marginBottom: 6 }}>
             {order.status === 'placed' && 'Order Placed!'}
             {order.status === 'accepted' && 'Order Accepted!'}
-            {order.status === 'preparing' && 'Being Prepared...'}
+            {order.status === 'preparing' && 'Being Prepared…'}
             {order.status === 'ready' && 'Ready for Pickup! 🎉'}
-            {order.status === 'completed' && 'Order Complete!'}
+            {order.status === 'completed' && 'Completed!'}
           </h1>
-          <p style={{ color: 'var(--color-muted)', fontSize: '15px', maxWidth: '300px', margin: '0 auto' }}>
-            {STATUS_STEPS[currentStepIdx]?.description}
-          </p>
+          <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>{STEPS[stepIdx]?.desc}</p>
 
-          {order.status === 'ready' && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-              style={{
-                marginTop: '16px', display: 'inline-flex', alignItems: 'center', gap: '8px',
-                background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)',
-                borderRadius: '99px', padding: '8px 16px', color: '#86efac', fontWeight: 600
-              }}
-            >
+          {isReady && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+              style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 8, background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 99, padding: '7px 14px', color: '#15803d', fontWeight: 600, fontSize: 13 }}>
               🏃 Please collect your order at the counter
             </motion.div>
           )}
         </motion.div>
 
-        {/* Progress Timeline */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="glass"
-          style={{ borderRadius: '20px', padding: '24px', marginBottom: '20px' }}
-        >
-          <h3 style={{ fontWeight: 700, fontSize: '15px', marginBottom: '20px', color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Order Progress
-          </h3>
-          <div style={{ position: 'relative' }}>
-            {/* Track line */}
-            <div style={{ position: 'absolute', left: '19px', top: '8px', bottom: '8px', width: '2px', background: 'var(--color-border)' }} />
-            <div style={{
-              position: 'absolute', left: '19px', top: '8px', width: '2px',
-              height: `${(currentStepIdx / (STATUS_STEPS.length - 1)) * 100}%`,
-              background: 'linear-gradient(to bottom, #f59e0b, #22c55e)',
-              transition: 'height 0.5s ease'
-            }} />
+        {/* Progress timeline */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 18, padding: '20px 22px', marginBottom: 16 }}>
+          <p style={{ fontWeight: 700, fontSize: 12, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 18 }}>Order Progress</p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-              {STATUS_STEPS.map((step, idx) => {
-                const isDone = idx < currentStepIdx;
-                const isActive = idx === currentStepIdx;
+          <div style={{ position: 'relative' }}>
+            {/* grey track */}
+            <div style={{ position: 'absolute', left: 19, top: 8, bottom: 8, width: 2, background: 'var(--color-border)' }} />
+            {/* filled track */}
+            <div style={{ position: 'absolute', left: 19, top: 8, width: 2, height: `${(stepIdx / (STEPS.length - 1)) * 100}%`, background: `linear-gradient(to bottom, ${ss.color}, #15803d)`, transition: 'height 0.5s ease' }} />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+              {STEPS.map((step, idx) => {
                 const Icon = step.icon;
+                const done = idx < stepIdx;
+                const active = idx === stepIdx;
+                const sc = STATUS_STYLE[step.key];
                 return (
-                  <div key={step.key} style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', position: 'relative', zIndex: 1 }}>
-                    <motion.div
-                      animate={isActive ? { scale: [1, 1.15, 1] } : {}}
-                      transition={{ repeat: Infinity, duration: 1.5 }}
+                  <div key={step.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, position: 'relative', zIndex: 1 }}>
+                    <motion.div animate={active ? { scale: [1, 1.15, 1] } : {}} transition={{ repeat: Infinity, duration: 1.5 }}
                       style={{
-                        width: 40, height: 40, borderRadius: '12px', flexShrink: 0,
-                        background: isDone ? '#22c55e22' : isActive ? statusStyle.bg : 'var(--color-surface)',
-                        border: `2px solid ${isDone ? '#22c55e' : isActive ? statusStyle.color : 'var(--color-border)'}`,
+                        width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+                        background: done ? '#f0fdf4' : active ? sc.bg : '#f9fafb',
+                        border: `2px solid ${done ? '#86efac' : active ? sc.color : '#e5e7eb'}`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        boxShadow: isActive ? `0 0 16px ${statusStyle.color}44` : 'none'
-                      }}
-                    >
-                      <Icon size={18} color={isDone ? '#22c55e' : isActive ? statusStyle.color : 'var(--color-muted)'} />
+                        boxShadow: active ? `0 2px 12px ${sc.color}30` : 'none'
+                      }}>
+                      <Icon size={17} color={done ? '#15803d' : active ? sc.color : '#9ca3af'} />
                     </motion.div>
-                    <div style={{ paddingTop: '8px' }}>
-                      <p style={{ fontWeight: isDone || isActive ? 700 : 500, color: isDone ? '#86efac' : isActive ? statusStyle.color : 'var(--color-muted)', fontSize: '15px' }}>
+                    <div style={{ paddingTop: 9 }}>
+                      <p style={{ fontWeight: done || active ? 700 : 500, fontSize: 14, color: done ? '#15803d' : active ? sc.color : 'var(--color-muted)' }}>
                         {step.label}
                       </p>
-                      {isActive && (
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          style={{ fontSize: '13px', color: 'var(--color-muted)', marginTop: '2px' }}
-                        >
-                          {step.description}
-                        </motion.p>
-                      )}
+                      {active && <p style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>{step.desc}</p>}
                     </div>
-                    {isActive && (
-                      <div style={{ marginLeft: 'auto', paddingTop: '10px' }}>
-                        <Clock size={14} color="var(--color-muted)" />
-                      </div>
-                    )}
+                    {active && <div style={{ marginLeft: 'auto', paddingTop: 12 }}><Clock size={13} color="var(--color-muted)" /></div>}
                   </div>
                 );
               })}
@@ -225,44 +159,36 @@ export default function OrderStatus() {
           </div>
         </motion.div>
 
-        {/* Order Details */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="glass"
-          style={{ borderRadius: '20px', padding: '20px', marginBottom: '20px' }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <h3 style={{ fontWeight: 700 }}>Order #{order.id}</h3>
-            <span style={{ color: 'var(--color-muted)', fontSize: '13px' }}>
+        {/* Order details */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+          style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 18, padding: 18, marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+            <h3 style={{ fontWeight: 700, fontSize: 15 }}>Order #{order.id}</h3>
+            <span style={{ color: 'var(--color-muted)', fontSize: 12 }}>
               {new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
-          <div style={{ marginBottom: '12px' }}>
-            <span style={{ fontSize: '13px', padding: '4px 10px', borderRadius: '99px', background: statusStyle.bg, color: statusStyle.color, fontWeight: 600 }}>
-              {METHOD_LABELS[order.paymentMethod]}
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+          <span style={{ fontSize: 12, padding: '3px 10px', borderRadius: 99, background: ss.bg, color: ss.color, fontWeight: 600, border: `1px solid ${ss.border}`, display: 'inline-block', marginBottom: 12 }}>
+            {METHOD_LABEL[order.paymentMethod]}
+          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 12 }}>
             {order.items.map((item) => (
-              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
                 <span style={{ color: 'var(--color-muted)' }}>{item.menuItem.name} × {item.quantity}</span>
                 <span style={{ fontWeight: 600 }}>₹{(item.price * item.quantity).toFixed(0)}</span>
               </div>
             ))}
           </div>
-          <div style={{ height: '1px', background: 'var(--color-border)', marginBottom: '12px' }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '18px' }}>
+          <div style={{ height: 1, background: 'var(--color-border)', marginBottom: 12 }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 17 }}>
             <span>Total</span>
-            <span style={{ color: 'var(--color-accent)' }}>₹{order.total.toFixed(0)}</span>
+            <span style={{ color: 'var(--color-accent-dark)' }}>₹{order.total.toFixed(0)}</span>
           </div>
         </motion.div>
 
         {lastUpdated && (
-          <p style={{ textAlign: 'center', color: 'var(--color-muted)', fontSize: '12px' }}>
-            Auto-updating · Last checked {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          <p style={{ textAlign: 'center', color: 'var(--color-muted)', fontSize: 11 }}>
+            Auto-refreshing every 5s · Last at {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </p>
         )}
       </div>

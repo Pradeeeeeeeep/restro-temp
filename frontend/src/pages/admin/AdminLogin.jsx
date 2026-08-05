@@ -14,7 +14,6 @@ export default function AdminLogin() {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!username || !password) return toast.error('Enter username and password');
-
     setLoading(true);
     try {
       const { data } = await api.post('/admin/login', { username, password });
@@ -31,64 +30,49 @@ export default function AdminLogin() {
   return (
     <div style={{
       minHeight: '100vh', background: 'var(--color-bg)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '24px'
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24
     }}>
-      <div style={{
-        position: 'fixed', inset: 0, zIndex: 0,
-        background: 'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(245,158,11,0.1) 0%, transparent 70%)',
-        pointerEvents: 'none'
-      }} />
+      {/* Ambient glow */}
+      <div style={{ position: 'fixed', top: -80, left: '50%', transform: 'translateX(-50%)', width: 500, height: 250, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(232,144,31,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="glass"
-        style={{ width: '100%', maxWidth: '400px', borderRadius: '24px', padding: '40px', position: 'relative', zIndex: 1 }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{
-            width: 64, height: 64, borderRadius: '20px', margin: '0 auto 16px',
-            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 12px 32px rgba(245,158,11,0.3)'
-          }}>
-            <Coffee size={32} color="#1a0800" />
+      <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+        style={{ width: '100%', maxWidth: 380, position: 'relative' }}>
+        {/* Card */}
+        <div style={{ background: '#fff', borderRadius: 24, padding: '36px 32px', border: '1px solid var(--color-border)', boxShadow: '0 8px 32px rgba(100,60,20,0.1)' }}>
+          <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <div style={{ width: 62, height: 62, borderRadius: 18, margin: '0 auto 14px', background: 'linear-gradient(135deg, #e8901f, #c2700f)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(194,112,15,0.25)' }}>
+              <Coffee size={30} color="#fff" />
+            </div>
+            <h1 style={{ fontWeight: 800, fontSize: 22, marginBottom: 4 }}>Admin Panel</h1>
+            <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>Brew & Bites Management</p>
           </div>
-          <h1 style={{ fontWeight: 800, fontSize: '24px', marginBottom: '4px' }}>Admin Panel</h1>
-          <p style={{ color: 'var(--color-muted)', fontSize: '14px' }}>Brew & Bites Management</p>
+
+          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>Username</label>
+              <div style={{ position: 'relative' }}>
+                <User size={15} style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted-light)' }} />
+                <input className="input-field" style={{ paddingLeft: 38 }} type="text" placeholder="admin" value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
+              </div>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>Password</label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={15} style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted-light)' }} />
+                <input className="input-field" style={{ paddingLeft: 38 }} type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </div>
+            </div>
+            <button className="btn-primary" type="submit" disabled={loading} style={{ marginTop: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              {loading
+                ? <><div className="spinner" style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} /> Logging in…</>
+                : 'Login to Dashboard'}
+            </button>
+          </form>
+
+          <p style={{ textAlign: 'center', marginTop: 18, color: 'var(--color-muted)', fontSize: 12 }}>
+            Default credentials: <strong>admin</strong> / <strong>admin123</strong>
+          </p>
         </div>
-
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
-              Username
-            </label>
-            <div style={{ position: 'relative' }}>
-              <User size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
-              <input className="input-field" style={{ paddingLeft: '40px' }} type="text" placeholder="admin" value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
-            </div>
-          </div>
-
-          <div>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
-              Password
-            </label>
-            <div style={{ position: 'relative' }}>
-              <Lock size={16} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-muted)' }} />
-              <input className="input-field" style={{ paddingLeft: '40px' }} type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
-            </div>
-          </div>
-
-          <button className="btn-primary" type="submit" disabled={loading} style={{ marginTop: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            {loading ? <><div className="spinner" /> Logging in...</> : 'Login to Dashboard'}
-          </button>
-        </form>
-
-        <p style={{ textAlign: 'center', marginTop: '20px', color: 'var(--color-muted)', fontSize: '13px' }}>
-          Default: admin / admin123
-        </p>
       </motion.div>
     </div>
   );

@@ -5,10 +5,10 @@ const { placeOrder, getOrder, getCustomerOrders } = require('../controllers/orde
 // POST /api/orders
 router.post('/', placeOrder);
 
+// GET /api/orders/customer/:phone  ← must be BEFORE /:id
+router.get('/customer/:phone', getCustomerOrders);
+
 // GET /api/orders/:id
 router.get('/:id', getOrder);
-
-// GET /api/orders/customer/:phone
-router.get('/customer/:phone', getCustomerOrders);
 
 module.exports = router;
