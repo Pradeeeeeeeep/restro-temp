@@ -8,6 +8,18 @@ import useCartStore from '../store/useCartStore';
 import useCustomerStore from '../store/useCustomerStore';
 import { getFestivalPalette, getCornerRadius } from '../theme/festivalThemes';
 
+const parseCustomizations = (cust) => {
+  if (!cust) return [];
+  if (Array.isArray(cust)) return cust;
+  if (typeof cust === 'string') {
+    try {
+      const parsed = JSON.parse(cust);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+  }
+  return [];
+};
+
 /* ─── Cart bottom snackbar ─── */
 function CartSnackbar({ count, total, lastAdded, onCheckout }) {
   if (count === 0) return null;
@@ -267,44 +279,47 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
                 {item.description || 'Freshly prepared using premium quality ingredients. Served hot & fresh for the best café experience.'}
               </p>
             </div>
-
             {/* Customizations & Add-ons selection */}
-            {Array.isArray(item.customizations) && item.customizations.length > 0 && (
-              <div style={{ background: 'var(--color-surface)', borderRadius: 14, padding: 12, border: '1.5px solid var(--color-accent-border)' }}>
-                <p style={{ fontWeight: 800, fontSize: 12, color: 'var(--color-accent-dark)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
-                  Customize &amp; Add-ons
-                </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {item.customizations.map((addon, i) => {
-                    const isSelected = selectedAddons.some((a) => a.name === addon.name);
-                    return (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => {
-                          if (isSelected) {
-                            setSelectedAddons(selectedAddons.filter((a) => a.name !== addon.name));
-                          } else {
-                            setSelectedAddons([...selectedAddons, addon]);
-                          }
-                        }}
-                        style={{
-                          padding: '6px 12px', borderRadius: 99, border: 'none', cursor: 'pointer',
-                          fontFamily: 'Outfit', fontWeight: 700, fontSize: 12,
-                          transition: 'all 0.15s',
-                          background: isSelected ? 'var(--color-accent)' : 'var(--color-card)',
-                          color: isSelected ? '#ffffff' : 'var(--color-text)',
-                          border: isSelected ? 'none' : '1px solid var(--color-border)',
-                          boxShadow: isSelected ? '0 2px 8px var(--btn-shadow)' : 'none',
-                        }}
-                      >
-                        {isSelected ? '✓ ' : '+ '}{addon.name} {addon.price > 0 ? `(+₹${addon.price})` : '(Free)'}
-                      </button>
-                    );
-                  })}
+            {(() => {
+              const custArray = parseCustomizations(item.customizations);
+              if (custArray.length === 0) return null;
+              return (
+                <div style={{ background: 'var(--color-surface)', borderRadius: 14, padding: 12, border: '1.5px solid var(--color-accent-border)' }}>
+                  <p style={{ fontWeight: 800, fontSize: 12, color: 'var(--color-accent-dark)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+                    Customize &amp; Add-ons
+                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {custArray.map((addon, i) => {
+                      const isSelected = selectedAddons.some((a) => a.name === addon.name);
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedAddons(selectedAddons.filter((a) => a.name !== addon.name));
+                            } else {
+                              setSelectedAddons([...selectedAddons, addon]);
+                            }
+                          }}
+                          style={{
+                            padding: '6px 12px', borderRadius: 99, border: 'none', cursor: 'pointer',
+                            fontFamily: 'Outfit', fontWeight: 700, fontSize: 12,
+                            transition: 'all 0.15s',
+                            background: isSelected ? 'var(--color-accent)' : 'var(--color-card)',
+                            color: isSelected ? '#ffffff' : 'var(--color-text)',
+                            border: isSelected ? 'none' : '1px solid var(--color-border)',
+                            boxShadow: isSelected ? '0 2px 8px var(--btn-shadow)' : 'none',
+                          }}
+                        >
+                          {isSelected ? '✓ ' : '+ '}{addon.name} {addon.price > 0 ? `(+₹${addon.price})` : '(Free)'}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Action Bar */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
@@ -596,7 +611,8 @@ export default function Menu() {
 
   const handleAdd = (item) => {
     // If item has customizations available and customer clicked add directly (without custom addons attached):
-    if (Array.isArray(item.customizations) && item.customizations.length > 0 && !item.selectedAddons) {
+    const custArray = parseCustomizations(item.customizations);
+    if (custArray.length > 0 && !item.selectedAddons) {
       setPromptItem(item);
       return;
     }

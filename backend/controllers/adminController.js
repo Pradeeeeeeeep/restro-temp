@@ -92,6 +92,18 @@ const updateOrderStatus = async (req, res, next) => {
   }
 };
 
+const parseCustomizations = (cust) => {
+  if (!cust) return [];
+  if (Array.isArray(cust)) return cust;
+  if (typeof cust === 'string') {
+    try {
+      const parsed = JSON.parse(cust);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+  }
+  return [];
+};
+
 // GET /api/admin/menu
 const getMenuItems = async (req, res, next) => {
   try {
@@ -99,7 +111,11 @@ const getMenuItems = async (req, res, next) => {
       include: { category: true },
       orderBy: [{ categoryId: 'asc' }, { name: 'asc' }],
     });
-    res.json({ items });
+    const cleanItems = items.map((item) => ({
+      ...item,
+      customizations: parseCustomizations(item.customizations),
+    }));
+    res.json({ items: cleanItems });
   } catch (err) {
     next(err);
   }
@@ -138,6 +154,7 @@ const createMenuItem = async (req, res, next) => {
       },
       include: { category: true },
     });
+    item.customizations = parseCustomizations(item.customizations);
     res.status(201).json({ item });
   } catch (err) {
     next(err);
@@ -173,6 +190,7 @@ const updateMenuItem = async (req, res, next) => {
       data: updateData,
       include: { category: true },
     });
+    item.customizations = parseCustomizations(item.customizations);
     res.json({ item });
   } catch (err) {
     next(err);

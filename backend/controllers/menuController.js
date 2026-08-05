@@ -1,5 +1,17 @@
 const prisma = require('../prismaClient');
 
+const parseCustomizations = (cust) => {
+  if (!cust) return [];
+  if (Array.isArray(cust)) return cust;
+  if (typeof cust === 'string') {
+    try {
+      const parsed = JSON.parse(cust);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+  }
+  return [];
+};
+
 // GET /api/menu — all available items grouped by category
 const getMenu = async (req, res, next) => {
   try {
@@ -12,7 +24,16 @@ const getMenu = async (req, res, next) => {
         },
       },
     });
-    res.json({ categories });
+
+    const cleanCategories = categories.map((cat) => ({
+      ...cat,
+      items: cat.items.map((item) => ({
+        ...item,
+        customizations: parseCustomizations(item.customizations),
+      })),
+    }));
+
+    res.json({ categories: cleanCategories });
   } catch (err) {
     next(err);
   }
@@ -25,7 +46,11 @@ const getAllItems = async (req, res, next) => {
       include: { category: true },
       orderBy: { id: 'desc' },
     });
-    res.json({ items });
+    const cleanItems = items.map((item) => ({
+      ...item,
+      customizations: parseCustomizations(item.customizations),
+    }));
+    res.json({ items: cleanItems });
   } catch (err) {
     next(err);
   }

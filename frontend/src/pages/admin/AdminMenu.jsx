@@ -79,6 +79,18 @@ export default function AdminMenu() {
   };
 
   /* ── item form actions ── */
+const parseCustomizations = (cust) => {
+  if (!cust) return [];
+  if (Array.isArray(cust)) return cust;
+  if (typeof cust === 'string') {
+    try {
+      const parsed = JSON.parse(cust);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+  }
+  return [];
+};
+
   const openAddItem = () => {
     setEditItem(null);
     setHasCustomizations(false);
@@ -87,7 +99,8 @@ export default function AdminMenu() {
   };
   const openEditItem = (item) => {
     setEditItem(item);
-    const hasCust = Array.isArray(item.customizations) && item.customizations.length > 0;
+    const custArray = parseCustomizations(item.customizations);
+    const hasCust = custArray.length > 0;
     setHasCustomizations(hasCust);
     setItemForm({
       name: item.name,
@@ -95,7 +108,7 @@ export default function AdminMenu() {
       price: item.price,
       categoryId: item.categoryId,
       available: item.available,
-      customizations: hasCust ? item.customizations : [{ name: 'Extra Cheese', price: 20 }],
+      customizations: hasCust ? custArray : [{ name: 'Extra Cheese', price: 20 }],
     });
     resetImg(); setExistingImage(item.image || null); setShowItemForm(true);
   };
