@@ -124,13 +124,13 @@ export default function AdminMenu() {
 
   /* ── category actions ── */
   const saveCategory = async () => {
-    const name = `${catEmoji} ${catName.trim()}`;
-    if (!catName.trim()) return toast.error('Category name is required');
+    const name = catName.trim();
+    if (!name) return toast.error('Category name is required');
     setSavingCat(true);
     try {
       await api.post('/admin/categories', { name, sortOrder: categories.length });
-      toast.success(`Category "${catName}" added!`);
-      setCatName(''); setCatEmoji('🍽️'); setShowCatForm(false);
+      toast.success(`Category "${name}" added!`);
+      setCatName(''); setShowCatForm(false);
       fetchData();
     } catch (err) { toast.error(err.response?.data?.error || 'Failed to add category'); }
     finally { setSavingCat(false); }
@@ -150,18 +150,14 @@ export default function AdminMenu() {
   };
 
   const startEditCat = (cat) => {
-    // strip leading emoji (first word) to get the text name
-    const parts = cat.name.split(' ');
     setEditCat(cat);
-    setEditCatName(parts.slice(1).join(' ') || cat.name);
+    setEditCatName(cat.name);
   };
 
   const saveEditCat = async () => {
     if (!editCatName.trim()) return toast.error('Name is required');
-    const emoji = editCat.name.split(' ')[0];
-    const newName = `${emoji} ${editCatName.trim()}`;
     try {
-      await api.put(`/admin/categories/${editCat.id}`, { name: newName });
+      await api.put(`/admin/categories/${editCat.id}`, { name: editCatName.trim() });
       toast.success('Category renamed!');
       setEditCat(null); setEditCatName('');
       fetchData();
@@ -307,51 +303,23 @@ export default function AdminMenu() {
                     <div style={{ background: '#fff', border: '2px solid var(--color-accent-border)', borderRadius: 18, padding: 22, boxShadow: '0 4px 20px rgba(194,112,15,0.1)' }}>
                       <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 16 }}>New Category</h3>
 
-                      {/* Emoji picker */}
-                      <div style={{ marginBottom: 14 }}>
-                        <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
-                          Choose Icon
-                        </label>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                          {CATEGORY_EMOJIS.map((e) => (
-                            <button key={e} onClick={() => setCatEmoji(e)}
-                              style={{
-                                width: 40, height: 40, borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 20,
-                                background: catEmoji === e ? 'var(--color-accent-bg)' : 'var(--color-surface)',
-                                border: catEmoji === e ? '2px solid var(--color-accent)' : '1.5px solid var(--color-border)',
-                                transition: 'all 0.15s',
-                              }}>
-                              {e}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
                       {/* Name input */}
                       <div style={{ marginBottom: 16 }}>
                         <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 7 }}>
                           Category Name *
                         </label>
-                        <div style={{ position: 'relative' }}>
-                          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 18 }}>{catEmoji}</span>
-                          <input
-                            className="input-field" style={{ paddingLeft: 44 }}
-                            type="text" placeholder="e.g. Beverages, Sandwiches…"
-                            value={catName} onChange={(e) => setCatName(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && saveCategory()}
-                            autoFocus
-                          />
-                        </div>
-                        {catName && (
-                          <p style={{ color: 'var(--color-muted)', fontSize: 12, marginTop: 6 }}>
-                            Will be saved as: <strong style={{ color: 'var(--color-text)' }}>{catEmoji} {catName}</strong>
-                          </p>
-                        )}
+                        <input
+                          className="input-field"
+                          type="text" placeholder="e.g. Beverages, Sandwiches…"
+                          value={catName} onChange={(e) => setCatName(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && saveCategory()}
+                          autoFocus
+                        />
                       </div>
 
                       {/* Buttons */}
                       <div style={{ display: 'flex', gap: 10 }}>
-                        <button onClick={() => { setShowCatForm(false); setCatName(''); setCatEmoji('🍽️'); }} className="btn-secondary" style={{ flex: 1 }}>
+                        <button onClick={() => { setShowCatForm(false); setCatName(''); }} className="btn-secondary" style={{ flex: 1 }}>
                           Cancel
                         </button>
                         <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
@@ -401,9 +369,9 @@ export default function AdminMenu() {
                           borderRadius: 14, padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 12,
                           boxShadow: isEditing ? '0 2px 12px rgba(194,112,15,0.1)' : 'none', transition: 'all 0.2s',
                         }}>
-                        {/* Emoji */}
-                        <div style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--color-accent-bg)', border: '1px solid var(--color-accent-border)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
-                          {cat.name.split(' ')[0]}
+                        {/* Icon */}
+                        <div style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--color-accent-bg)', border: '1px solid var(--color-accent-border)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <UtensilsCrossed size={20} color="var(--color-accent)" />
                         </div>
 
                         {/* Name / inline edit */}
@@ -480,20 +448,23 @@ export default function AdminMenu() {
       {/* ═════════════════ ADD / EDIT ITEM MODAL ═════════════════ */}
       <AnimatePresence>
         {showItemForm && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={closeItemForm}
-              style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,5,0.4)', zIndex: 100 }} />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={closeItemForm}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(26,15,5,0.4)',
+              backdropFilter: 'blur(4px)', zIndex: 100,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+            }}>
             <motion.div
+              onClick={(e) => e.stopPropagation()}
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               style={{
-                position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
-                width: '100%', maxWidth: 480, maxHeight: '92vh', overflowY: 'auto',
+                width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto',
                 background: '#fff', border: '1px solid var(--color-border)', borderRadius: 24,
-                padding: 28, zIndex: 101, boxShadow: '0 24px 64px rgba(100,60,20,0.18)',
+                padding: 28, boxShadow: '0 24px 64px rgba(100,60,20,0.18)',
               }}>
 
               {/* Modal header */}
@@ -616,7 +587,7 @@ export default function AdminMenu() {
                 </motion.button>
               </div>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

@@ -109,7 +109,7 @@ export default function OrderStatus() {
               display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40,
               boxShadow: isReady ? `0 4px 24px ${ss.color}30` : '0 2px 12px rgba(100,60,20,0.1)'
             }}>
-            {STEP_EMOJI[order.status]}
+            {(() => { const Icon = STEP_ICON[order.status] || Coffee; return <Icon size={38} color={ss.color} />; })()}
           </motion.div>
 
           <h1 style={{ fontWeight: 800, fontSize: 24, marginBottom: 6 }}>

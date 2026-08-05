@@ -1,8 +1,8 @@
 {
-  "cafeName": "Brew & Bites",
+  "cafeName": "Pika Bites",
   "cafeLogoUrl": "",
-  "googleReviewLink": "",
-  "showReviewBanner": false,
+  "googleReviewLink": "g.page/dd",
+  "showReviewBanner": true,
   "theme": "warm-cafe",
   "customColors": {}
 }
