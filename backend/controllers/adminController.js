@@ -108,7 +108,7 @@ const getMenuItems = async (req, res, next) => {
 // POST /api/admin/menu
 const createMenuItem = async (req, res, next) => {
   try {
-    const { name, description, price, categoryId, available } = req.body;
+    const { name, description, price, categoryId, available, customizations } = req.body;
     if (!name || !price || !categoryId) {
       return res.status(400).json({ error: 'name, price, and categoryId are required' });
     }
@@ -119,6 +119,13 @@ const createMenuItem = async (req, res, next) => {
       imageUrl = req.body.image;
     }
 
+    let parsedCustomizations = null;
+    if (customizations) {
+      try {
+        parsedCustomizations = typeof customizations === 'string' ? JSON.parse(customizations) : customizations;
+      } catch {}
+    }
+
     const item = await prisma.menuItem.create({
       data: {
         name,
@@ -127,6 +134,7 @@ const createMenuItem = async (req, res, next) => {
         categoryId: parseInt(categoryId),
         available: available !== undefined ? available === 'true' || available === true : true,
         image: imageUrl,
+        customizations: parsedCustomizations,
       },
       include: { category: true },
     });
@@ -140,7 +148,7 @@ const createMenuItem = async (req, res, next) => {
 const updateMenuItem = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { name, description, price, categoryId, available, image } = req.body;
+    const { name, description, price, categoryId, available, image, customizations } = req.body;
 
     const updateData = {};
     if (name !== undefined) updateData.name = name;
@@ -152,6 +160,12 @@ const updateMenuItem = async (req, res, next) => {
       updateData.image = `/uploads/${req.file.filename}`;
     } else if (image !== undefined) {
       updateData.image = image;
+    }
+
+    if (customizations !== undefined) {
+      try {
+        updateData.customizations = typeof customizations === 'string' ? JSON.parse(customizations) : customizations;
+      } catch {}
     }
 
     const item = await prisma.menuItem.update({

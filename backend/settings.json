@@ -3,9 +3,9 @@
   "cafeLogoUrl": "",
   "googleReviewLink": "g.page/dd",
   "showReviewBanner": true,
-  "showFestivalBanner": true,
-  "festivalSaleName": "Valentine’s Cupid Deals",
-  "theme": "sweet-pink",
+  "showFestivalBanner": false,
+  "festivalSaleName": "Monsoon Madness Markdown",
+  "theme": "forest",
   "customColors": {},
   "cardCornerStyle": "rounded-md",
   "menuItemCornerStyle": "rounded-md"

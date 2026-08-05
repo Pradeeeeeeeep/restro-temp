@@ -181,10 +181,14 @@ function MenuCard({ item, onAdd, onUpdate, cartQty, onClickCard, cornerStyle }) 
 function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelectItem, cornerStyle }) {
   if (!itemData) return null;
   const { item, catName, categoryItems } = itemData;
+  const [selectedAddons, setSelectedAddons] = useState([]);
   const imgSrc = item.image || null;
   const rating = (4.5 + (item.id % 5) * 0.1).toFixed(1);
   const reviewsCount = 18 + (item.id * 7) % 45;
   const cardRadius = getCornerRadius(cornerStyle);
+
+  const addonsTotal = selectedAddons.reduce((sum, a) => sum + (a.price || 0), 0);
+  const unitPrice = item.price + addonsTotal;
 
   return (
     <AnimatePresence>
@@ -264,17 +268,55 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
               </p>
             </div>
 
+            {/* Customizations & Add-ons selection */}
+            {Array.isArray(item.customizations) && item.customizations.length > 0 && (
+              <div style={{ background: 'var(--color-surface)', borderRadius: 14, padding: 12, border: '1.5px solid var(--color-accent-border)' }}>
+                <p style={{ fontWeight: 800, fontSize: 12, color: 'var(--color-accent-dark)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+                  Customize &amp; Add-ons
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {item.customizations.map((addon, i) => {
+                    const isSelected = selectedAddons.some((a) => a.name === addon.name);
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedAddons(selectedAddons.filter((a) => a.name !== addon.name));
+                          } else {
+                            setSelectedAddons([...selectedAddons, addon]);
+                          }
+                        }}
+                        style={{
+                          padding: '6px 12px', borderRadius: 99, border: 'none', cursor: 'pointer',
+                          fontFamily: 'Outfit', fontWeight: 700, fontSize: 12,
+                          transition: 'all 0.15s',
+                          background: isSelected ? 'var(--color-accent)' : 'var(--color-card)',
+                          color: isSelected ? '#ffffff' : 'var(--color-text)',
+                          border: isSelected ? 'none' : '1px solid var(--color-border)',
+                          boxShadow: isSelected ? '0 2px 8px var(--btn-shadow)' : 'none',
+                        }}
+                      >
+                        {isSelected ? '✓ ' : '+ '}{addon.name} {addon.price > 0 ? `(+₹${addon.price})` : '(Free)'}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Action Bar */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
               <div>
                 <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Total</p>
-                <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--color-text)' }}>₹{((cartQty || 1) * item.price).toFixed(0)}</p>
+                <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--color-text)' }}>₹{((cartQty || 1) * unitPrice).toFixed(0)}</p>
               </div>
 
               {cartQty === 0 ? (
                 <button
                   className="btn-primary"
-                  onClick={() => onAdd(item)}
+                  onClick={() => onAdd({ ...item, price: unitPrice, selectedAddons })}
                   style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 22px', fontSize: 15 }}>
                   <Plus size={18} /> Add to Cart
                 </button>
@@ -284,7 +326,7 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
                     <Minus size={16} strokeWidth={2.8} />
                   </button>
                   <span style={{ minWidth: 28, textAlign: 'center', fontWeight: 800, fontSize: 16, color: '#fff' }}>{cartQty}</span>
-                  <button onClick={() => onAdd(item)} style={{ width: 40, height: 42, border: 'none', background: 'transparent', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <button onClick={() => onAdd({ ...item, price: unitPrice, selectedAddons })} style={{ width: 40, height: 42, border: 'none', background: 'transparent', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Plus size={16} strokeWidth={2.8} />
                   </button>
                 </div>

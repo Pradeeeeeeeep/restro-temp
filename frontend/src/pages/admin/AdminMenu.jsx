@@ -9,7 +9,16 @@ import toast from 'react-hot-toast';
 import { AdminNav } from './AdminDashboard';
 
 /* ─────────────────────────── constants ─────────────────────────── */
-const EMPTY_ITEM = { name: '', description: '', price: '', categoryId: '', available: true };
+const EMPTY_ITEM = { name: '', description: '', price: '', categoryId: '', available: true, customizations: [] };
+
+const PRESET_ADDONS = [
+  { name: 'Extra Cheese', price: 20 },
+  { name: 'Extra Mayo', price: 15 },
+  { name: 'Double Grilled', price: 10 },
+  { name: 'Make it Spicy', price: 0 },
+  { name: 'Brown Bread', price: 10 },
+  { name: 'Extra Dip', price: 20 },
+];
 // No more emoji array — categories use UtensilsCrossed icon as default
 const CATEGORY_ICON = UtensilsCrossed;
 
@@ -76,7 +85,14 @@ export default function AdminMenu() {
   };
   const openEditItem = (item) => {
     setEditItem(item);
-    setItemForm({ name: item.name, description: item.description || '', price: item.price, categoryId: item.categoryId, available: item.available });
+    setItemForm({
+      name: item.name,
+      description: item.description || '',
+      price: item.price,
+      categoryId: item.categoryId,
+      available: item.available,
+      customizations: Array.isArray(item.customizations) ? item.customizations : [],
+    });
     resetImg(); setExistingImage(item.image || null); setShowItemForm(true);
   };
   const closeItemForm = () => { setShowItemForm(false); resetImg(); };
@@ -93,6 +109,7 @@ export default function AdminMenu() {
       fd.append('price', parseFloat(itemForm.price));
       fd.append('categoryId', parseInt(itemForm.categoryId));
       fd.append('available', itemForm.available);
+      fd.append('customizations', JSON.stringify(itemForm.customizations || []));
       if (imageFile) fd.append('image', imageFile);
       else if (existingImage) fd.append('image', existingImage);
       const cfg = { headers: { 'Content-Type': 'multipart/form-data' } };
@@ -566,6 +583,126 @@ export default function AdminMenu() {
                       {itemForm.available ? 'Customers can order this' : 'Item is hidden from customers'}
                     </p>
                   </div>
+                </div>
+
+                {/* ── CUSTOMIZATIONS & ADD-ONS EDITOR ── */}
+                <div style={{ paddingTop: 14, borderTop: '1px solid var(--color-border)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                    <div>
+                      <p style={{ fontWeight: 800, fontSize: 14, color: 'var(--color-text)' }}>Item Add-ons &amp; Customizations</p>
+                      <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Allow customers to add extra toppings/options</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const list = itemForm.customizations || [];
+                        if (list.length > 0) {
+                          setItemForm({ ...itemForm, customizations: [] });
+                        } else {
+                          setItemForm({ ...itemForm, customizations: [{ name: 'Extra Cheese', price: 20 }] });
+                        }
+                      }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: (itemForm.customizations && itemForm.customizations.length > 0) ? 'var(--color-accent)' : 'var(--color-muted)', padding: 0, display: 'flex' }}
+                    >
+                      {(itemForm.customizations && itemForm.customizations.length > 0) ? <ToggleRight size={30} /> : <ToggleLeft size={30} />}
+                    </button>
+                  </div>
+
+                  {itemForm.customizations && itemForm.customizations.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--color-surface)', padding: 14, borderRadius: 14, border: '1px solid var(--color-border)' }}>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Add-on Options List
+                      </p>
+
+                      {itemForm.customizations.map((addon, index) => (
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <input
+                            className="input-field"
+                            type="text"
+                            placeholder="Add-on name (e.g. Extra Cheese)"
+                            value={addon.name || ''}
+                            onChange={(e) => {
+                              const updated = [...itemForm.customizations];
+                              updated[index].name = e.target.value;
+                              setItemForm({ ...itemForm, customizations: updated });
+                            }}
+                            style={{ flex: 2, padding: '7px 11px', fontSize: 13 }}
+                          />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1 }}>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-muted)' }}>+₹</span>
+                            <input
+                              className="input-field"
+                              type="number"
+                              min="0"
+                              placeholder="Price"
+                              value={addon.price !== undefined ? addon.price : ''}
+                              onChange={(e) => {
+                                const updated = [...itemForm.customizations];
+                                updated[index].price = parseFloat(e.target.value) || 0;
+                                setItemForm({ ...itemForm, customizations: updated });
+                              }}
+                              style={{ padding: '7px 9px', fontSize: 13 }}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = itemForm.customizations.filter((_, i) => i !== index);
+                              setItemForm({ ...itemForm, customizations: updated });
+                            }}
+                            style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', borderRadius: 8, padding: 6, cursor: 'pointer', display: 'flex', flexShrink: 0 }}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setItemForm({ ...itemForm, customizations: [...itemForm.customizations, { name: '', price: 0 }] });
+                          }}
+                          style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: 'var(--color-accent)', display: 'flex', alignItems: 'center', gap: 5 }}
+                        >
+                          <Plus size={13} /> Add Customization Option
+                        </button>
+                      </div>
+
+                      {/* Quick Add Presets */}
+                      <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--color-border)' }}>
+                        <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+                          Quick Add Presets
+                        </p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                          {PRESET_ADDONS.map((preset) => {
+                            const exists = itemForm.customizations.some((a) => a.name === preset.name);
+                            return (
+                              <button
+                                key={preset.name}
+                                type="button"
+                                onClick={() => {
+                                  if (!exists) {
+                                    setItemForm({ ...itemForm, customizations: [...itemForm.customizations, preset] });
+                                  }
+                                }}
+                                disabled={exists}
+                                style={{
+                                  padding: '4px 9px', borderRadius: 99, border: '1px solid var(--color-border)',
+                                  background: exists ? 'var(--color-surface)' : 'var(--color-card)',
+                                  color: exists ? 'var(--color-muted)' : 'var(--color-text)',
+                                  fontSize: 11, fontWeight: 600, cursor: exists ? 'default' : 'pointer',
+                                  opacity: exists ? 0.5 : 1
+                                }}
+                              >
+                                + {preset.name} (+₹{preset.price})
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
