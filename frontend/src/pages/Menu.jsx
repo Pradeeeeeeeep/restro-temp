@@ -82,25 +82,40 @@ function CartSnackbar({ count, total, lastAdded, onCheckout }) {
 }
 
 /* ─── Menu card ─── */
-function MenuCard({ item, onAdd, onUpdate, cartQty }) {
+function MenuCard({ item, onAdd, onUpdate, cartQty, onClickCard }) {
   const imgSrc = item.image
     ? (item.image.startsWith('/') ? `http://localhost:5001${item.image}` : item.image)
     : null;
+  const rating = (4.5 + (item.id % 5) * 0.1).toFixed(1);
 
   return (
     <motion.div layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card"
-      style={{ overflow: 'visible', position: 'relative' }}>
+      onClick={() => onClickCard && onClickCard(item)}
+      style={{ overflow: 'visible', position: 'relative', cursor: 'pointer' }}>
       {/* Image */}
-      <div style={{ height: 130, background: 'var(--color-surface)', overflow: 'hidden', borderRadius: '14px 14px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ height: 130, background: 'var(--color-surface)', overflow: 'hidden', borderRadius: '14px 14px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
         {imgSrc
           ? <img src={imgSrc} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           : <Utensils size={34} color="var(--color-muted-light)" />}
+
+        {/* Rating star badge */}
+        <div style={{
+          position: 'absolute', top: 8, left: 8,
+          display: 'flex', alignItems: 'center', gap: 3,
+          padding: '3px 8px', borderRadius: 99,
+          background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)',
+          fontSize: 11, fontWeight: 800, color: '#1a0f05',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.12)'
+        }}>
+          <Star size={11} fill="#e8901f" color="#e8901f" />
+          <span>{rating}</span>
+        </div>
       </div>
 
       <div style={{ padding: '12px 14px 14px', display: 'flex', flexDirection: 'column', gap: 5 }}>
         <h3 style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.3 }}>{item.name}</h3>
         {item.description && (
-          <p style={{ color: 'var(--color-muted)', fontSize: 12, lineHeight: 1.5 }}>{item.description}</p>
+          <p style={{ color: 'var(--color-muted)', fontSize: 12, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.description}</p>
         )}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
           <span style={{ fontWeight: 800, fontSize: 17, color: 'var(--color-accent-dark)' }}>₹{item.price}</span>
@@ -111,7 +126,7 @@ function MenuCard({ item, onAdd, onUpdate, cartQty }) {
                 initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.7 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 whileTap={{ scale: 0.88 }}
-                onClick={() => onAdd(item)}
+                onClick={(e) => { e.stopPropagation(); onAdd(item); }}
                 style={{
                   width: 36, height: 36, borderRadius: 10, border: 'none', cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -124,13 +139,14 @@ function MenuCard({ item, onAdd, onUpdate, cartQty }) {
               <motion.div key="stepper"
                 initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                onClick={(e) => e.stopPropagation()}
                 style={{
                   display: 'flex', alignItems: 'center',
                   background: 'var(--color-accent)',
                   borderRadius: 10, overflow: 'hidden',
                   boxShadow: '0 3px 10px var(--btn-shadow)',
                 }}>
-                <motion.button whileTap={{ scale: 0.85 }} onClick={() => onUpdate(item.id, cartQty - 1)}
+                <motion.button whileTap={{ scale: 0.85 }} onClick={(e) => { e.stopPropagation(); onUpdate(item.id, cartQty - 1); }}
                   style={{ width: 32, height: 36, border: 'none', cursor: 'pointer', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
                   <Minus size={15} strokeWidth={2.8} />
                 </motion.button>
@@ -142,7 +158,7 @@ function MenuCard({ item, onAdd, onUpdate, cartQty }) {
                     {cartQty}
                   </motion.span>
                 </AnimatePresence>
-                <motion.button whileTap={{ scale: 0.85 }} onClick={() => onAdd(item)}
+                <motion.button whileTap={{ scale: 0.85 }} onClick={(e) => { e.stopPropagation(); onAdd(item); }}
                   style={{ width: 32, height: 36, border: 'none', cursor: 'pointer', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
                   <Plus size={15} strokeWidth={2.8} />
                 </motion.button>
@@ -152,6 +168,125 @@ function MenuCard({ item, onAdd, onUpdate, cartQty }) {
         </div>
       </div>
     </motion.div>
+  );
+}
+
+/* ─── Item Detail Floating Modal ─── */
+function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty }) {
+  if (!itemData) return null;
+  const { item, catName } = itemData;
+  const imgSrc = item.image
+    ? (item.image.startsWith('/') ? `http://localhost:5001${item.image}` : item.image)
+    : null;
+  const rating = (4.5 + (item.id % 5) * 0.1).toFixed(1);
+  const reviewsCount = 18 + (item.id * 7) % 45;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(26,15,5,0.45)',
+          backdropFilter: 'blur(6px)', zIndex: 110,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+        }}>
+        <motion.div
+          onClick={(e) => e.stopPropagation()}
+          initial={{ opacity: 0, scale: 0.9, y: 24 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 24 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          style={{
+            width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto',
+            background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 24,
+            boxShadow: '0 24px 64px rgba(0,0,0,0.22)', overflow: 'hidden'
+          }}>
+          {/* Header Image */}
+          <div style={{ position: 'relative', height: 210, background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {imgSrc ? (
+              <img src={imgSrc} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <Utensils size={48} color="var(--color-muted-light)" />
+            )}
+
+            {/* Close button */}
+            <button
+              onClick={onClose}
+              style={{
+                position: 'absolute', top: 12, right: 12, width: 34, height: 34, borderRadius: 99,
+                background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', border: 'none',
+                color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+              <X size={18} />
+            </button>
+
+            {/* Rating badge */}
+            <div style={{
+              position: 'absolute', bottom: 12, left: 12,
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '5px 12px', borderRadius: 99,
+              background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+              fontSize: 13, fontWeight: 800, color: '#1a0f05'
+            }}>
+              <Star size={14} fill="#e8901f" color="#e8901f" />
+              <span>{rating}</span>
+              <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>({reviewsCount} reviews)</span>
+            </div>
+          </div>
+
+          {/* Details Body */}
+          <div style={{ padding: '20px 22px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {catName && (
+              <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--color-accent)', background: 'var(--color-accent-bg)', padding: '3px 10px', borderRadius: 99, width: 'fit-content' }}>
+                {catName}
+              </span>
+            )}
+
+            <div>
+              <h2 style={{ fontWeight: 800, fontSize: 20, marginBottom: 4 }}>{item.name}</h2>
+              <span style={{ fontWeight: 800, fontSize: 22, color: 'var(--color-accent-dark)' }}>₹{item.price}</span>
+            </div>
+
+            {/* Description */}
+            <div style={{ background: 'var(--color-surface)', borderRadius: 14, padding: 14, border: '1px solid var(--color-border)' }}>
+              <p style={{ fontWeight: 700, fontSize: 12, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>About this item</p>
+              <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--color-text-secondary)' }}>
+                {item.description || 'Freshly prepared using premium quality ingredients. Served hot & fresh for the best café experience.'}
+              </p>
+            </div>
+
+            {/* Action Bar */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
+              <div>
+                <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Total</p>
+                <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--color-text)' }}>₹{((cartQty || 1) * item.price).toFixed(0)}</p>
+              </div>
+
+              {cartQty === 0 ? (
+                <button
+                  className="btn-primary"
+                  onClick={() => onAdd(item)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 22px', fontSize: 15 }}>
+                  <Plus size={18} /> Add to Cart
+                </button>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--color-accent)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 4px 14px var(--btn-shadow)' }}>
+                  <button onClick={() => onUpdate(item.id, cartQty - 1)} style={{ width: 40, height: 42, border: 'none', background: 'transparent', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Minus size={16} strokeWidth={2.8} />
+                  </button>
+                  <span style={{ minWidth: 28, textAlign: 'center', fontWeight: 800, fontSize: 16, color: '#fff' }}>{cartQty}</span>
+                  <button onClick={() => onAdd(item)} style={{ width: 40, height: 42, border: 'none', background: 'transparent', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Plus size={16} strokeWidth={2.8} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
@@ -225,6 +360,7 @@ export default function Menu() {
   const [cartOpen, setCartOpen] = useState(false);
   const [lastAdded, setLastAdded] = useState(null);
   const [snackTimer, setSnackTimer] = useState(null);
+  const [selectedItemData, setSelectedItemData] = useState(null);
 
   const navigate = useNavigate();
   const customer = useCustomerStore((s) => s.customer);
@@ -368,7 +504,10 @@ export default function Menu() {
               {/* Items grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(165px,1fr))', gap: 14 }}>
                 {cat.items.map((item) => (
-                  <MenuCard key={item.id} item={item} onAdd={handleAdd} onUpdate={handleUpdate} cartQty={getQty(item.id)} />
+                  <MenuCard key={item.id} item={item}
+                    cartQty={getQty(item.id)} onAdd={handleAdd}
+                    onUpdate={handleUpdate}
+                    onClickCard={(it) => setSelectedItemData({ item: it, catName: cat.name })} />
                 ))}
               </div>
             </div>
@@ -416,6 +555,15 @@ export default function Menu() {
         open={cartOpen} onClose={() => setCartOpen(false)}
         cartItems={cartItems} updateQuantity={updateQuantity}
         addItem={addItem} total={total} navigate={navigate}
+      />
+
+      {/* ── Item Detail Floating Card Modal ── */}
+      <ItemDetailModal
+        itemData={selectedItemData}
+        onClose={() => setSelectedItemData(null)}
+        onAdd={handleAdd}
+        onUpdate={handleUpdate}
+        cartQty={selectedItemData ? getQty(selectedItemData.item.id) : 0}
       />
 
       {/* ── Bottom snackbar ── */}
