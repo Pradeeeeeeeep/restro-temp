@@ -131,6 +131,7 @@ export default function AdminSettings() {
       .then(({ data }) => setSettings({
         googleReviewLink: '', showReviewBanner: false, cafeName: 'Brew & Bites', cafeLogoUrl: '',
         showFestivalBanner: false, festivalSaleName: 'Diwali Light-Up Sale', cardCornerStyle: 'rounded-full',
+        menuItemCornerStyle: 'rounded-md',
         ...data.settings,
       }))
       .catch(() => toast.error('Failed to load settings'))
@@ -505,6 +506,52 @@ export default function AdminSettings() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+                {/* ── Menu Item Card Corner Style Customization ── */}
+                <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--color-border)' }}>
+                  <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 4, color: 'var(--color-text)' }}>
+                    Menu Item Card Customization
+                  </p>
+                  <p style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 14 }}>
+                    Customize corner shape &amp; curvature specifically for your food &amp; beverage menu cards
+                  </p>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
+                    {Object.values(CORNER_STYLES).map((corner) => {
+                      const isSelected = (settings.menuItemCornerStyle || 'rounded-md') === corner.id;
+                      return (
+                        <button
+                          key={`menu-${corner.id}`}
+                          type="button"
+                          onClick={() => setSettings((s) => ({ ...s, menuItemCornerStyle: corner.id }))}
+                          style={{
+                            background: isSelected ? 'var(--color-surface)' : 'var(--color-card)',
+                            border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+                            borderRadius: 14, padding: '12px 10px', cursor: 'pointer',
+                            textAlign: 'center', transition: 'all 0.15s',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                          }}
+                        >
+                          {/* Visual box preview */}
+                          <div style={{
+                            width: 42, height: 28, background: 'var(--color-accent)',
+                            borderRadius: corner.radius, opacity: isSelected ? 1 : 0.5,
+                            transition: 'all 0.15s',
+                            boxShadow: isSelected ? '0 2px 8px var(--btn-shadow)' : 'none'
+                          }} />
+                          <div>
+                            <p style={{ fontWeight: 800, fontSize: 12, color: isSelected ? 'var(--color-accent)' : 'var(--color-text)' }}>
+                              {corner.name}
+                            </p>
+                            <p style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: 2 }}>
+                              {corner.desc}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </motion.div>
 

@@ -625,7 +625,7 @@ export default function Menu() {
                   <MenuCard key={item.id} item={item}
                     cartQty={getQty(item.id)} onAdd={handleAdd}
                     onUpdate={handleUpdate}
-                    cornerStyle={siteSettings?.cardCornerStyle}
+                    cornerStyle={siteSettings?.menuItemCornerStyle || siteSettings?.cardCornerStyle}
                     onClickCard={(it) => setSelectedItemData({ item: it, catName: cat.name, categoryItems: cat.items })} />
                 ))}
               </div>
@@ -683,7 +683,7 @@ export default function Menu() {
         onAdd={handleAdd}
         onUpdate={handleUpdate}
         cartQty={selectedItemData ? getQty(selectedItemData.item.id) : 0}
-        cornerStyle={siteSettings?.cardCornerStyle}
+        cornerStyle={siteSettings?.menuItemCornerStyle || siteSettings?.cardCornerStyle}
         onSelectItem={(item) => {
           const cat = categories.find((c) => c.items.some((i) => i.id === item.id));
           setSelectedItemData({ item, catName: cat?.name || '', categoryItems: cat?.items || [] });

@@ -7,5 +7,6 @@
   "festivalSaleName": "Valentine’s Cupid Deals",
   "theme": "sweet-pink",
   "customColors": {},
-  "cardCornerStyle": "rounded-full"
+  "cardCornerStyle": "rounded-md",
+  "menuItemCornerStyle": "rounded-md"
 }
