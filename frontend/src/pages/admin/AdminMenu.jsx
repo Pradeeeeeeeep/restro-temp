@@ -38,6 +38,7 @@ export default function AdminMenu() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [existingImage, setExistingImage] = useState(null);
+  const [hasCustomizations, setHasCustomizations] = useState(false);
   const fileInputRef = useRef(null);
   const [savingItem, setSavingItem] = useState(false);
   const [deletingItem, setDeletingItem] = useState(null);
@@ -80,18 +81,21 @@ export default function AdminMenu() {
   /* ── item form actions ── */
   const openAddItem = () => {
     setEditItem(null);
-    setItemForm({ ...EMPTY_ITEM, categoryId: categories[0]?.id || '' });
+    setHasCustomizations(false);
+    setItemForm({ ...EMPTY_ITEM, categoryId: categories[0]?.id || '', customizations: [] });
     resetImg(); setShowItemForm(true);
   };
   const openEditItem = (item) => {
     setEditItem(item);
+    const hasCust = Array.isArray(item.customizations) && item.customizations.length > 0;
+    setHasCustomizations(hasCust);
     setItemForm({
       name: item.name,
       description: item.description || '',
       price: item.price,
       categoryId: item.categoryId,
       available: item.available,
-      customizations: Array.isArray(item.customizations) ? item.customizations : [],
+      customizations: hasCust ? item.customizations : [{ name: 'Extra Cheese', price: 20 }],
     });
     resetImg(); setExistingImage(item.image || null); setShowItemForm(true);
   };
@@ -109,7 +113,12 @@ export default function AdminMenu() {
       fd.append('price', parseFloat(itemForm.price));
       fd.append('categoryId', parseInt(itemForm.categoryId));
       fd.append('available', itemForm.available);
-      fd.append('customizations', JSON.stringify(itemForm.customizations || []));
+
+      const cleanCustomizations = hasCustomizations
+        ? (itemForm.customizations || []).filter((a) => a && a.name && a.name.trim() !== '')
+        : [];
+      fd.append('customizations', JSON.stringify(cleanCustomizations));
+
       if (imageFile) fd.append('image', imageFile);
       else if (existingImage) fd.append('image', existingImage);
       const cfg = { headers: { 'Content-Type': 'multipart/form-data' } };
@@ -595,20 +604,19 @@ export default function AdminMenu() {
                     <button
                       type="button"
                       onClick={() => {
-                        const list = itemForm.customizations || [];
-                        if (list.length > 0) {
-                          setItemForm({ ...itemForm, customizations: [] });
-                        } else {
+                        const nextState = !hasCustomizations;
+                        setHasCustomizations(nextState);
+                        if (nextState && (!itemForm.customizations || itemForm.customizations.length === 0)) {
                           setItemForm({ ...itemForm, customizations: [{ name: 'Extra Cheese', price: 20 }] });
                         }
                       }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: (itemForm.customizations && itemForm.customizations.length > 0) ? 'var(--color-accent)' : 'var(--color-muted)', padding: 0, display: 'flex' }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: hasCustomizations ? 'var(--color-accent)' : 'var(--color-muted)', padding: 0, display: 'flex' }}
                     >
-                      {(itemForm.customizations && itemForm.customizations.length > 0) ? <ToggleRight size={30} /> : <ToggleLeft size={30} />}
+                      {hasCustomizations ? <ToggleRight size={30} /> : <ToggleLeft size={30} />}
                     </button>
                   </div>
 
-                  {itemForm.customizations && itemForm.customizations.length > 0 && (
+                  {hasCustomizations && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--color-surface)', padding: 14, borderRadius: 14, border: '1px solid var(--color-border)' }}>
                       <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                         Add-on Options List

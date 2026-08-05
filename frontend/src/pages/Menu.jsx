@@ -414,6 +414,87 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
   );
 }
 
+/* ─── Customization Prompt Modal ─── */
+function CustomizationPromptModal({ item, onAddBase, onCustomize, onClose }) {
+  if (!item) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(26,15,5,0.55)',
+          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+          zIndex: 160,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+        }}
+      >
+        <motion.div
+          onClick={(e) => e.stopPropagation()}
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          style={{
+            width: '100%', maxWidth: 380,
+            background: 'var(--color-card)',
+            border: '2px solid var(--color-accent-border)',
+            borderRadius: 28, padding: '26px 22px',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
+            textAlign: 'center', position: 'relative'
+          }}
+        >
+          <button onClick={onClose} style={{ position: 'absolute', top: 14, right: 14, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 99, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-muted)' }}>
+            <X size={16} />
+          </button>
+
+          <div style={{ width: 58, height: 58, borderRadius: 20, background: 'var(--color-accent-bg)', border: '1.5px solid var(--color-accent-border)', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Sparkles size={28} color="var(--color-accent)" />
+          </div>
+
+          <h3 style={{ fontWeight: 800, fontSize: 20, marginBottom: 6, color: 'var(--color-text)' }}>
+            Customize {item.name}?
+          </h3>
+          <p style={{ fontSize: 13, color: 'var(--color-muted)', marginBottom: 22, lineHeight: 1.5 }}>
+            This item has extra add-ons available! Would you like to customize it with toppings or add standard?
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* Customize button */}
+            <button
+              onClick={onCustomize}
+              style={{
+                width: '100%', padding: '14px 18px', borderRadius: 14, border: 'none', cursor: 'pointer',
+                background: 'var(--color-accent)', color: '#ffffff',
+                fontFamily: 'Outfit', fontWeight: 800, fontSize: 15,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                boxShadow: '0 4px 16px var(--btn-shadow)'
+              }}
+            >
+              <Sparkles size={16} />
+              <span>Customize &amp; Add-ons →</span>
+            </button>
+
+            {/* Standard button */}
+            <button
+              onClick={onAddBase}
+              style={{
+                width: '100%', padding: '12px 18px', borderRadius: 14,
+                background: 'var(--color-surface)', border: '1.5px solid var(--color-border)',
+                color: 'var(--color-text)', fontFamily: 'Outfit', fontWeight: 700, fontSize: 14,
+                cursor: 'pointer'
+              }}
+            >
+              Add Standard (₹{item.price})
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 /* ─── Cart drawer ─── */
 function CartDrawer({ open, onClose, cartItems, updateQuantity, addItem, total, navigate }) {
   return (
@@ -484,7 +565,7 @@ export default function Menu() {
   const [cartOpen, setCartOpen] = useState(false);
   const [lastAdded, setLastAdded] = useState(null);
   const [snackTimer, setSnackTimer] = useState(null);
-  const [selectedItemData, setSelectedItemData] = useState(null);
+  const [promptItem, setPromptItem] = useState(null);
 
   const navigate = useNavigate();
   const customer = useCustomerStore((s) => s.customer);
@@ -513,9 +594,26 @@ export default function Menu() {
   );
 
   const handleAdd = (item) => {
-    addItem({ menuItemId: item.id, name: item.name, price: item.price, image: item.image });
+    // If item has customizations available and customer clicked add directly (without custom addons attached):
+    if (Array.isArray(item.customizations) && item.customizations.length > 0 && !item.selectedAddons) {
+      setPromptItem(item);
+      return;
+    }
+
+    const addonsText = item.selectedAddons && item.selectedAddons.length > 0
+      ? ` (${item.selectedAddons.map((a) => a.name).join(', ')})`
+      : '';
+    const displayName = `${item.name}${addonsText}`;
+
+    addItem({
+      menuItemId: item.id,
+      name: displayName,
+      price: item.price,
+      image: item.image,
+    });
+
     // Snackbar flash
-    setLastAdded(item.name);
+    setLastAdded(displayName);
     if (snackTimer) clearTimeout(snackTimer);
     const t = setTimeout(() => setLastAdded(null), 2500);
     setSnackTimer(t);
@@ -722,11 +820,33 @@ export default function Menu() {
       <ItemDetailModal
         itemData={selectedItemData}
         onClose={() => setSelectedItemData(null)}
-        onAdd={handleAdd}
+        onAdd={(custItem) => {
+          setSelectedItemData(null);
+          handleAdd(custItem);
+        }}
         onUpdate={handleUpdate}
         cartQty={selectedItemData ? getQty(selectedItemData.item.id) : 0}
         cornerStyle={siteSettings?.menuItemCornerStyle || siteSettings?.cardCornerStyle}
         onSelectItem={(item) => {
+          const cat = categories.find((c) => c.items.some((i) => i.id === item.id));
+          setSelectedItemData({ item, catName: cat?.name || '', categoryItems: cat?.items || [] });
+        }}
+      />
+
+      {/* ── CUSTOMIZATION PROMPT MODAL ── */}
+      <CustomizationPromptModal
+        item={promptItem}
+        onClose={() => setPromptItem(null)}
+        onAddBase={() => {
+          const item = promptItem;
+          setPromptItem(null);
+          addItem({ menuItemId: item.id, name: item.name, price: item.price, image: item.image });
+          setLastAdded(item.name);
+          toast.success(`Added ${item.name} to cart!`);
+        }}
+        onCustomize={() => {
+          const item = promptItem;
+          setPromptItem(null);
           const cat = categories.find((c) => c.items.some((i) => i.id === item.id));
           setSelectedItemData({ item, catName: cat?.name || '', categoryItems: cat?.items || [] });
         }}
