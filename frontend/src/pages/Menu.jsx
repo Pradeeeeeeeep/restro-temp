@@ -215,6 +215,7 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
         }}>
         {/* ── 1. MAIN CARD ── */}
         <motion.div
+          className="no-scrollbar"
           onClick={(e) => e.stopPropagation()}
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
