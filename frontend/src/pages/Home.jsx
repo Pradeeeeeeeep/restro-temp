@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import api from '../api/axios';
 import useCustomerStore from '../store/useCustomerStore';
 import useCartStore from '../store/useCartStore';
+import { getFestivalPalette } from '../theme/festivalThemes';
 
 /* ─── Status config ─── */
 const STATUS_CONFIG = {
@@ -98,9 +99,7 @@ export default function Home() {
   const [reviewDismissed, setReviewDismissed] = useState(() =>
     localStorage.getItem('review_dismissed') === 'true'
   );
-  const [festivalModalDismissed, setFestivalModalDismissed] = useState(() =>
-    sessionStorage.getItem('festival_modal_dismissed') === 'true'
-  );
+  const [showFestivalModal, setShowFestivalModal] = useState(true);
   const reviewSettings = siteSettings;
 
   const navigate = useNavigate();
@@ -205,38 +204,42 @@ export default function Home() {
         </motion.div>
 
         {/* ── FESTIVAL / EVENT SALE BANNER CARD ── */}
-        {siteSettings?.showFestivalBanner && siteSettings?.festivalSaleName && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            onClick={() => navigate('/menu')}
-            style={{
-              background: 'var(--color-accent)',
-              color: '#ffffff',
-              borderRadius: 18, padding: '14px 18px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-              boxShadow: '0 4px 18px var(--btn-shadow)', marginBottom: 22,
-            }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Sparkles size={20} color="#fff" />
+        {siteSettings?.showFestivalBanner && siteSettings?.festivalSaleName && (() => {
+          const pal = getFestivalPalette(siteSettings.festivalSaleName);
+          return (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              onClick={() => navigate('/menu')}
+              style={{
+                background: pal.gradient,
+                color: '#ffffff',
+                borderRadius: 18, padding: '14px 18px', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                boxShadow: '0 4px 18px rgba(0,0,0,0.2)', marginBottom: 22,
+                border: `1.5px solid ${pal.border}`,
+              }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Sparkles size={20} color="#fff" />
+                </div>
+                <div>
+                  <p style={{ fontWeight: 800, fontSize: 14, letterSpacing: '0.2px' }}>
+                    {siteSettings.festivalSaleName} is going on!
+                  </p>
+                  <p style={{ fontSize: 11, opacity: 0.92, fontWeight: 500 }}>
+                    ORDER NOW &amp; get special discounts
+                  </p>
+                </div>
               </div>
-              <div>
-                <p style={{ fontWeight: 800, fontSize: 14, letterSpacing: '0.2px' }}>
-                  {siteSettings.festivalSaleName} is going on!
-                </p>
-                <p style={{ fontSize: 11, opacity: 0.9, fontWeight: 500 }}>
-                  ORDER NOW &amp; get special discounts
-                </p>
-              </div>
-            </div>
-            <span style={{
-              background: '#ffffff', color: 'var(--color-accent)',
-              fontWeight: 800, fontSize: 11, padding: '7px 13px', borderRadius: 99,
-              letterSpacing: '0.4px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4
-            }}>
-              ORDER NOW <ArrowRight size={12} />
-            </span>
-          </motion.div>
-        )}
+              <span style={{
+                background: '#ffffff', color: pal.accent,
+                fontWeight: 800, fontSize: 11, padding: '7px 13px', borderRadius: 99,
+                letterSpacing: '0.4px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4
+              }}>
+                ORDER NOW <ArrowRight size={12} />
+              </span>
+            </motion.div>
+          );
+        })()}
 
         {/* ── RETURNING CUSTOMER VIEW ── */}
         <AnimatePresence mode="wait">
@@ -471,18 +474,16 @@ export default function Home() {
 
       </div>
 
-      {/* ── BIG CANCELABLE FESTIVAL CELEBRATION MODAL ── */}
-      {!festivalModalDismissed && (
+      {/* ── BIG CANCELABLE FESTIVAL CELEBRATION MODAL (Always Visible on Home Page) ── */}
+      {showFestivalModal && (
         <FestivalCelebrationModal
           settings={siteSettings}
           onOrderNow={() => {
-            sessionStorage.setItem('festival_modal_dismissed', 'true');
-            setFestivalModalDismissed(true);
+            setShowFestivalModal(false);
             navigate('/menu');
           }}
           onClose={() => {
-            sessionStorage.setItem('festival_modal_dismissed', 'true');
-            setFestivalModalDismissed(true);
+            setShowFestivalModal(false);
           }}
         />
       )}
@@ -493,6 +494,7 @@ export default function Home() {
 /* ─── Big Festival Celebration Card Modal ─── */
 function FestivalCelebrationModal({ settings, onOrderNow, onClose }) {
   if (!settings?.showFestivalBanner || !settings?.festivalSaleName) return null;
+  const pal = getFestivalPalette(settings.festivalSaleName);
 
   return (
     <AnimatePresence>
@@ -503,9 +505,9 @@ function FestivalCelebrationModal({ settings, onOrderNow, onClose }) {
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0,
-          background: 'rgba(15, 10, 5, 0.65)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
+          background: 'rgba(15, 10, 5, 0.75)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           zIndex: 200,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           padding: 20, overflowY: 'auto'
@@ -520,9 +522,9 @@ function FestivalCelebrationModal({ settings, onOrderNow, onClose }) {
           style={{
             width: '100%', maxWidth: 420,
             background: 'var(--color-card)',
-            border: '2px solid var(--color-accent-border)',
+            border: `2.5px solid ${pal.accent}`,
             borderRadius: 32,
-            boxShadow: '0 32px 80px rgba(0,0,0,0.4)',
+            boxShadow: `0 32px 80px rgba(0,0,0,0.5)`,
             overflow: 'hidden',
             position: 'relative'
           }}
@@ -530,8 +532,8 @@ function FestivalCelebrationModal({ settings, onOrderNow, onClose }) {
           {/* Festive Ribbon Banner Header */}
           <div style={{
             position: 'relative',
-            background: 'var(--color-accent)',
-            padding: '36px 24px 28px',
+            background: pal.gradient,
+            padding: '38px 24px 30px',
             textAlign: 'center',
             color: '#ffffff',
             overflow: 'hidden'
@@ -539,14 +541,14 @@ function FestivalCelebrationModal({ settings, onOrderNow, onClose }) {
             {/* Corner Ribbon Tag */}
             <div style={{
               position: 'absolute', top: 18, left: -34,
-              background: '#ffffff', color: 'var(--color-accent)',
+              background: '#ffffff', color: pal.accent,
               transform: 'rotate(-45deg)',
               padding: '4px 38px',
               fontSize: 10, fontWeight: 800, letterSpacing: '1px',
               textTransform: 'uppercase',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+              boxShadow: '0 2px 8px rgba(0,0,0,0.25)'
             }}>
-              LIMITED OFFER
+              {pal.ribbonText}
             </div>
 
             {/* Cancel / Close Button */}
@@ -555,8 +557,8 @@ function FestivalCelebrationModal({ settings, onOrderNow, onClose }) {
               style={{
                 position: 'absolute', top: 14, right: 14,
                 width: 36, height: 36, borderRadius: 99,
-                background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(4px)',
-                border: '1px solid rgba(255,255,255,0.3)',
+                background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)',
+                border: '1px solid rgba(255,255,255,0.35)',
                 color: '#fff', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 transition: 'all 0.2s'
@@ -568,11 +570,11 @@ function FestivalCelebrationModal({ settings, onOrderNow, onClose }) {
             {/* Glowing Icon Badge */}
             <div style={{
               width: 76, height: 76, borderRadius: 24,
-              background: 'rgba(255,255,255,0.2)',
+              background: 'rgba(255,255,255,0.22)',
               border: '2px solid rgba(255,255,255,0.4)',
               margin: '0 auto 16px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
+              boxShadow: '0 8px 24px rgba(0,0,0,0.25)'
             }}>
               <Sparkles size={40} color="#ffffff" />
             </div>
@@ -580,41 +582,43 @@ function FestivalCelebrationModal({ settings, onOrderNow, onClose }) {
             {/* Ribbon Banner Badge */}
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
-              background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.35)',
-              padding: '4px 14px', borderRadius: 99,
+              background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.38)',
+              padding: '5px 16px', borderRadius: 99,
               fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px',
               marginBottom: 10
             }}>
-              <span>🎉 CELEBRATING FESTIVAL SALE 🎉</span>
+              <span>{pal.tag}</span>
             </div>
 
             <h2 style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.3px', marginBottom: 6 }}>
               {settings.festivalSaleName}
             </h2>
-            <p style={{ fontSize: 14, opacity: 0.92, fontWeight: 600 }}>
+            <p style={{ fontSize: 14, opacity: 0.95, fontWeight: 600 }}>
               is going on right now!
             </p>
           </div>
 
           {/* Body Content */}
           <div style={{ padding: '24px 24px 28px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ background: 'var(--color-surface)', borderRadius: 18, padding: 16, border: '1px solid var(--color-border)' }}>
-              <p style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-text)', marginBottom: 4 }}>
+            <div style={{ background: pal.bg, borderRadius: 18, padding: 16, border: `1.5px solid ${pal.border}` }}>
+              <p style={{ fontWeight: 800, fontSize: 14, color: pal.text, marginBottom: 4 }}>
                 Special Festival Discounts Applied!
               </p>
-              <p style={{ fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+              <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
                 Order your favorite food &amp; drinks today and celebrate with festive deals &amp; fast pickup.
               </p>
             </div>
 
             {/* Big Order Now Button */}
             <button
-              className="btn-primary"
               onClick={onOrderNow}
               style={{
                 width: '100%', padding: '16px 24px', fontSize: 17, fontWeight: 800,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                borderRadius: 16, boxShadow: '0 6px 20px var(--btn-shadow)'
+                borderRadius: 16, border: 'none', cursor: 'pointer',
+                background: pal.gradient, color: '#ffffff',
+                boxShadow: `0 8px 24px ${pal.accent}50`,
+                fontFamily: 'Outfit', transition: 'all 0.2s'
               }}
             >
               <ShoppingBag size={20} />
@@ -631,7 +635,7 @@ function FestivalCelebrationModal({ settings, onOrderNow, onClose }) {
                 fontFamily: 'Outfit', textDecoration: 'underline'
               }}
             >
-              Maybe later
+              Close and browse menu
             </button>
           </div>
         </motion.div>

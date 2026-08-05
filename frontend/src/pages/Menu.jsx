@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import api from '../api/axios';
 import useCartStore from '../store/useCartStore';
 import useCustomerStore from '../store/useCustomerStore';
+import { getFestivalPalette } from '../theme/festivalThemes';
 
 /* ─── Cart bottom snackbar ─── */
 function CartSnackbar({ count, total, lastAdded, onCheckout }) {
@@ -553,37 +554,40 @@ export default function Menu() {
       )}
 
       {/* ── FESTIVAL / EVENT SALE BANNER ── */}
-      {siteSettings?.showFestivalBanner && siteSettings?.festivalSaleName && (
-        <div style={{ maxWidth: 768, margin: '12px auto 0', padding: '0 16px' }}>
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            style={{
-              background: 'var(--color-accent-bg)',
-              border: '1.5px solid var(--color-accent-border)',
-              borderRadius: 16, padding: '12px 16px',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-              boxShadow: '0 2px 10px var(--card-shadow)'
-            }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Sparkles size={20} color="var(--color-accent)" />
-              <div>
-                <p style={{ fontWeight: 800, fontSize: 13, color: 'var(--color-accent-dark)' }}>
-                  {siteSettings.festivalSaleName} is going on!
-                </p>
-                <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
-                  Special deals &amp; seasonal offers available now
-                </p>
+      {siteSettings?.showFestivalBanner && siteSettings?.festivalSaleName && (() => {
+        const pal = getFestivalPalette(siteSettings.festivalSaleName);
+        return (
+          <div style={{ maxWidth: 768, margin: '12px auto 0', padding: '0 16px' }}>
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              style={{
+                background: pal.bg,
+                border: `1.5px solid ${pal.border}`,
+                borderRadius: 16, padding: '12px 16px',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                boxShadow: '0 2px 10px var(--card-shadow)'
+              }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Sparkles size={20} color={pal.accent} />
+                <div>
+                  <p style={{ fontWeight: 800, fontSize: 13, color: pal.text }}>
+                    {siteSettings.festivalSaleName} is going on!
+                  </p>
+                  <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
+                    Special deals &amp; seasonal offers available now
+                  </p>
+                </div>
               </div>
-            </div>
-            <span style={{
-              background: 'var(--color-accent)', color: '#ffffff',
-              fontWeight: 800, fontSize: 11, padding: '6px 12px', borderRadius: 99,
-              letterSpacing: '0.4px', flexShrink: 0
-            }}>
-              ORDER NOW
-            </span>
-          </motion.div>
-        </div>
-      )}
+              <span style={{
+                background: pal.accent, color: '#ffffff',
+                fontWeight: 800, fontSize: 11, padding: '6px 12px', borderRadius: 99,
+                letterSpacing: '0.4px', flexShrink: 0
+              }}>
+                ORDER NOW
+              </span>
+            </motion.div>
+          </div>
+        );
+      })()}
 
       {/* ── Items — ALL categories shown as sections ── */}
       <div style={{ maxWidth: 768, margin: '0 auto', padding: '14px 16px' }}>

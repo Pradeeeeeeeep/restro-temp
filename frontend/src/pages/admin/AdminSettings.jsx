@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import { AdminNav } from './AdminDashboard';
 import { THEMES, THEME_IDS, applyTheme } from '../../theme/themes';
 import { useTheme } from '../../theme/ThemeProvider';
+import { getFestivalPalette } from '../../theme/festivalThemes';
 
 /* ── Colour swatch for theme picker ── */
 function ThemeSwatch({ theme, selected, onClick }) {
@@ -308,36 +309,42 @@ export default function AdminSettings() {
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
                     Live Banner Preview
                   </label>
-                  <div style={{
-                    background: 'var(--color-accent)',
-                    color: '#ffffff',
-                    borderRadius: 16, padding: '14px 18px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-                    boxShadow: '0 4px 16px var(--btn-shadow)',
-                    opacity: settings.showFestivalBanner ? 1 : 0.45,
-                    transition: 'all 0.2s',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Sparkles size={18} color="#fff" />
+                  {(() => {
+                    const pal = getFestivalPalette(settings.festivalSaleName);
+                    return (
+                      <div style={{
+                        background: pal.gradient,
+                        color: '#ffffff',
+                        borderRadius: 16, padding: '14px 18px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                        boxShadow: `0 4px 16px ${pal.accent}40`,
+                        border: `1.5px solid ${pal.border}`,
+                        opacity: settings.showFestivalBanner ? 1 : 0.45,
+                        transition: 'all 0.2s',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <Sparkles size={18} color="#fff" />
+                          </div>
+                          <div>
+                            <p style={{ fontWeight: 800, fontSize: 14, letterSpacing: '0.2px' }}>
+                              {settings.festivalSaleName || 'Diwali Light-Up Sale'} is going on!
+                            </p>
+                            <p style={{ fontSize: 11, opacity: 0.92, fontWeight: 500 }}>
+                              ORDER NOW &amp; enjoy special offers
+                            </p>
+                          </div>
+                        </div>
+                        <span style={{
+                          background: '#ffffff', color: pal.accent,
+                          fontWeight: 800, fontSize: 11, padding: '6px 12px', borderRadius: 99,
+                          letterSpacing: '0.4px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4
+                        }}>
+                          ORDER NOW <ArrowRight size={12} />
+                        </span>
                       </div>
-                      <div>
-                        <p style={{ fontWeight: 800, fontSize: 14, letterSpacing: '0.2px' }}>
-                          {settings.festivalSaleName || 'Diwali Light-Up Sale'} is going on!
-                        </p>
-                        <p style={{ fontSize: 11, opacity: 0.9, fontWeight: 500 }}>
-                          ORDER NOW &amp; enjoy special offers
-                        </p>
-                      </div>
-                    </div>
-                    <span style={{
-                      background: '#ffffff', color: 'var(--color-accent)',
-                      fontWeight: 800, fontSize: 11, padding: '6px 12px', borderRadius: 99,
-                      letterSpacing: '0.4px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4
-                    }}>
-                      ORDER NOW <ArrowRight size={12} />
-                    </span>
-                  </div>
+                    );
+                  })()}
                   
                   <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
                     <button
@@ -382,6 +389,7 @@ export default function AdminSettings() {
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
                         {cat.sales.map((saleName) => {
                           const isSelected = settings.festivalSaleName === saleName;
+                          const pal = getFestivalPalette(saleName);
                           return (
                             <button
                               key={saleName}
@@ -391,10 +399,10 @@ export default function AdminSettings() {
                                 padding: '6px 13px', borderRadius: 99, border: 'none', cursor: 'pointer',
                                 fontFamily: 'Outfit', fontWeight: 700, fontSize: 12,
                                 transition: 'all 0.15s',
-                                background: isSelected ? 'var(--color-accent)' : 'var(--color-card)',
+                                background: isSelected ? pal.accent : 'var(--color-card)',
                                 color: isSelected ? '#ffffff' : 'var(--color-text-secondary)',
                                 border: isSelected ? 'none' : '1px solid var(--color-border)',
-                                boxShadow: isSelected ? '0 3px 10px var(--btn-shadow)' : 'none',
+                                boxShadow: isSelected ? `0 3px 10px ${pal.accent}40` : 'none',
                               }}
                             >
                               {isSelected ? '✓ ' : ''}{saleName}
@@ -550,32 +558,35 @@ export default function AdminSettings() {
 
       {/* Full-Screen Popup Preview Modal */}
       <AnimatePresence>
-        {showPopupPreview && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={() => setShowPopupPreview(false)}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(10px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-            <motion.div onClick={(e) => e.stopPropagation()}
-              initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }}
-              style={{ width: '100%', maxWidth: 420, background: 'var(--color-card)', border: '2px solid var(--color-accent-border)', borderRadius: 32, boxShadow: '0 32px 80px rgba(0,0,0,0.4)', overflow: 'hidden', position: 'relative' }}>
-              <div style={{ position: 'relative', background: 'var(--color-accent)', padding: '36px 24px 28px', textAlign: 'center', color: '#fff', overflow: 'hidden' }}>
-                <div style={{ position: 'absolute', top: 18, left: -34, background: '#fff', color: 'var(--color-accent)', transform: 'rotate(-45deg)', padding: '4px 38px', fontSize: 10, fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}>LIMITED OFFER</div>
-                <button onClick={() => setShowPopupPreview(false)} style={{ position: 'absolute', top: 14, right: 14, width: 36, height: 36, borderRadius: 99, background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
-                <div style={{ width: 76, height: 76, borderRadius: 24, background: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.4)', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Sparkles size={40} color="#fff" /></div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.35)', padding: '4px 14px', borderRadius: 99, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 10 }}>🎉 CELEBRATING FESTIVAL SALE 🎉</div>
-                <h2 style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.2, marginBottom: 6 }}>{settings.festivalSaleName || 'Diwali Light-Up Sale'}</h2>
-                <p style={{ fontSize: 14, opacity: 0.92, fontWeight: 600 }}>is going on right now!</p>
-              </div>
-              <div style={{ padding: '24px 24px 28px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div style={{ background: 'var(--color-surface)', borderRadius: 18, padding: 16, border: '1px solid var(--color-border)' }}>
-                  <p style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-text)', marginBottom: 4 }}>Special Festival Discounts Applied!</p>
-                  <p style={{ fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>Order your favorite food &amp; drinks today and celebrate with festive deals.</p>
+        {showPopupPreview && (() => {
+          const pal = getFestivalPalette(settings.festivalSaleName);
+          return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowPopupPreview(false)}
+              style={{ position: 'fixed', inset: 0, background: 'rgba(15,10,5,0.75)', backdropFilter: 'blur(12px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+              <motion.div onClick={(e) => e.stopPropagation()}
+                initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }}
+                style={{ width: '100%', maxWidth: 420, background: 'var(--color-card)', border: `2.5px solid ${pal.accent}`, borderRadius: 32, boxShadow: '0 32px 80px rgba(0,0,0,0.5)', overflow: 'hidden', position: 'relative' }}>
+                <div style={{ position: 'relative', background: pal.gradient, padding: '38px 24px 30px', textAlign: 'center', color: '#fff', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', top: 18, left: -34, background: '#fff', color: pal.accent, transform: 'rotate(-45deg)', padding: '4px 38px', fontSize: 10, fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}>{pal.ribbonText}</div>
+                  <button onClick={() => setShowPopupPreview(false)} style={{ position: 'absolute', top: 14, right: 14, width: 36, height: 36, borderRadius: 99, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.35)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
+                  <div style={{ width: 76, height: 76, borderRadius: 24, background: 'rgba(255,255,255,0.22)', border: '2px solid rgba(255,255,255,0.4)', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Sparkles size={40} color="#fff" /></div>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.38)', padding: '5px 16px', borderRadius: 99, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 10 }}>{pal.tag}</div>
+                  <h2 style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.2, marginBottom: 6 }}>{settings.festivalSaleName || 'Diwali Light-Up Sale'}</h2>
+                  <p style={{ fontSize: 14, opacity: 0.95, fontWeight: 600 }}>is going on right now!</p>
                 </div>
-                <button onClick={() => setShowPopupPreview(false)} className="btn-primary" style={{ width: '100%', padding: '16px 24px', fontSize: 17, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16 }}><ShoppingBag size={20} /><span>ORDER NOW</span><ArrowRight size={18} /></button>
-                <button onClick={() => setShowPopupPreview(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', fontSize: 13, fontWeight: 600, fontFamily: 'Outfit', textDecoration: 'underline' }}>Close preview</button>
-              </div>
+                <div style={{ padding: '24px 24px 28px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ background: pal.bg, borderRadius: 18, padding: 16, border: `1.5px solid ${pal.border}` }}>
+                    <p style={{ fontWeight: 800, fontSize: 14, color: pal.text, marginBottom: 4 }}>Special Festival Discounts Applied!</p>
+                    <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>Order your favorite food &amp; drinks today and celebrate with festive deals.</p>
+                  </div>
+                  <button onClick={() => setShowPopupPreview(false)} style={{ width: '100%', padding: '16px 24px', fontSize: 17, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, border: 'none', cursor: 'pointer', background: pal.gradient, color: '#fff', boxShadow: `0 8px 24px ${pal.accent}50`, fontFamily: 'Outfit' }}><ShoppingBag size={20} /><span>ORDER NOW</span><ArrowRight size={18} /></button>
+                  <button onClick={() => setShowPopupPreview(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', fontSize: 13, fontWeight: 600, fontFamily: 'Outfit', textDecoration: 'underline' }}>Close preview</button>
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          );
+        })()}
       </AnimatePresence>
     </div>
   );
