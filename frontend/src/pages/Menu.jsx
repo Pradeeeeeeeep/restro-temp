@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import api from '../api/axios';
 import useCartStore from '../store/useCartStore';
 import useCustomerStore from '../store/useCustomerStore';
-import { getFestivalPalette } from '../theme/festivalThemes';
+import { getFestivalPalette, getCornerRadius } from '../theme/festivalThemes';
 
 /* ─── Cart bottom snackbar ─── */
 function CartSnackbar({ count, total, lastAdded, onCheckout }) {
@@ -83,16 +83,23 @@ function CartSnackbar({ count, total, lastAdded, onCheckout }) {
 }
 
 /* ─── Menu card ─── */
-function MenuCard({ item, onAdd, onUpdate, cartQty, onClickCard }) {
+function MenuCard({ item, onAdd, onUpdate, cartQty, onClickCard, cornerStyle }) {
   const imgSrc = item.image || null;
   const rating = (4.5 + (item.id % 5) * 0.1).toFixed(1);
+  const cardRadius = getCornerRadius(cornerStyle);
+
+  let imgRadius = '14px 14px 0 0';
+  if (cornerStyle === 'rounded-full') imgRadius = '24px 24px 0 0';
+  else if (cornerStyle === 'rounded-md') imgRadius = '18px 18px 0 0';
+  else if (cornerStyle === 'sharp') imgRadius = '6px 6px 0 0';
+  else if (cornerStyle === 'asymmetric') imgRadius = '28px 8px 0 0';
 
   return (
     <motion.div layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card"
       onClick={() => onClickCard && onClickCard(item)}
-      style={{ overflow: 'visible', position: 'relative', cursor: 'pointer' }}>
+      style={{ overflow: 'hidden', position: 'relative', cursor: 'pointer', borderRadius: cardRadius }}>
       {/* Image */}
-      <div style={{ height: 130, background: 'var(--color-surface)', overflow: 'hidden', borderRadius: '14px 14px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+      <div style={{ height: 130, background: 'var(--color-surface)', overflow: 'hidden', borderRadius: imgRadius, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
         {imgSrc
           ? <img src={imgSrc} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           : <Utensils size={34} color="var(--color-muted-light)" />}
@@ -171,12 +178,13 @@ function MenuCard({ item, onAdd, onUpdate, cartQty, onClickCard }) {
 }
 
 /* ─── Item Detail Floating Modal ─── */
-function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelectItem }) {
+function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelectItem, cornerStyle }) {
   if (!itemData) return null;
   const { item, catName, categoryItems } = itemData;
   const imgSrc = item.image || null;
   const rating = (4.5 + (item.id % 5) * 0.1).toFixed(1);
   const reviewsCount = 18 + (item.id * 7) % 45;
+  const cardRadius = getCornerRadius(cornerStyle);
 
   return (
     <AnimatePresence>
@@ -198,7 +206,7 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           style={{
             width: '100%', maxWidth: 420, maxHeight: '70vh', overflowY: 'auto',
-            background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 24,
+            background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: cardRadius,
             boxShadow: '0 24px 64px rgba(0,0,0,0.22)', overflow: 'hidden', flexShrink: 0
           }}>
           {/* Header Image */}
@@ -617,6 +625,7 @@ export default function Menu() {
                   <MenuCard key={item.id} item={item}
                     cartQty={getQty(item.id)} onAdd={handleAdd}
                     onUpdate={handleUpdate}
+                    cornerStyle={siteSettings?.cardCornerStyle}
                     onClickCard={(it) => setSelectedItemData({ item: it, catName: cat.name, categoryItems: cat.items })} />
                 ))}
               </div>
@@ -667,14 +676,18 @@ export default function Menu() {
         addItem={addItem} total={total} navigate={navigate}
       />
 
-      {/* ── Item Detail Floating Card Modal ── */}
+      {/* ── Floating Item Detail Modal ── */}
       <ItemDetailModal
         itemData={selectedItemData}
         onClose={() => setSelectedItemData(null)}
         onAdd={handleAdd}
         onUpdate={handleUpdate}
         cartQty={selectedItemData ? getQty(selectedItemData.item.id) : 0}
-        onSelectItem={(newItem) => setSelectedItemData((prev) => prev ? { ...prev, item: newItem } : null)}
+        cornerStyle={siteSettings?.cardCornerStyle}
+        onSelectItem={(item) => {
+          const cat = categories.find((c) => c.items.some((i) => i.id === item.id));
+          setSelectedItemData({ item, catName: cat?.name || '', categoryItems: cat?.items || [] });
+        }}
       />
 
       {/* ── Bottom snackbar ── */}

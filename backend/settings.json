@@ -4,7 +4,8 @@
   "googleReviewLink": "g.page/dd",
   "showReviewBanner": true,
   "showFestivalBanner": true,
-  "festivalSaleName": "Rakhi Bond of Love Deals",
-  "theme": "warm-cafe",
-  "customColors": {}
+  "festivalSaleName": "Valentine’s Cupid Deals",
+  "theme": "sweet-pink",
+  "customColors": {},
+  "cardCornerStyle": "rounded-full"
 }
