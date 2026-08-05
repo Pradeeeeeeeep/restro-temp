@@ -11,7 +11,6 @@ import api from '../api/axios';
 import useCustomerStore from '../store/useCustomerStore';
 import useCartStore from '../store/useCartStore';
 import { getFestivalPalette, getCornerRadius } from '../theme/festivalThemes';
-import { FastFoodBigCTA, FastFoodComboCards, PickupTimerWidget } from '../components/FastFoodFeatures';
 
 /* ─── Status config ─── */
 const STATUS_CONFIG = {
@@ -203,15 +202,6 @@ export default function Home() {
           </h1>
           <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>Your neighbourhood café</p>
         </motion.div>
-
-        {/* ── FAST FOOD THEME BIG CTA & PICKUP TIMER ── */}
-        <div style={{ marginBottom: 20 }}>
-          <FastFoodBigCTA onOrderClick={() => navigate('/menu')} />
-          <PickupTimerWidget initialMinutes={15} />
-        </div>
-
-        {/* ── FAST FOOD COMBO CARDS ── */}
-        <FastFoodComboCards />
 
         {/* ── FESTIVAL / EVENT SALE BANNER CARD ── */}
         {siteSettings?.showFestivalBanner && siteSettings?.festivalSaleName && (() => {
