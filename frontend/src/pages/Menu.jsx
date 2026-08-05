@@ -565,6 +565,7 @@ export default function Menu() {
   const [cartOpen, setCartOpen] = useState(false);
   const [lastAdded, setLastAdded] = useState(null);
   const [snackTimer, setSnackTimer] = useState(null);
+  const [selectedItemData, setSelectedItemData] = useState(null);
   const [promptItem, setPromptItem] = useState(null);
 
   const navigate = useNavigate();
