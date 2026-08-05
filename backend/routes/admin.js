@@ -70,9 +70,21 @@ router.get('/settings', getSettings);
 router.put('/settings', updateSettings);
 router.post('/settings/logo', upload.single('logo'), uploadLogo);
 
+const {
+  getAdminCombos,
+  createCombo,
+  updateCombo,
+  deleteCombo,
+} = require('../controllers/comboController');
+
 router.get('/coupons', getAdminCoupons);
 router.post('/coupons', createCoupon);
 router.put('/coupons/:id', updateCoupon);
 router.delete('/coupons/:id', deleteCoupon);
+
+router.get('/combos', getAdminCombos);
+router.post('/combos', createCombo);
+router.put('/combos/:id', updateCombo);
+router.delete('/combos/:id', deleteCombo);
 
 module.exports = router;

@@ -67,9 +67,16 @@ export default function AdminMenu() {
 
   const fetchData = async () => {
     try {
-      const [ir, cr] = await Promise.all([api.get('/admin/menu'), api.get('/admin/categories')]);
+      const [ir, cr, combRes] = await Promise.all([
+        api.get('/admin/menu'),
+        api.get('/admin/categories'),
+        api.get('/admin/combos').catch(() => ({ data: { combos: [] } }))
+      ]);
       setItems(ir.data.items);
       setCategories(cr.data.categories);
+      if (combRes.data.combos && combRes.data.combos.length > 0) {
+        setCombosList(combRes.data.combos.map(c => ({ ...c, desc: c.description || c.desc })));
+      }
     } catch { toast.error('Failed to load data'); }
     finally { setLoading(false); }
   };
@@ -206,13 +213,6 @@ const parseCustomizations = (cust) => {
   };
 
   /* ── combos helpers ── */
-  const updateCombosStorage = (newList, isEnabled = combosEnabled) => {
-    setCombosList(newList);
-    localStorage.setItem('admin_combos', JSON.stringify(newList));
-    localStorage.setItem('admin_combos_enabled', isEnabled ? 'true' : 'false');
-    window.dispatchEvent(new Event('combos-updated'));
-  };
-
   const toggleCombosSectionMaster = () => {
     const nextState = !combosEnabled;
     setCombosEnabled(nextState);
@@ -221,19 +221,30 @@ const parseCustomizations = (cust) => {
     toast.success(`Combos section ${nextState ? 'enabled' : 'disabled'}`);
   };
 
-  const toggleSingleComboActive = (id) => {
-    const updated = combosList.map((c) =>
-      c.id === id ? { ...c, available: c.available === false ? true : false } : c
-    );
-    updateCombosStorage(updated);
-    toast.success('Combo toggle updated!');
+  const toggleSingleComboActive = async (id) => {
+    const target = combosList.find((c) => c.id === id);
+    if (!target) return;
+    const newAvail = target.available === false ? true : false;
+    try {
+      await api.put(`/admin/combos/${id}`, { available: newAvail });
+      toast.success('Combo toggle updated!');
+      fetchData();
+      window.dispatchEvent(new Event('combos-updated'));
+    } catch {
+      toast.error('Failed to update combo');
+    }
   };
 
-  const deleteSingleCombo = (id) => {
+  const deleteSingleCombo = async (id) => {
     if (!window.confirm('Delete this combo meal?')) return;
-    const updated = combosList.filter((c) => c.id !== id);
-    updateCombosStorage(updated);
-    toast.success('Combo deleted!');
+    try {
+      await api.delete(`/admin/combos/${id}`);
+      toast.success('Combo deleted!');
+      fetchData();
+      window.dispatchEvent(new Event('combos-updated'));
+    } catch {
+      toast.error('Failed to delete combo');
+    }
   };
 
   const openAddCombo = () => {
@@ -246,7 +257,7 @@ const parseCustomizations = (cust) => {
     setEditingCombo(c);
     setComboForm({
       name: c.name,
-      desc: c.desc,
+      desc: c.desc || c.description || '',
       originalPrice: c.originalPrice ? String(c.originalPrice) : '',
       comboPrice: String(c.comboPrice),
       badge: c.badge || '',
@@ -256,37 +267,37 @@ const parseCustomizations = (cust) => {
     setShowComboModal(true);
   };
 
-  const saveCombo = () => {
+  const saveCombo = async () => {
     if (!comboForm.name.trim()) return toast.error('Combo name is required');
     if (!comboForm.comboPrice || isNaN(comboForm.comboPrice)) return toast.error('Valid combo price required');
 
     const origPrice = comboForm.originalPrice ? parseFloat(comboForm.originalPrice) : null;
     const cPrice = parseFloat(comboForm.comboPrice);
-    const savingsAmount = origPrice && origPrice > cPrice ? (origPrice - cPrice) : null;
 
     const payload = {
-      id: editingCombo ? editingCombo.id : `combo-${Date.now()}`,
       name: comboForm.name.trim(),
-      desc: comboForm.desc.trim(),
+      description: comboForm.desc.trim(),
       originalPrice: origPrice,
       comboPrice: cPrice,
-      savings: savingsAmount,
       badge: comboForm.badge.trim(),
       image: comboForm.image.trim(),
       available: comboForm.available,
     };
 
-    let updated;
-    if (editingCombo) {
-      updated = combosList.map((c) => (c.id === editingCombo.id ? payload : c));
-      toast.success('Combo updated!');
-    } else {
-      updated = [...combosList, payload];
-      toast.success('New combo created!');
+    try {
+      if (editingCombo && typeof editingCombo.id === 'number') {
+        await api.put(`/admin/combos/${editingCombo.id}`, payload);
+        toast.success('Combo updated!');
+      } else {
+        await api.post('/admin/combos', payload);
+        toast.success('New combo created!');
+      }
+      fetchData();
+      window.dispatchEvent(new Event('combos-updated'));
+      setShowComboModal(false);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to save combo');
     }
-
-    updateCombosStorage(updated);
-    setShowComboModal(false);
   };
 
   const filtered = filterCat ? items.filter((i) => i.categoryId === parseInt(filterCat)) : items;

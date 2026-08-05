@@ -70,3 +70,16 @@ model Coupon {
   active         Boolean   @default(true)
   createdAt      DateTime  @default(now())
 }
+
+model Combo {
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  originalPrice Float?
+  comboPrice    Float
+  savings       Float?
+  badge         String?
+  image         String?
+  available     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+}

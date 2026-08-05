@@ -157,16 +157,32 @@ export function FastFoodBigCTA({ onOrderClick }) {
   );
 }
 
-/* ─── 3. Combo Cards Section (Filters for Admin Toggled Active Combos) ─── */
+import api from '../api/axios';
+
+/* ─── 3. Combo Cards Section (Fetches active DB combos) ─── */
 export function FastFoodComboCards() {
   const addToCart = useCartStore((s) => s.addToCart);
   const [animatingId, setAnimatingId] = useState(null);
-  const [combos, setCombos] = useState(getStoredCombos());
+  const [combos, setCombos] = useState([]);
   const [enabled, setEnabled] = useState(isCombosSectionEnabled());
 
+  const fetchCombos = async () => {
+    try {
+      const { data } = await api.get('/combos');
+      if (data.combos && data.combos.length > 0) {
+        setCombos(data.combos);
+      } else {
+        setCombos(DEFAULT_FAST_FOOD_COMBOS);
+      }
+    } catch {
+      setCombos(DEFAULT_FAST_FOOD_COMBOS);
+    }
+  };
+
   useEffect(() => {
+    fetchCombos();
     const handleUpdate = () => {
-      setCombos(getStoredCombos());
+      fetchCombos();
       setEnabled(isCombosSectionEnabled());
     };
     window.addEventListener('combos-updated', handleUpdate);
