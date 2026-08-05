@@ -193,6 +193,37 @@ const createCategory = async (req, res, next) => {
   }
 };
 
+// PUT /api/admin/categories/:id — rename a category
+const updateCategory = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, sortOrder } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name is required' });
+    const category = await prisma.category.update({
+      where: { id: parseInt(id) },
+      data: { name, ...(sortOrder !== undefined && { sortOrder: parseInt(sortOrder) }) },
+    });
+    res.json({ category });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// DELETE /api/admin/categories/:id
+const deleteCategory = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const itemCount = await prisma.menuItem.count({ where: { categoryId: parseInt(id) } });
+    if (itemCount > 0) {
+      return res.status(400).json({ error: `Cannot delete: ${itemCount} menu item${itemCount !== 1 ? 's' : ''} belong to this category. Reassign or delete them first.` });
+    }
+    await prisma.category.delete({ where: { id: parseInt(id) } });
+    res.json({ message: 'Category deleted' });
+  } catch (err) {
+    next(err);
+  }
+};
+
 // GET /api/admin/dashboard/stats
 const getDashboardStats = async (req, res, next) => {
   try {
@@ -251,5 +282,7 @@ module.exports = {
   deleteMenuItem,
   getCategories,
   createCategory,
+  updateCategory,
+  deleteCategory,
   getDashboardStats,
 };
