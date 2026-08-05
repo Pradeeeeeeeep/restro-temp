@@ -170,9 +170,9 @@ function MenuCard({ item, onAdd, onUpdate, cartQty, onClickCard }) {
 }
 
 /* ─── Item Detail Floating Modal ─── */
-function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty }) {
+function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelectItem }) {
   if (!itemData) return null;
-  const { item, catName } = itemData;
+  const { item, catName, categoryItems } = itemData;
   const imgSrc = item.image || null;
   const rating = (4.5 + (item.id % 5) * 0.1).toFixed(1);
   const reviewsCount = 18 + (item.id * 7) % 45;
@@ -279,6 +279,88 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty }) {
                 </div>
               )}
             </div>
+
+            {/* ── More Items Carousel Tray (Lightly Curved Tray) ── */}
+            {categoryItems && categoryItems.length > 1 && (
+              <div style={{ marginTop: 4, paddingTop: 12, borderTop: '1px solid var(--color-border)' }}>
+                <p style={{ fontWeight: 700, fontSize: 12, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>
+                  More in {catName || 'Menu'}
+                </p>
+
+                {/* Lightly curved tray container */}
+                <div style={{
+                  background: 'var(--color-surface)',
+                  borderRadius: 20,
+                  padding: '12px 14px',
+                  border: '1px solid var(--color-border)',
+                  boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.03)'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    gap: 14,
+                    overflowX: 'auto',
+                    paddingBottom: 4,
+                    scrollSnapType: 'x mandatory'
+                  }}>
+                    {categoryItems.map((otherItem) => {
+                      const isSelected = otherItem.id === item.id;
+                      const otherImg = otherItem.image || null;
+                      return (
+                        <motion.button
+                          key={otherItem.id}
+                          whileHover={{ scale: 1.06 }}
+                          whileTap={{ scale: 0.94 }}
+                          onClick={() => onSelectItem && onSelectItem(otherItem)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 6,
+                            minWidth: 64,
+                            scrollSnapAlign: 'start',
+                            opacity: isSelected ? 1 : 0.75,
+                            transition: 'opacity 0.2s'
+                          }}
+                        >
+                          {/* Circular rounded image container */}
+                          <div style={{
+                            width: 54, height: 54, borderRadius: '50%',
+                            overflow: 'hidden', background: 'var(--color-card)',
+                            border: isSelected ? '2.5px solid var(--color-accent)' : '1.5px solid var(--color-border)',
+                            boxShadow: isSelected ? '0 3px 12px var(--btn-shadow)' : '0 2px 6px rgba(0,0,0,0.06)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            position: 'relative', flexShrink: 0, transition: 'all 0.2s'
+                          }}>
+                            {otherImg ? (
+                              <img src={otherImg} alt={otherItem.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <Utensils size={20} color="var(--color-muted)" />
+                            )}
+                          </div>
+
+                          {/* Item short name */}
+                          <span style={{
+                            fontSize: 11, fontWeight: isSelected ? 800 : 600,
+                            color: isSelected ? 'var(--color-accent-dark)' : 'var(--color-text)',
+                            maxWidth: 64, textAlign: 'center',
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                          }}>
+                            {otherItem.name}
+                          </span>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-muted)' }}>
+                            ₹{otherItem.price}
+                          </span>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
       </motion.div>
@@ -503,7 +585,7 @@ export default function Menu() {
                   <MenuCard key={item.id} item={item}
                     cartQty={getQty(item.id)} onAdd={handleAdd}
                     onUpdate={handleUpdate}
-                    onClickCard={(it) => setSelectedItemData({ item: it, catName: cat.name })} />
+                    onClickCard={(it) => setSelectedItemData({ item: it, catName: cat.name, categoryItems: cat.items })} />
                 ))}
               </div>
             </div>
@@ -560,6 +642,7 @@ export default function Menu() {
         onAdd={handleAdd}
         onUpdate={handleUpdate}
         cartQty={selectedItemData ? getQty(selectedItemData.item.id) : 0}
+        onSelectItem={(newItem) => setSelectedItemData((prev) => prev ? { ...prev, item: newItem } : null)}
       />
 
       {/* ── Bottom snackbar ── */}
