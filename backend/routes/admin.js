@@ -19,6 +19,7 @@ const {
   getDashboardStats,
   getSettings,
   updateSettings,
+  uploadLogo,
 } = require('../controllers/adminController');
 
 // Multer config for image uploads
@@ -63,5 +64,6 @@ router.delete('/categories/:id', deleteCategory);
 
 router.get('/settings', getSettings);
 router.put('/settings', updateSettings);
+router.post('/settings/logo', upload.single('logo'), uploadLogo);
 
 module.exports = router;

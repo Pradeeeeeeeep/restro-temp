@@ -292,6 +292,20 @@ const updateSettings = (req, res) => {
   res.json({ settings: updated });
 };
 
+// POST /api/admin/settings/logo
+const uploadLogo = (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const logoUrl = `/uploads/${req.file.filename}`;
+    const current = readSettings();
+    const updated = { ...current, cafeLogoUrl: logoUrl };
+    writeSettings(updated);
+    res.json({ logoUrl, settings: updated });
+  } catch (err) {
+    res.status(500).json({ error: 'Upload failed' });
+  }
+};
+
 module.exports = {
   login,
   getOrders,
@@ -307,4 +321,5 @@ module.exports = {
   getDashboardStats,
   getSettings,
   updateSettings,
+  uploadLogo,
 };

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Star, Link, ToggleLeft, ToggleRight, Save, ExternalLink,
-  Palette, Check, RefreshCw, Pipette,
+  Palette, Check, RefreshCw, Pipette, Upload, Image, Edit3, Coffee,
 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
@@ -77,11 +77,15 @@ export default function AdminSettings() {
   });
   const [loading, setLoading]     = useState(true);
   const [saving, setSaving]       = useState(false);
-  const [previewTheme, setPreviewTheme] = useState(null); // while hovering
+  const [previewTheme, setPreviewTheme] = useState(null);
+  const [logoUploading, setLogoUploading] = useState(false);
 
   useEffect(() => {
     api.get('/admin/settings')
-      .then(({ data }) => setSettings(data.settings))
+      .then(({ data }) => setSettings({
+        googleReviewLink: '', showReviewBanner: false, cafeName: 'Brew & Bites', cafeLogoUrl: '',
+        ...data.settings,
+      }))
       .catch(() => toast.error('Failed to load settings'))
       .finally(() => setLoading(false));
   }, []);
@@ -130,6 +134,24 @@ export default function AdminSettings() {
     }
   };
 
+  const uploadLogo = async (file) => {
+    if (!file) return;
+    setLogoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('logo', file);
+      const { data } = await api.post('/admin/settings/logo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setSettings((s) => ({ ...s, cafeLogoUrl: data.logoUrl }));
+      toast.success('Logo uploaded!');
+    } catch {
+      toast.error('Logo upload failed');
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
   const isValidUrl = (url) => { try { new URL(url); return true; } catch { return false; } };
 
   // Current custom colors with defaults from selected theme
@@ -160,6 +182,56 @@ export default function AdminSettings() {
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+            {/* ════ CAFÉ BRANDING ════ */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Edit3 size={20} color="#fff" />
+                </div>
+                <div>
+                  <p style={{ fontWeight: 800, fontSize: 16 }}>Café Branding</p>
+                  <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Customize your café name and logo shown to customers</p>
+                </div>
+              </div>
+              <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* Logo preview + upload */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  {/* Logo preview */}
+                  <div style={{ width: 80, height: 80, borderRadius: 18, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', boxShadow: '0 4px 14px var(--btn-shadow)' }}>
+                    {settings.cafeLogoUrl
+                      ? <img src={`http://localhost:5001${settings.cafeLogoUrl}`} alt="logo"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <Coffee size={32} color="#fff" />}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Café Logo</p>
+                    <p style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 10 }}>PNG/JPG — shows on the home screen &amp; order pages</p>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'var(--color-surface)', border: '1.5px solid var(--color-border)', cursor: 'pointer', fontWeight: 700, fontSize: 13, fontFamily: 'Outfit', color: 'var(--color-muted)' }}>
+                      {logoUploading ? <div className="spinner" style={{ width: 14, height: 14 }} /> : <Upload size={14} />}
+                      {logoUploading ? 'Uploading…' : 'Upload Logo'}
+                      <input type="file" accept="image/*" style={{ display: 'none' }}
+                        onChange={(e) => uploadLogo(e.target.files[0])} />
+                    </label>
+                    {settings.cafeLogoUrl && (
+                      <button onClick={() => setSettings((s) => ({ ...s, cafeLogoUrl: '' }))}
+                        style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', fontSize: 12, fontFamily: 'Outfit' }}>Remove</button>
+                    )}
+                  </div>
+                </div>
+                {/* Café Name */}
+                <div>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Café Name</label>
+                  <input className="input-field"
+                    value={settings.cafeName || ''}
+                    onChange={(e) => setSettings((s) => ({ ...s, cafeName: e.target.value }))}
+                    placeholder="e.g. Brew &amp; Bites"
+                    style={{ maxWidth: 340 }} />
+                  <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 5 }}>Shown in the app header and browser tab</p>
+                </div>
+              </div>
+            </motion.div>
 
             {/* ════ THEME PICKER ════ */}
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}

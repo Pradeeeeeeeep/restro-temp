@@ -1,6 +1,8 @@
 {
-  "googleReviewLink": "adsfd",
-  "showReviewBanner": true,
+  "cafeName": "Brew & Bites",
+  "cafeLogoUrl": "",
+  "googleReviewLink": "",
+  "showReviewBanner": false,
   "theme": "warm-cafe",
   "customColors": {}
 }

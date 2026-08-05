@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Search, Plus, ArrowLeft, X, Minus, ArrowRight, Coffee, Utensils } from 'lucide-react';
+import { ShoppingCart, Search, Plus, ArrowLeft, X, Minus, ArrowRight, Coffee, Utensils, ClipboardList, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 import useCartStore from '../store/useCartStore';
@@ -228,7 +228,17 @@ export default function Menu() {
 
   const navigate = useNavigate();
   const customer = useCustomerStore((s) => s.customer);
+  const lastOrderId = useCustomerStore((s) => s.lastOrderId);
   const { items: cartItems, addItem, updateQuantity, total, count } = useCartStore();
+
+  const [siteSettings, setSiteSettings] = useState(null);
+  const [reviewDismissed, setReviewDismissed] = useState(
+    () => localStorage.getItem('review_dismissed') === 'true'
+  );
+
+  useEffect(() => {
+    api.get('/settings').then(({ data }) => setSiteSettings(data.settings)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!customer) { navigate('/'); return; }
@@ -276,8 +286,17 @@ export default function Menu() {
             </button>
             <div style={{ flex: 1 }}>
               <h1 style={{ fontWeight: 800, fontSize: 18 }}>Menu</h1>
-              <p style={{ color: 'var(--color-muted)', fontSize: 12 }}>Hey {customer?.name}! 👋</p>
+              <p style={{ color: 'var(--color-muted)', fontSize: 12 }}>Hey {customer?.name}!</p>
             </div>
+            {/* Orders button — visible after at least one order placed */}
+            {lastOrderId && (
+              <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }} whileTap={{ scale: 0.9 }}
+                onClick={() => navigate(`/order/${lastOrderId}`)}
+                style={{ background: 'var(--color-surface)', border: '1.5px solid var(--color-border)', borderRadius: 12, padding: '8px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, color: 'var(--color-muted)' }}>
+                <ClipboardList size={15} />
+                <span>Orders</span>
+              </motion.button>
+            )}
             {/* Cart icon — only shown when items in cart, opens drawer */}
             {count > 0 && (
               <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }} whileTap={{ scale: 0.9 }}
@@ -355,6 +374,41 @@ export default function Menu() {
             </div>
           ))
         )}
+
+        {/* ── Google Review Banner ── */}
+        <AnimatePresence>
+          {siteSettings?.showReviewBanner && siteSettings?.googleReviewLink && !reviewDismissed && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }} transition={{ delay: 0.3, duration: 0.4 }}
+              style={{ padding: '0 4px', marginTop: 8, marginBottom: 8 }}
+            >
+              <a href={siteSettings.googleReviewLink} target="_blank" rel="noopener noreferrer"
+                style={{ textDecoration: 'none', display: 'block' }}>
+                <div style={{
+                  background: 'var(--color-accent-bg)',
+                  border: '1.5px solid var(--color-accent-border)', borderRadius: 16,
+                  padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12,
+                  position: 'relative', boxShadow: '0 2px 12px var(--card-shadow)',
+                }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Star size={20} color="#fff" fill="#fff" />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontWeight: 800, fontSize: 14, color: 'var(--color-accent-dark)', marginBottom: 2 }}>Enjoying your visit?</p>
+                    <p style={{ fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>Leave us a Google review — it means a lot!</p>
+                  </div>
+                  <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReviewDismissed(true); localStorage.setItem('review_dismissed', 'true'); }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', display: 'flex', flexShrink: 0 }}>
+                    <X size={15} />
+                  </button>
+                </div>
+              </a>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </div>
 
       {/* ── Cart drawer ── */}

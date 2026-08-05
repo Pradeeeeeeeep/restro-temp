@@ -94,18 +94,19 @@ export default function Home() {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [reviewSettings, setReviewSettings] = useState(null);
+  const [siteSettings, setSiteSettings] = useState(null);
   const [reviewDismissed, setReviewDismissed] = useState(() =>
     localStorage.getItem('review_dismissed') === 'true'
   );
+  const reviewSettings = siteSettings;
 
   const navigate = useNavigate();
   const { customer, setCustomer, clearCustomer } = useCustomerStore();
   const clearCart = useCartStore((s) => s.clearCart);
 
-  // Fetch public settings for review banner
+  // Fetch public settings (cafeName, cafeLogoUrl, review banner, theme)
   useEffect(() => {
-    api.get('/settings').then(({ data }) => setReviewSettings(data.settings)).catch(() => {});
+    api.get('/settings').then(({ data }) => setSiteSettings(data.settings)).catch(() => {});
   }, []);
 
   /* fetch orders whenever we have a customer */
@@ -187,11 +188,15 @@ export default function Home() {
             background: 'var(--color-accent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 12px 32px var(--btn-shadow)',
+            overflow: 'hidden',
           }}>
-            <Coffee size={38} color="#fff" />
+            {siteSettings?.cafeLogoUrl
+              ? <img src={`http://localhost:5001${siteSettings.cafeLogoUrl}`} alt="logo"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <Coffee size={38} color="#fff" />}
           </div>
           <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 4 }}>
-            <span className="gradient-text">Brew & Bites</span>
+            <span className="gradient-text">{siteSettings?.cafeName || 'Brew & Bites'}</span>
           </h1>
           <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>Your neighbourhood café</p>
         </motion.div>

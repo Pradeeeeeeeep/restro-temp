@@ -28,6 +28,7 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const customer = useCustomerStore((s) => s.customer);
+  const setLastOrderId = useCustomerStore((s) => s.setLastOrderId);
   const { items, total, count, clearCart } = useCartStore();
 
   if (!customer) { navigate('/'); return null; }
@@ -43,7 +44,8 @@ export default function Checkout() {
         note: note.trim() || undefined,
       });
       clearCart();
-      toast.success('Order placed! Your coffee is on the way.');
+      setLastOrderId(data.order.id);
+      toast.success('Order placed! Your order is on the way.');
       navigate(`/order/${data.order.id}`);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to place order');
