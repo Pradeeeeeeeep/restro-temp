@@ -185,21 +185,23 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
         style={{
           position: 'fixed', inset: 0, background: 'rgba(26,15,5,0.45)',
           backdropFilter: 'blur(6px)', zIndex: 110,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 14, padding: 16, overflowY: 'auto'
         }}>
+        {/* ── 1. MAIN CARD ── */}
         <motion.div
           onClick={(e) => e.stopPropagation()}
-          initial={{ opacity: 0, scale: 0.9, y: 24 }}
+          initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 24 }}
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           style={{
-            width: '100%', maxWidth: 420, maxHeight: '90vh', overflowY: 'auto',
+            width: '100%', maxWidth: 420, maxHeight: '70vh', overflowY: 'auto',
             background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 24,
-            boxShadow: '0 24px 64px rgba(0,0,0,0.22)', overflow: 'hidden'
+            boxShadow: '0 24px 64px rgba(0,0,0,0.22)', overflow: 'hidden', flexShrink: 0
           }}>
           {/* Header Image */}
-          <div style={{ position: 'relative', height: 210, background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'relative', height: 190, background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {imgSrc ? (
               <img src={imgSrc} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
@@ -233,7 +235,7 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
           </div>
 
           {/* Details Body */}
-          <div style={{ padding: '20px 22px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ padding: '18px 20px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
             {catName && (
               <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--color-accent)', background: 'var(--color-accent-bg)', padding: '3px 10px', borderRadius: 99, width: 'fit-content' }}>
                 {catName}
@@ -246,15 +248,15 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
             </div>
 
             {/* Description */}
-            <div style={{ background: 'var(--color-surface)', borderRadius: 14, padding: 14, border: '1px solid var(--color-border)' }}>
-              <p style={{ fontWeight: 700, fontSize: 12, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>About this item</p>
-              <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--color-text-secondary)' }}>
+            <div style={{ background: 'var(--color-surface)', borderRadius: 14, padding: 12, border: '1px solid var(--color-border)' }}>
+              <p style={{ fontWeight: 700, fontSize: 11, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>About this item</p>
+              <p style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--color-text-secondary)' }}>
                 {item.description || 'Freshly prepared using premium quality ingredients. Served hot & fresh for the best café experience.'}
               </p>
             </div>
 
             {/* Action Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
               <div>
                 <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Total</p>
                 <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--color-text)' }}>₹{((cartQty || 1) * item.price).toFixed(0)}</p>
@@ -279,90 +281,83 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
                 </div>
               )}
             </div>
-
-            {/* ── More Items Carousel Tray (Lightly Curved Tray) ── */}
-            {categoryItems && categoryItems.length > 1 && (
-              <div style={{ marginTop: 4, paddingTop: 12, borderTop: '1px solid var(--color-border)' }}>
-                <p style={{ fontWeight: 700, fontSize: 12, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 10 }}>
-                  More in {catName || 'Menu'}
-                </p>
-
-                {/* Lightly curved tray container */}
-                <div style={{
-                  background: 'var(--color-surface)',
-                  borderRadius: 20,
-                  padding: '12px 14px',
-                  border: '1px solid var(--color-border)',
-                  boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.03)'
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    gap: 14,
-                    overflowX: 'auto',
-                    paddingBottom: 4,
-                    scrollSnapType: 'x mandatory'
-                  }}>
-                    {categoryItems.map((otherItem) => {
-                      const isSelected = otherItem.id === item.id;
-                      const otherImg = otherItem.image || null;
-                      return (
-                        <motion.button
-                          key={otherItem.id}
-                          whileHover={{ scale: 1.06 }}
-                          whileTap={{ scale: 0.94 }}
-                          onClick={() => onSelectItem && onSelectItem(otherItem)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            padding: 0,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: 6,
-                            minWidth: 64,
-                            scrollSnapAlign: 'start',
-                            opacity: isSelected ? 1 : 0.75,
-                            transition: 'opacity 0.2s'
-                          }}
-                        >
-                          {/* Circular rounded image container */}
-                          <div style={{
-                            width: 54, height: 54, borderRadius: '50%',
-                            overflow: 'hidden', background: 'var(--color-card)',
-                            border: isSelected ? '2.5px solid var(--color-accent)' : '1.5px solid var(--color-border)',
-                            boxShadow: isSelected ? '0 3px 12px var(--btn-shadow)' : '0 2px 6px rgba(0,0,0,0.06)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            position: 'relative', flexShrink: 0, transition: 'all 0.2s'
-                          }}>
-                            {otherImg ? (
-                              <img src={otherImg} alt={otherItem.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                              <Utensils size={20} color="var(--color-muted)" />
-                            )}
-                          </div>
-
-                          {/* Item short name */}
-                          <span style={{
-                            fontSize: 11, fontWeight: isSelected ? 800 : 600,
-                            color: isSelected ? 'var(--color-accent-dark)' : 'var(--color-text)',
-                            maxWidth: 64, textAlign: 'center',
-                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                          }}>
-                            {otherItem.name}
-                          </span>
-                          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-muted)' }}>
-                            ₹{otherItem.price}
-                          </span>
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </motion.div>
+
+        {/* ── 2. OUTSIDE FLOATING CURVED DOCK ── */}
+        {categoryItems && categoryItems.length > 1 && (
+          <motion.div
+            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300, delay: 0.05 }}
+            style={{
+              width: '100%', maxWidth: 420,
+              background: 'var(--color-card)',
+              border: '1.5px solid var(--color-accent-border)',
+              borderRadius: 26,
+              padding: '12px 16px',
+              boxShadow: '0 16px 40px rgba(0,0,0,0.22)',
+              display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0
+            }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
+              <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: 'var(--color-accent-dark)' }}>
+                Explore {catName || 'Menu'}
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 600 }}>
+                {categoryItems.length} items
+              </span>
+            </div>
+
+            {/* Horizontal scroll of circular items */}
+            <div style={{
+              display: 'flex', gap: 14, overflowX: 'auto', padding: '4px 2px 4px',
+              scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch'
+            }}>
+              {categoryItems.map((otherItem) => {
+                const isSelected = otherItem.id === item.id;
+                const otherImg = otherItem.image || null;
+                return (
+                  <motion.button
+                    key={otherItem.id}
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.92 }}
+                    onClick={() => onSelectItem && onSelectItem(otherItem)}
+                    style={{
+                      background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                      minWidth: 62, scrollSnapAlign: 'center', opacity: isSelected ? 1 : 0.7, transition: 'all 0.2s'
+                    }}>
+                    <div style={{
+                      width: 52, height: 52, borderRadius: '50%', overflow: 'hidden',
+                      background: 'var(--color-surface)',
+                      border: isSelected ? '2.5px solid var(--color-accent)' : '1.5px solid var(--color-border)',
+                      boxShadow: isSelected ? '0 4px 14px var(--btn-shadow)' : '0 2px 6px rgba(0,0,0,0.08)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s'
+                    }}>
+                      {otherImg ? (
+                        <img src={otherImg} alt={otherItem.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <Utensils size={20} color="var(--color-muted)" />
+                      )}
+                    </div>
+                    <span style={{
+                      fontSize: 11, fontWeight: isSelected ? 800 : 600,
+                      color: isSelected ? 'var(--color-accent-dark)' : 'var(--color-text)',
+                      maxWidth: 62, textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
+                    }}>
+                      {otherItem.name}
+                    </span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-muted)' }}>
+                      ₹{otherItem.price}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
       </motion.div>
     </AnimatePresence>
   );
