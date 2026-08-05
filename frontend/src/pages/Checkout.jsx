@@ -39,7 +39,18 @@ export default function Checkout() {
     try {
       const { data } = await api.post('/orders', {
         customerId: customer.id,
-        items: items.map((i) => ({ menuItemId: i.menuItemId, quantity: i.quantity })),
+        items: items.map((i) => {
+          let custStr = i.customizations || null;
+          if (!custStr && i.name && i.name.includes('(')) {
+            custStr = i.name.substring(i.name.indexOf('(') + 1, i.name.lastIndexOf(')'));
+          }
+          return {
+            menuItemId: i.menuItemId,
+            quantity: i.quantity,
+            price: i.price,
+            customizations: custStr,
+          };
+        }),
         paymentMethod: method,
         note: note.trim() || undefined,
       });

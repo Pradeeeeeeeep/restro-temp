@@ -31,12 +31,20 @@ const placeOrder = async (req, res, next) => {
     let total = 0;
     const orderItemsData = items.map((i) => {
       const menuItem = menuItems.find((m) => m.id === i.menuItemId);
-      const lineTotal = menuItem.price * i.quantity;
+      const itemPrice = i.price && !isNaN(i.price) ? parseFloat(i.price) : menuItem.price;
+      const lineTotal = itemPrice * i.quantity;
       total += lineTotal;
+
+      let custStr = null;
+      if (i.customizations) {
+        custStr = typeof i.customizations === 'string' ? i.customizations : JSON.stringify(i.customizations);
+      }
+
       return {
         menuItemId: i.menuItemId,
         quantity: i.quantity,
-        price: menuItem.price,
+        price: itemPrice,
+        customizations: custStr,
       };
     });
 

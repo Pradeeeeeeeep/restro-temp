@@ -19,7 +19,10 @@ function printInvoice(order) {
   const date = new Date(order.createdAt).toLocaleString('en-IN');
   const rows = order.items.map((i) => `
     <tr>
-      <td style="padding:7px 0;border-bottom:1px solid #f0ebe4">${i.menuItem.name}</td>
+      <td style="padding:7px 0;border-bottom:1px solid #f0ebe4">
+        <div style="font-weight:600">${i.menuItem.name}</div>
+        ${i.customizations ? `<div style="font-size:11px;color:#c2700f;margin-top:2px">✨ ${i.customizations}</div>` : ''}
+      </td>
       <td style="text-align:center;padding:7px 8px;border-bottom:1px solid #f0ebe4">×${i.quantity}</td>
       <td style="text-align:right;padding:7px 0;border-bottom:1px solid #f0ebe4;font-weight:600">₹${(i.price * i.quantity).toFixed(0)}</td>
     </tr>`).join('');
@@ -90,7 +93,10 @@ function printInvoice(order) {
 /* ── WhatsApp invoice ── */
 function sendWhatsApp(order) {
   const date = new Date(order.createdAt).toLocaleString('en-IN');
-  const lines = order.items.map((i) => `  • ${i.menuItem.name} × ${i.quantity} = ₹${(i.price * i.quantity).toFixed(0)}`).join('\n');
+  const lines = order.items.map((i) => {
+    const cust = i.customizations ? ` (${i.customizations})` : '';
+    return `  • ${i.menuItem.name}${cust} × ${i.quantity} = ₹${(i.price * i.quantity).toFixed(0)}`;
+  }).join('\n');
   const note = order.note ? `\nNote: ${order.note}` : '';
   const text = `*Cafe Order Invoice*\n\n` +
     `Order #${order.id}\n` +
@@ -245,11 +251,18 @@ export default function AdminOrders() {
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: 'hidden' }}>
                           <div style={{ borderTop: '1px solid var(--color-border)', padding: 16 }}>
                             {/* Items list */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 14 }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 14 }}>
                               {order.items.map((item) => (
-                                <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                                  <span style={{ color: 'var(--color-muted)' }}>{item.menuItem.name} × {item.quantity}</span>
-                                  <span style={{ fontWeight: 600 }}>₹{(item.price * item.quantity).toFixed(0)}</span>
+                                <div key={item.id} style={{ padding: '8px 10px', background: 'var(--color-surface)', borderRadius: 10, border: '1px solid var(--color-border)' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                                    <span style={{ fontWeight: 700, color: 'var(--color-text)' }}>{item.menuItem.name} × {item.quantity}</span>
+                                    <span style={{ fontWeight: 800, color: 'var(--color-accent-dark)' }}>₹{(item.price * item.quantity).toFixed(0)}</span>
+                                  </div>
+                                  {item.customizations && (
+                                    <p style={{ fontSize: 12, color: 'var(--color-accent-dark)', fontWeight: 600, marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                      ✨ <span style={{ background: 'var(--color-accent-bg)', padding: '2px 7px', borderRadius: 6, border: '1px solid var(--color-accent-border)' }}>{item.customizations}</span>
+                                    </p>
+                                  )}
                                 </div>
                               ))}
                               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 15, paddingTop: 8, borderTop: '1px solid var(--color-border)' }}>
