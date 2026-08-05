@@ -5,8 +5,8 @@
   "showReviewBanner": true,
   "showFestivalBanner": true,
   "festivalSaleName": "Holi",
-  "theme": "forest",
+  "theme": "clean-pro",
   "customColors": {},
   "cardCornerStyle": "rounded-md",
-  "menuItemCornerStyle": "rounded-md"
+  "menuItemCornerStyle": "sharp"
 }

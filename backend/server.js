@@ -8,6 +8,7 @@ const menuRoutes = require('./routes/menu');
 const orderRoutes = require('./routes/orders');
 const adminRoutes = require('./routes/admin');
 const couponRoutes = require('./routes/coupons');
+const remoteRoutes = require('./routes/remote');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -34,6 +35,7 @@ app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/coupons', couponRoutes);
+app.use('/api/remote', remoteRoutes);
 
 // Public settings (no auth — used by customer-facing pages)
 const { getSettings } = require('./controllers/adminController');

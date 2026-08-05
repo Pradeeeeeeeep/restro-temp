@@ -525,6 +525,74 @@ export default function AdminSettings() {
                     <ColorRow label="Text"            desc="Primary text colour"     varName="--color-text"         value={effectiveText}   onChange={handleColorChange} />
                   </div>
                 </motion.div>
+
+                {/* ════ REMOTE MASTER THEME CONTROL ════ */}
+                <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
+                  style={{ background: 'var(--color-card)', border: '2px solid var(--color-accent-border)', borderRadius: 18, overflow: 'hidden' }}>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-accent-bg)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <ExternalLink size={20} color="#fff" />
+                      </div>
+                      <div>
+                        <p style={{ fontWeight: 800, fontSize: 16, color: 'var(--color-accent-dark)' }}>Remote Master Theme Controller API</p>
+                        <p style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>Control store theme &amp; banners remotely from an external master site</p>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 800, background: 'var(--color-accent)', color: '#fff', padding: '4px 10px', borderRadius: 99 }}>
+                      API LIVE
+                    </span>
+                  </div>
+
+                  <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <div style={{ background: 'var(--color-surface)', borderRadius: 12, padding: 14, border: '1px solid var(--color-border)' }}>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                        Remote Control Endpoint
+                      </p>
+                      <code style={{ display: 'block', background: 'var(--color-card)', padding: '8px 12px', borderRadius: 8, fontSize: 13, fontWeight: 700, color: 'var(--color-accent-dark)', border: '1px solid var(--color-border)' }}>
+                        POST /api/remote/theme
+                      </code>
+                      <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 6 }}>
+                        Header: <code style={{ fontWeight: 700 }}>X-Remote-Secret: super-secret-remote-key</code>
+                      </p>
+                    </div>
+
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: 'var(--color-text)' }}>
+                        Remote Controller Simulator (Test External Site Change)
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {['shopify-crave', 'warm-cafe', 'midnight', 'clean-pro', 'forest', 'sweet-pink'].map((tId) => (
+                          <button
+                            key={`remote-${tId}`}
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                await api.post('/remote/theme', { theme: tId }, {
+                                  headers: { 'x-remote-secret': 'super-secret-remote-key' }
+                                });
+                                selectTheme(tId);
+                                toast.success(`Remote command executed: Switched to ${tId}!`);
+                              } catch {
+                                toast.error('Remote command failed');
+                              }
+                            }}
+                            style={{
+                              padding: '7px 14px', borderRadius: 10, cursor: 'pointer',
+                              fontFamily: 'Outfit', fontWeight: 700, fontSize: 12,
+                              background: settings.theme === tId ? 'var(--color-accent)' : 'var(--color-surface)',
+                              color: settings.theme === tId ? '#ffffff' : 'var(--color-text)',
+                              border: settings.theme === tId ? 'none' : '1px solid var(--color-border)',
+                              transition: 'all 0.15s'
+                            }}
+                          >
+                            {tId === 'shopify-crave' ? '🔥 Shopify Crave' : tId}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
               </div>
             )}
 

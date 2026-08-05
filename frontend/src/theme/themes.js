@@ -156,6 +156,37 @@ export const THEMES = {
       '--btn-shadow':          'rgba(225,29,72,0.30)',
     },
   },
+
+  'shopify-crave': {
+    id: 'shopify-crave',
+    name: 'Shopify Crave',
+    desc: 'Bold, high-contrast foodie theme',
+    dark: false,
+    preview: { bg: '#fffdf7', accent: '#ff4d2e', surface: '#f7f2e4', text: '#121212' },
+    vars: {
+      '--color-bg':            '#fffdf7',
+      '--color-surface':       '#f7f2e4',
+      '--color-card':          '#ffffff',
+      '--color-card-hover':    '#fffaf2',
+      '--color-border':        '#121212',
+      '--color-border-strong': '#000000',
+      '--color-accent':        '#ff4d2e',
+      '--color-accent-dark':   '#d9381e',
+      '--color-accent-light':  '#ffd166',
+      '--color-accent-bg':     '#fff0ed',
+      '--color-accent-border': '#ffb8ab',
+      '--color-text':          '#121212',
+      '--color-text-secondary':'#3a2e2b',
+      '--color-muted':         '#7a665f',
+      '--color-muted-light':   '#a8958e',
+      '--glass-bg':            'rgba(255,253,247,0.92)',
+      '--shimmer-from':        '#f7f2e4',
+      '--shimmer-mid':         '#fffdf7',
+      '--focus-ring':          'rgba(255,77,46,0.25)',
+      '--card-shadow':         'rgba(18,18,18,0.18)',
+      '--btn-shadow':          'rgba(255,77,46,0.38)',
+    },
+  },
 };
 
 export const THEME_IDS = Object.keys(THEMES);
