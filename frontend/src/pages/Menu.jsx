@@ -643,25 +643,24 @@ export default function Menu() {
               </button>
             )}
           </div>
+
+          {/* ── Category quick-jump badges below search box ── */}
+          {!search && categories.length > 1 && (
+            <div className="no-scrollbar" style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingTop: 10, paddingBottom: 2 }}>
+              {categories.map((cat) => (
+                <button key={cat.id}
+                  onClick={() => document.getElementById(`cat-${cat.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  style={{
+                    whiteSpace: 'nowrap', padding: '5px 13px', borderRadius: 99, border: '1px solid var(--color-border)',
+                    cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 700, fontSize: 12,
+                    background: 'var(--color-card)', color: 'var(--color-text-secondary)', transition: 'all 0.15s',
+                    boxShadow: '0 1px 4px var(--card-shadow)', flexShrink: 0
+                  }}>{cat.name}</button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
-
-      {/* ── Category quick-jump pills ── */}
-      {!search && categories.length > 1 && (
-        <div style={{ maxWidth: 768, margin: '0 auto', padding: '10px 16px 0' }}>
-          <div className="no-scrollbar" style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 2 }}>
-            {categories.map((cat) => (
-              <button key={cat.id}
-                onClick={() => document.getElementById(`cat-${cat.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                style={{
-                  whiteSpace: 'nowrap', padding: '6px 14px', borderRadius: 99, border: '1px solid var(--color-border)',
-                  cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 600, fontSize: 13,
-                  background: 'var(--color-card)', color: 'var(--color-text-secondary)', transition: 'all 0.15s',
-                }}>{cat.name}</button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ── FESTIVAL / EVENT SALE BANNER ── */}
       {siteSettings?.showFestivalBanner && siteSettings?.festivalSaleName && (() => {
