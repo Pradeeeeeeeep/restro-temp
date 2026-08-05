@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 import api from '../api/axios';
 import useCustomerStore from '../store/useCustomerStore';
 import useCartStore from '../store/useCartStore';
-import { getFestivalPalette } from '../theme/festivalThemes';
+import { getFestivalPalette, getCornerRadius } from '../theme/festivalThemes';
 
 /* ─── Status config ─── */
 const STATUS_CONFIG = {
@@ -206,13 +206,14 @@ export default function Home() {
         {/* ── FESTIVAL / EVENT SALE BANNER CARD ── */}
         {siteSettings?.showFestivalBanner && siteSettings?.festivalSaleName && (() => {
           const pal = getFestivalPalette(siteSettings.festivalSaleName);
+          const radius = getCornerRadius(siteSettings.cardCornerStyle);
           return (
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
               onClick={() => navigate('/menu')}
               style={{
                 background: pal.gradient,
                 color: '#ffffff',
-                borderRadius: 18, padding: '14px 18px', cursor: 'pointer',
+                borderRadius: radius, padding: '14px 18px', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
                 boxShadow: '0 4px 18px rgba(0,0,0,0.2)', marginBottom: 22,
                 border: `1.5px solid ${pal.border}`,
@@ -495,6 +496,7 @@ export default function Home() {
 function FestivalCelebrationModal({ settings, onOrderNow, onClose }) {
   if (!settings?.showFestivalBanner || !settings?.festivalSaleName) return null;
   const pal = getFestivalPalette(settings.festivalSaleName);
+  const radius = getCornerRadius(settings.cardCornerStyle);
 
   return (
     <AnimatePresence>
@@ -523,7 +525,7 @@ function FestivalCelebrationModal({ settings, onOrderNow, onClose }) {
             width: '100%', maxWidth: 420,
             background: 'var(--color-card)',
             border: `2.5px solid ${pal.accent}`,
-            borderRadius: 32,
+            borderRadius: radius,
             boxShadow: `0 32px 80px rgba(0,0,0,0.5)`,
             overflow: 'hidden',
             position: 'relative'

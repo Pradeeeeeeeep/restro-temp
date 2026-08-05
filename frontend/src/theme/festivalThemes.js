@@ -184,6 +184,17 @@ export const FESTIVAL_THEME_PALETTES = {
   }
 };
 
+export const CORNER_STYLES = {
+  'rounded-full': { id: 'rounded-full', name: 'Ultra Curved', radius: '32px', desc: 'Cozy soft curves (32px)' },
+  'rounded-md':   { id: 'rounded-md',   name: 'Smooth Rounded', radius: '18px', desc: 'Balanced modern (18px)' },
+  'sharp':        { id: 'sharp',        name: 'Sharp & Crisp', radius: '6px', desc: 'Minimalist square (6px)' },
+  'asymmetric':   { id: 'asymmetric',   name: 'Playful Leaf', radius: '32px 8px 32px 8px', desc: 'Stylish diagonal leaf cut' },
+};
+
+export function getCornerRadius(styleId) {
+  return CORNER_STYLES[styleId]?.radius || CORNER_STYLES['rounded-full'].radius;
+}
+
 export function getFestivalPalette(saleName) {
   return FESTIVAL_THEME_PALETTES[saleName] || {
     accent: 'var(--color-accent)',

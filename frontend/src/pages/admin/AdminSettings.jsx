@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 import { AdminNav } from './AdminDashboard';
 import { THEMES, THEME_IDS, applyTheme } from '../../theme/themes';
 import { useTheme } from '../../theme/ThemeProvider';
-import { getFestivalPalette } from '../../theme/festivalThemes';
+import { getFestivalPalette, CORNER_STYLES, getCornerRadius } from '../../theme/festivalThemes';
 
 /* ── Colour swatch for theme picker ── */
 function ThemeSwatch({ theme, selected, onClick }) {
@@ -130,7 +130,7 @@ export default function AdminSettings() {
     api.get('/admin/settings')
       .then(({ data }) => setSettings({
         googleReviewLink: '', showReviewBanner: false, cafeName: 'Brew & Bites', cafeLogoUrl: '',
-        showFestivalBanner: false, festivalSaleName: 'Diwali Light-Up Sale',
+        showFestivalBanner: false, festivalSaleName: 'Diwali Light-Up Sale', cardCornerStyle: 'rounded-full',
         ...data.settings,
       }))
       .catch(() => toast.error('Failed to load settings'))
@@ -311,11 +311,12 @@ export default function AdminSettings() {
                   </label>
                   {(() => {
                     const pal = getFestivalPalette(settings.festivalSaleName);
+                    const radius = getCornerRadius(settings.cardCornerStyle);
                     return (
                       <div style={{
                         background: pal.gradient,
                         color: '#ffffff',
-                        borderRadius: 16, padding: '14px 18px',
+                        borderRadius: radius, padding: '14px 18px',
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
                         boxShadow: `0 4px 16px ${pal.accent}40`,
                         border: `1.5px solid ${pal.border}`,
@@ -373,6 +374,50 @@ export default function AdminSettings() {
                     onChange={(e) => setSettings((s) => ({ ...s, festivalSaleName: e.target.value }))}
                     placeholder="e.g. Diwali Light-Up Sale"
                   />
+                </div>
+
+                {/* Card Corner & Shape Style Picker */}
+                <div>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
+                    Card Corner &amp; Shape Style
+                  </label>
+                  <p style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 12 }}>
+                    Customize corner curvature for celebration cards &amp; banners
+                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
+                    {Object.values(CORNER_STYLES).map((corner) => {
+                      const isSelected = (settings.cardCornerStyle || 'rounded-full') === corner.id;
+                      return (
+                        <button
+                          key={corner.id}
+                          type="button"
+                          onClick={() => setSettings((s) => ({ ...s, cardCornerStyle: corner.id }))}
+                          style={{
+                            background: isSelected ? 'var(--color-surface)' : 'var(--color-card)',
+                            border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+                            borderRadius: 14, padding: '12px 10px', cursor: 'pointer',
+                            textAlign: 'center', transition: 'all 0.15s',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                          }}
+                        >
+                          {/* Visual box preview of corner radius */}
+                          <div style={{
+                            width: 40, height: 26, background: 'var(--color-accent)',
+                            borderRadius: corner.radius, opacity: isSelected ? 1 : 0.5,
+                            transition: 'all 0.15s'
+                          }} />
+                          <div>
+                            <p style={{ fontWeight: 800, fontSize: 12, color: isSelected ? 'var(--color-accent)' : 'var(--color-text)' }}>
+                              {corner.name}
+                            </p>
+                            <p style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: 2 }}>
+                              {corner.desc}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Category Presets Selector */}
@@ -560,13 +605,14 @@ export default function AdminSettings() {
       <AnimatePresence>
         {showPopupPreview && (() => {
           const pal = getFestivalPalette(settings.festivalSaleName);
+          const radius = getCornerRadius(settings.cardCornerStyle);
           return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setShowPopupPreview(false)}
               style={{ position: 'fixed', inset: 0, background: 'rgba(15,10,5,0.75)', backdropFilter: 'blur(12px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
               <motion.div onClick={(e) => e.stopPropagation()}
                 initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }}
-                style={{ width: '100%', maxWidth: 420, background: 'var(--color-card)', border: `2.5px solid ${pal.accent}`, borderRadius: 32, boxShadow: '0 32px 80px rgba(0,0,0,0.5)', overflow: 'hidden', position: 'relative' }}>
+                style={{ width: '100%', maxWidth: 420, background: 'var(--color-card)', border: `2.5px solid ${pal.accent}`, borderRadius: radius, boxShadow: '0 32px 80px rgba(0,0,0,0.5)', overflow: 'hidden', position: 'relative' }}>
                 <div style={{ position: 'relative', background: pal.gradient, padding: '38px 24px 30px', textAlign: 'center', color: '#fff', overflow: 'hidden' }}>
                   <div style={{ position: 'absolute', top: 18, left: -34, background: '#fff', color: pal.accent, transform: 'rotate(-45deg)', padding: '4px 38px', fontSize: 10, fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}>{pal.ribbonText}</div>
                   <button onClick={() => setShowPopupPreview(false)} style={{ position: 'absolute', top: 14, right: 14, width: 36, height: 36, borderRadius: 99, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.35)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
