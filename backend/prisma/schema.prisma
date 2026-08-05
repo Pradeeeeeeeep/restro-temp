@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String   @unique
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
+model Category {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  sortOrder Int        @default(0)
+  items     MenuItem[]
+}
+
+model MenuItem {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  category    Category    @relation(fields: [categoryId], references: [id])
+  categoryId  Int
+  image       String?
+  available   Boolean     @default(true)
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id            Int         @id @default(autoincrement())
+  customer      Customer    @relation(fields: [customerId], references: [id])
+  customerId    Int
+  paymentMethod String      // "cash" | "cafe" | "online"
+  paymentStatus String      @default("pending") // "pending" | "paid"
+  status        String      @default("placed")  // "placed" | "accepted" | "preparing" | "ready" | "completed"
+  total         Float
+  note          String?
+  createdAt     DateTime    @default(now())
+  items         OrderItem[]
+}
+
+model OrderItem {
+  id         Int      @id @default(autoincrement())
+  order      Order    @relation(fields: [orderId], references: [id])
+  orderId    Int
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItemId Int
+  quantity   Int
+  price      Float
+}
