@@ -403,7 +403,7 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
             </div>
 
             {/* Horizontal scroll of circular items */}
-            <div style={{
+            <div className="no-scrollbar" style={{
               display: 'flex', gap: 14, overflowX: 'auto', padding: '4px 2px 4px',
               scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch'
             }}>
@@ -649,7 +649,7 @@ export default function Menu() {
       {/* ── Category quick-jump pills ── */}
       {!search && categories.length > 1 && (
         <div style={{ maxWidth: 768, margin: '0 auto', padding: '10px 16px 0' }}>
-          <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 2 }}>
+          <div className="no-scrollbar" style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 2 }}>
             {categories.map((cat) => (
               <button key={cat.id}
                 onClick={() => document.getElementById(`cat-${cat.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}

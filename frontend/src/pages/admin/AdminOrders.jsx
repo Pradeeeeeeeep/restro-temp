@@ -180,7 +180,7 @@ export default function AdminOrders() {
         </div>
 
         {/* Filter tabs */}
-        <div style={{ display: 'flex', gap: 7, marginBottom: 18, flexWrap: 'wrap' }}>
+        <div className="no-scrollbar" style={{ display: 'flex', gap: 7, marginBottom: 18, overflowX: 'auto', paddingBottom: 2, flexWrap: 'nowrap' }}>
           {filterList.map((s) => (
             <button key={s} onClick={() => setFilter(s)}
               style={{

@@ -259,7 +259,7 @@ const parseCustomizations = (cust) => {
           {tab === 'items' && (
             <motion.div key="items" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
               {/* Category filter pills */}
-              <div style={{ display: 'flex', gap: 7, marginBottom: 16, flexWrap: 'wrap' }}>
+              <div className="no-scrollbar" style={{ display: 'flex', gap: 7, marginBottom: 16, overflowX: 'auto', paddingBottom: 2, flexWrap: 'nowrap' }}>
                 {['', ...categories.map((c) => String(c.id))].map((cid) => {
                   const cat = categories.find((c) => String(c.id) === cid);
                   const sel = filterCat === cid;
