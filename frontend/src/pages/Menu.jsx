@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Search, Plus, Check, ArrowLeft, X, Minus, ArrowRight } from 'lucide-react';
+import { ShoppingCart, Search, Plus, ArrowLeft, X, Minus, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 import useCartStore from '../store/useCartStore';
@@ -11,43 +11,91 @@ const CATEGORY_EMOJI = {
   'Coffee': '☕', 'Cold Drinks': '🧋', 'Snacks': '🥪', 'Desserts': '🍰', 'Meals': '🍽️'
 };
 
-function MenuCard({ item, onAdd, cartQty }) {
-  const [added, setAdded] = useState(false);
-  const handleAdd = () => {
-    onAdd(item);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1200);
-  };
-
+function MenuCard({ item, onAdd, onUpdate, cartQty }) {
   return (
-    <motion.div layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card">
+    <motion.div layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="card"
+      style={{ overflow: 'visible', position: 'relative' }}>
+
       {/* Image */}
-      <div style={{ height: 130, background: 'var(--color-surface)', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ height: 130, background: 'var(--color-surface)', overflow: 'hidden', borderRadius: '14px 14px 0 0', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {item.image
-          ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ? <img src={item.image.startsWith('/') ? `http://localhost:5001${item.image}` : item.image}
+              alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           : <span style={{ fontSize: 42 }}>{CATEGORY_EMOJI[item.category?.name] || '🍴'}</span>
         }
-        {cartQty > 0 && (
-          <div style={{ position: 'absolute', top: 8, right: 8, background: 'var(--color-accent)', color: '#fff', borderRadius: 99, padding: '2px 8px', fontSize: 11, fontWeight: 700 }}>
-            {cartQty} in cart
-          </div>
-        )}
       </div>
+
       <div style={{ padding: '12px 14px 14px', display: 'flex', flexDirection: 'column', gap: 5 }}>
         <h3 style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.3 }}>{item.name}</h3>
         {item.description && <p style={{ color: 'var(--color-muted)', fontSize: 12, lineHeight: 1.5 }}>{item.description}</p>}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
           <span style={{ fontWeight: 800, fontSize: 17, color: 'var(--color-accent-dark)' }}>₹{item.price}</span>
-          <motion.button
-            whileTap={{ scale: 0.88 }}
-            onClick={handleAdd}
-            style={{
-              width: 34, height: 34, borderRadius: 10, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: added ? '#15803d' : 'linear-gradient(135deg, #e8901f, #c2700f)', transition: 'background 0.25s'
-            }}
-          >
-            {added ? <Check size={16} color="#fff" /> : <Plus size={16} color="#fff" />}
-          </motion.button>
+
+          <AnimatePresence mode="wait" initial={false}>
+            {cartQty === 0 ? (
+              /* ── Plain ADD button ── */
+              <motion.button
+                key="add"
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.7 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                whileTap={{ scale: 0.88 }}
+                onClick={() => onAdd(item)}
+                style={{
+                  width: 36, height: 36, borderRadius: 10, border: 'none', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #e8901f, #c2700f)',
+                  boxShadow: '0 3px 10px rgba(194,112,15,0.3)',
+                }}
+              >
+                <Plus size={18} color="#fff" strokeWidth={2.5} />
+              </motion.button>
+            ) : (
+              /* ── Stepper: − qty + ── */
+              <motion.div
+                key="stepper"
+                initial={{ opacity: 0, scale: 0.8, width: 36 }}
+                animate={{ opacity: 1, scale: 1, width: 'auto' }}
+                exit={{ opacity: 0, scale: 0.8, width: 36 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 0,
+                  background: 'linear-gradient(135deg, #e8901f, #c2700f)',
+                  borderRadius: 10, overflow: 'hidden',
+                  boxShadow: '0 3px 10px rgba(194,112,15,0.3)',
+                }}
+              >
+                {/* − */}
+                <motion.button whileTap={{ scale: 0.85 }}
+                  onClick={() => onUpdate(item.id, cartQty - 1)}
+                  style={{ width: 32, height: 36, border: 'none', cursor: 'pointer', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                  <Minus size={15} strokeWidth={2.8} />
+                </motion.button>
+
+                {/* qty */}
+                <AnimatePresence mode="popLayout">
+                  <motion.span
+                    key={cartQty}
+                    initial={{ y: -10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 10, opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    style={{ minWidth: 22, textAlign: 'center', fontWeight: 800, fontSize: 14, color: '#fff', userSelect: 'none' }}>
+                    {cartQty}
+                  </motion.span>
+                </AnimatePresence>
+
+                {/* + */}
+                <motion.button whileTap={{ scale: 0.85 }}
+                  onClick={() => onAdd(item)}
+                  style={{ width: 32, height: 36, border: 'none', cursor: 'pointer', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                  <Plus size={15} strokeWidth={2.8} />
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </motion.div>
@@ -64,6 +112,17 @@ export default function Menu() {
   const customer = useCustomerStore((s) => s.customer);
   const { items: cartItems, addItem, updateQuantity, total, count } = useCartStore();
 
+  const getQty = (id) => cartItems.find((i) => i.menuItemId === id)?.quantity || 0;
+
+  const handleAdd = (item) => {
+    addItem({ menuItemId: item.id, name: item.name, price: item.price, image: item.image });
+    toast.success(`${item.name} added!`, { duration: 900, icon: '☕' });
+  };
+
+  const handleUpdate = (menuItemId, qty) => {
+    updateQuantity(menuItemId, qty); // qty 0 = remove
+  };
+
   useEffect(() => {
     if (!customer) { navigate('/'); return; }
     api.get('/menu').then(({ data }) => {
@@ -72,12 +131,6 @@ export default function Menu() {
     }).catch(() => toast.error('Failed to load menu')).finally(() => setLoading(false));
   }, []);
 
-  const handleAdd = (item) => {
-    addItem({ menuItemId: item.id, name: item.name, price: item.price, image: item.image });
-    toast.success(`${item.name} added!`, { duration: 1000 });
-  };
-
-  const getQty = (id) => cartItems.find((i) => i.menuItemId === id)?.quantity || 0;
 
   const displayCategories = search
     ? categories.map((c) => ({ ...c, items: c.items.filter((i) => i.name.toLowerCase().includes(search.toLowerCase()) || (i.description || '').toLowerCase().includes(search.toLowerCase())) })).filter((c) => c.items.length)
@@ -156,7 +209,7 @@ export default function Menu() {
               <div key={cat.id} style={{ marginBottom: 24 }}>
                 {search && <h2 style={{ fontWeight: 700, fontSize: 16, marginBottom: 12, color: 'var(--color-accent-dark)' }}>{CATEGORY_EMOJI[cat.name]} {cat.name}</h2>}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(170px,1fr))', gap: 14 }}>
-                  {cat.items.map((item) => <MenuCard key={item.id} item={item} onAdd={handleAdd} cartQty={getQty(item.id)} />)}
+                  {cat.items.map((item) => <MenuCard key={item.id} item={item} onAdd={handleAdd} onUpdate={handleUpdate} cartQty={getQty(item.id)} />)}
                 </div>
               </div>
             ))
