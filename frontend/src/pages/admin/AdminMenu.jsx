@@ -261,7 +261,7 @@ export default function AdminMenu() {
                       }}>
                       <div style={{ width: 50, height: 50, borderRadius: 11, background: 'var(--color-surface)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
                         {item.image
-                          ? <img src={item.image.startsWith('/') ? `http://localhost:5001${item.image}` : item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ? <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           : <Utensils size={22} color="var(--color-muted-light)" />}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -488,7 +488,7 @@ export default function AdminMenu() {
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>Item Photo</label>
                   {currentImage ? (
                     <div style={{ position: 'relative', borderRadius: 14, overflow: 'hidden', height: 160, background: 'var(--color-surface)', border: '2px solid var(--color-accent-border)' }}>
-                      <img src={currentImage.startsWith('/') ? `http://localhost:5001${currentImage}` : currentImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={currentImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: 0, transition: 'opacity 0.2s' }}
                         onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
                         onMouseLeave={(e) => e.currentTarget.style.opacity = 0}>

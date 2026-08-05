@@ -83,9 +83,7 @@ function CartSnackbar({ count, total, lastAdded, onCheckout }) {
 
 /* ─── Menu card ─── */
 function MenuCard({ item, onAdd, onUpdate, cartQty, onClickCard }) {
-  const imgSrc = item.image
-    ? (item.image.startsWith('/') ? `http://localhost:5001${item.image}` : item.image)
-    : null;
+  const imgSrc = item.image || null;
   const rating = (4.5 + (item.id % 5) * 0.1).toFixed(1);
 
   return (
@@ -175,9 +173,7 @@ function MenuCard({ item, onAdd, onUpdate, cartQty, onClickCard }) {
 function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty }) {
   if (!itemData) return null;
   const { item, catName } = itemData;
-  const imgSrc = item.image
-    ? (item.image.startsWith('/') ? `http://localhost:5001${item.image}` : item.image)
-    : null;
+  const imgSrc = item.image || null;
   const rating = (4.5 + (item.id % 5) * 0.1).toFixed(1);
   const reviewsCount = 18 + (item.id * 7) % 45;
 

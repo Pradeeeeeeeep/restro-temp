@@ -191,7 +191,7 @@ export default function Home() {
             overflow: 'hidden',
           }}>
             {siteSettings?.cafeLogoUrl
-              ? <img src={`http://localhost:5001${siteSettings.cafeLogoUrl}`} alt="logo"
+              ? <img src={siteSettings.cafeLogoUrl} alt="logo"
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               : <Coffee size={38} color="#fff" />}
           </div>

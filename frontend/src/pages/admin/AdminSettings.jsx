@@ -201,7 +201,7 @@ export default function AdminSettings() {
                   {/* Logo preview */}
                   <div style={{ width: 80, height: 80, borderRadius: 18, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', boxShadow: '0 4px 14px var(--btn-shadow)' }}>
                     {settings.cafeLogoUrl
-                      ? <img src={`http://localhost:5001${settings.cafeLogoUrl}`} alt="logo"
+                      ? <img src={settings.cafeLogoUrl} alt="logo"
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       : <Coffee size={32} color="#fff" />}
                   </div>
