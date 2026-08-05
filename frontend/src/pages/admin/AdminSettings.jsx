@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Star, Link, ToggleLeft, ToggleRight, Save, ExternalLink,
-  Palette, Check, RefreshCw, Pipette, Upload, Image, Edit3, Coffee, Sparkles, Tag, ArrowRight, ShoppingBag, X, Plus, Trash2, Gift, Percent
+  Palette, Check, RefreshCw, Pipette, Upload, Image, Edit3, Coffee, Sparkles, Tag, ArrowRight, ShoppingBag, X, Plus, Trash2, Gift, Percent, Sliders
 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
@@ -98,16 +98,16 @@ const FESTIVAL_SALE_CATEGORIES = [
       'Rakhi Bond of Love Deals',
       'Holi Color Fest Offers',
     ]
-  },
-  {
-    name: 'Milestone & Event Themes',
-    sales: [
-      'Black Friday Bonanza',
-      'Cyber Monday Tech Blowout',
-      'Anniversary Appreciation Sale',
-      'Mid-Year Mega Clearance',
-    ]
   }
+];
+
+const SETTINGS_TABS = [
+  { id: 'all', label: 'All Settings', icon: Sliders },
+  { id: 'branding', label: 'Branding & Info', icon: Edit3 },
+  { id: 'appearance', label: 'Theme & Style', icon: Palette },
+  { id: 'coupons', label: 'Coupons & Offers', icon: Tag },
+  { id: 'festival', label: 'Festival Banners', icon: Sparkles },
+  { id: 'reviews', label: 'Reviews & Social', icon: Star },
 ];
 
 /* ════════════════════════════════════════
@@ -125,6 +125,7 @@ export default function AdminSettings() {
   const [previewTheme, setPreviewTheme] = useState(null);
   const [logoUploading, setLogoUploading] = useState(false);
   const [showPopupPreview, setShowPopupPreview] = useState(false);
+  const [activeCategoryTab, setActiveCategoryTab] = useState('all');
 
   // Coupon management state
   const [coupons, setCoupons] = useState([]);
@@ -311,11 +312,36 @@ export default function AdminSettings() {
 
       <div style={{ maxWidth: 720, margin: '0 auto', padding: '28px 20px', paddingBottom: 60 }}>
         {/* Header */}
-        <div style={{ marginBottom: 28 }}>
+        <div style={{ marginBottom: 20 }}>
           <h1 style={{ fontWeight: 800, fontSize: 24, marginBottom: 4 }}>
-            <span className="gradient-text">Settings</span>
+            <span className="gradient-text">Store Settings</span>
           </h1>
-          <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>Manage your café app appearance & configuration</p>
+          <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>Manage your café app branding, themes, coupons &amp; configurations</p>
+        </div>
+
+        {/* Category Navigation Pills */}
+        <div className="no-scrollbar" style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 24, paddingBottom: 4 }}>
+          {SETTINGS_TABS.map(({ id, label, icon: Icon }) => {
+            const sel = activeCategoryTab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveCategoryTab(id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 99,
+                  fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                  whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.18s',
+                  background: sel ? 'linear-gradient(135deg, #e8901f, #c2700f)' : 'var(--color-card)',
+                  color: sel ? '#ffffff' : 'var(--color-text-secondary)',
+                  border: sel ? 'none' : '1px solid var(--color-border)',
+                  boxShadow: sel ? '0 3px 12px var(--btn-shadow)' : '0 1px 4px var(--card-shadow)',
+                }}
+              >
+                <Icon size={15} /> {label}
+              </button>
+            );
+          })}
         </div>
 
         {loading ? (
@@ -325,473 +351,479 @@ export default function AdminSettings() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-            {/* ════ CAFÉ BRANDING ════ */}
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-              style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Edit3 size={20} color="#fff" />
-                </div>
-                <div>
-                  <p style={{ fontWeight: 800, fontSize: 16 }}>Café Branding</p>
-                  <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Customize your café name and logo shown to customers</p>
-                </div>
-              </div>
-              <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {/* Logo preview + upload */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                  {/* Logo preview */}
-                  <div style={{ width: 80, height: 80, borderRadius: 18, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', boxShadow: '0 4px 14px var(--btn-shadow)' }}>
-                    {settings.cafeLogoUrl
-                      ? <img src={settings.cafeLogoUrl} alt="logo"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <Coffee size={32} color="#fff" />}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Café Logo</p>
-                    <p style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 10 }}>PNG/JPG — shows on the home screen &amp; order pages</p>
-                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'var(--color-surface)', border: '1.5px solid var(--color-border)', cursor: 'pointer', fontWeight: 700, fontSize: 13, fontFamily: 'Outfit', color: 'var(--color-muted)' }}>
-                      {logoUploading ? <div className="spinner" style={{ width: 14, height: 14 }} /> : <Upload size={14} />}
-                      {logoUploading ? 'Uploading…' : 'Upload Logo'}
-                      <input type="file" accept="image/*" style={{ display: 'none' }}
-                        onChange={(e) => uploadLogo(e.target.files[0])} />
-                    </label>
-                    {settings.cafeLogoUrl && (
-                      <button onClick={() => setSettings((s) => ({ ...s, cafeLogoUrl: '' }))}
-                        style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', fontSize: 12, fontFamily: 'Outfit' }}>Remove</button>
-                    )}
-                  </div>
-                </div>
-                {/* Café Name */}
-                <div>
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Café Name</label>
-                  <input className="input-field"
-                    value={settings.cafeName || ''}
-                    onChange={(e) => setSettings((s) => ({ ...s, cafeName: e.target.value }))}
-                    placeholder="e.g. Brew &amp; Bites"
-                    style={{ maxWidth: 340 }} />
-                  <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 5 }}>Shown in the app header and browser tab</p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* ════ FESTIVAL & SALE THEMES ════ */}
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-              style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* ════ 1. CAFÉ BRANDING ════ */}
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'branding') && (
+              <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
                   <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Sparkles size={20} color="#fff" />
+                    <Edit3 size={20} color="#fff" />
                   </div>
                   <div>
-                    <p style={{ fontWeight: 800, fontSize: 16 }}>Festival &amp; Sale Themes</p>
-                    <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Display a floating festival banner card on customer pages</p>
+                    <p style={{ fontWeight: 800, fontSize: 16 }}>Café Branding &amp; Info</p>
+                    <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Customize your café name and logo shown to customers</p>
                   </div>
                 </div>
-                {/* Toggle button */}
-                <button
-                  type="button"
-                  onClick={() => setSettings((s) => ({ ...s, showFestivalBanner: !s.showFestivalBanner }))}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: settings.showFestivalBanner ? 'var(--color-accent)' : 'var(--color-muted)', padding: 0, display: 'flex' }}
-                >
-                  {settings.showFestivalBanner ? <ToggleRight size={36} /> : <ToggleLeft size={36} />}
-                </button>
-              </div>
-
-              <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 18 }}>
-                {/* Banner Live Card Preview */}
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
-                    Live Banner Preview
-                  </label>
-                  {(() => {
-                    const pal = getFestivalPalette(settings.festivalSaleName);
-                    const radius = getCornerRadius(settings.cardCornerStyle);
-                    return (
-                      <div style={{
-                        background: pal.gradient,
-                        color: '#ffffff',
-                        borderRadius: radius, padding: '14px 18px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-                        boxShadow: `0 4px 16px ${pal.accent}40`,
-                        border: `1.5px solid ${pal.border}`,
-                        opacity: settings.showFestivalBanner ? 1 : 0.45,
-                        transition: 'all 0.2s',
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <Sparkles size={18} color="#fff" />
-                          </div>
-                          <div>
-                            <p style={{ fontWeight: 800, fontSize: 14, letterSpacing: '0.2px' }}>
-                              {settings.festivalSaleName || 'Diwali Light-Up Sale'} is going on!
-                            </p>
-                            <p style={{ fontSize: 11, opacity: 0.92, fontWeight: 500 }}>
-                              ORDER NOW &amp; enjoy special offers
-                            </p>
-                          </div>
-                        </div>
-                        <span style={{
-                          background: '#ffffff', color: pal.accent,
-                          fontWeight: 800, fontSize: 11, padding: '6px 12px', borderRadius: 99,
-                          letterSpacing: '0.4px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4
-                        }}>
-                          ORDER NOW <ArrowRight size={12} />
-                        </span>
+                <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {/* Logo preview + upload */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <div style={{ width: 80, height: 80, borderRadius: 18, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', boxShadow: '0 4px 14px var(--btn-shadow)' }}>
+                      {settings.cafeLogoUrl
+                        ? <img src={settings.cafeLogoUrl} alt="logo"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <Coffee size={32} color="#fff" />}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Café Logo</p>
+                      <p style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 10 }}>PNG, JPG or SVG (max 5MB)</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: 'var(--color-surface)', border: '1.5px solid var(--color-border)', cursor: 'pointer', fontWeight: 700, fontSize: 13, fontFamily: 'Outfit', color: 'var(--color-muted)' }}>
+                          {logoUploading ? <div className="spinner" style={{ width: 14, height: 14 }} /> : <Upload size={14} />}
+                          {logoUploading ? 'Uploading…' : 'Upload Logo'}
+                          <input type="file" accept="image/*" style={{ display: 'none' }}
+                            onChange={(e) => uploadLogo(e.target.files[0])} />
+                        </label>
+                        {settings.cafeLogoUrl && (
+                          <button onClick={() => setSettings((s) => ({ ...s, cafeLogoUrl: '' }))}
+                            style={{ marginLeft: 8, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', fontSize: 12, fontFamily: 'Outfit' }}>Remove</button>
+                        )}
                       </div>
-                    );
-                  })()}
-                  
-                  <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
-                    <button
-                      type="button"
-                      onClick={() => setShowPopupPreview(true)}
-                      style={{
-                        background: 'var(--color-surface)', border: '1.5px solid var(--color-border)',
-                        borderRadius: 10, padding: '7px 14px', cursor: 'pointer',
-                        fontFamily: 'Outfit', fontWeight: 700, fontSize: 12, color: 'var(--color-accent)',
-                        display: 'flex', alignItems: 'center', gap: 6
-                      }}
-                    >
-                      <Sparkles size={14} /> Preview Full-Screen Celebration Popup
-                    </button>
+                    </div>
+                  </div>
+                  {/* Café Name */}
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Café Name</label>
+                    <input className="input-field"
+                      value={settings.cafeName || ''}
+                      onChange={(e) => setSettings((s) => ({ ...s, cafeName: e.target.value }))}
+                      placeholder="e.g. Brew &amp; Bites"
+                      style={{ maxWidth: 340 }} />
+                    <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 5 }}>Shown in the app header and browser tab</p>
                   </div>
                 </div>
+              </motion.div>
+            )}
 
-                {/* Custom Sale Name Input */}
-                <div>
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
-                    Active Sale Name
-                  </label>
-                  <input
-                    className="input-field"
-                    value={settings.festivalSaleName || ''}
-                    onChange={(e) => setSettings((s) => ({ ...s, festivalSaleName: e.target.value }))}
-                    placeholder="e.g. Diwali Light-Up Sale"
-                  />
-                </div>
+            {/* ════ 2. THEME & APPEARANCE ════ */}
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'appearance') && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {/* Theme Swatches */}
+                <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                  style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Palette size={20} color="#fff" />
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 800, fontSize: 16 }}>Theme &amp; Appearance</p>
+                      <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Choose a color theme for your customer-facing pages</p>
+                    </div>
+                  </div>
 
-                {/* Card Corner & Shape Style Picker */}
-                <div>
-                  <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
-                    Card Corner &amp; Shape Style
-                  </label>
-                  <p style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 12 }}>
-                    Customize corner curvature for celebration cards &amp; banners
-                  </p>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
-                    {Object.values(CORNER_STYLES).map((corner) => {
-                      const isSelected = (settings.cardCornerStyle || 'rounded-full') === corner.id;
-                      return (
-                        <button
-                          key={corner.id}
-                          type="button"
-                          onClick={() => setSettings((s) => ({ ...s, cardCornerStyle: corner.id }))}
-                          style={{
-                            background: isSelected ? 'var(--color-surface)' : 'var(--color-card)',
-                            border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
-                            borderRadius: 14, padding: '12px 10px', cursor: 'pointer',
-                            textAlign: 'center', transition: 'all 0.15s',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                          }}
+                  <div style={{ padding: 20 }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 14 }}>
+                      Hover to preview · Click to select
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
+                      {THEME_IDS.map((id) => (
+                        <div key={id}
+                          onMouseEnter={() => handleSwatchHover(id)}
+                          onMouseLeave={handleSwatchLeave}
                         >
-                          {/* Visual box preview of corner radius */}
-                          <div style={{
-                            width: 40, height: 26, background: 'var(--color-accent)',
-                            borderRadius: corner.radius, opacity: isSelected ? 1 : 0.5,
-                            transition: 'all 0.15s'
-                          }} />
-                          <div>
-                            <p style={{ fontWeight: 800, fontSize: 12, color: isSelected ? 'var(--color-accent)' : 'var(--color-text)' }}>
-                              {corner.name}
-                            </p>
-                            <p style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: 2 }}>
-                              {corner.desc}
-                            </p>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                          <ThemeSwatch
+                            theme={id}
+                            selected={settings.theme === id}
+                            onClick={() => selectTheme(id)}
+                          />
+                        </div>
+                      ))}
+                    </div>
 
-                {/* Category Presets Selector */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    Select a Sale Theme Preset
-                  </p>
+                    <AnimatePresence>
+                      {previewTheme && (
+                        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                          style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 7, background: 'var(--color-accent-bg)', border: '1px solid var(--color-accent-border)', borderRadius: 99, padding: '5px 12px', fontSize: 12, color: 'var(--color-accent-dark)', fontWeight: 600 }}>
+                          <span style={{ width: 7, height: 7, borderRadius: 99, background: 'var(--color-accent)', display: 'inline-block' }} />
+                          Previewing {THEMES[previewTheme]?.name}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
 
-                  {FESTIVAL_SALE_CATEGORIES.map((cat) => (
-                    <div key={cat.name} style={{ background: 'var(--color-surface)', borderRadius: 14, padding: 14, border: '1px solid var(--color-border)' }}>
-                      <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: 'var(--color-text)' }}>
-                        {cat.name}
+                    {/* Menu Item Card Corner Style Customization */}
+                    <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--color-border)' }}>
+                      <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 4, color: 'var(--color-text)' }}>
+                        Menu Item Card Customization
                       </p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-                        {cat.sales.map((saleName) => {
-                          const isSelected = settings.festivalSaleName === saleName;
-                          const pal = getFestivalPalette(saleName);
+                      <p style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 14 }}>
+                        Customize corner shape &amp; curvature specifically for your food &amp; beverage menu cards
+                      </p>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
+                        {Object.values(CORNER_STYLES).map((corner) => {
+                          const isSelected = (settings.menuItemCornerStyle || 'rounded-md') === corner.id;
                           return (
                             <button
-                              key={saleName}
+                              key={`menu-${corner.id}`}
                               type="button"
-                              onClick={() => setSettings((s) => ({ ...s, festivalSaleName: saleName, showFestivalBanner: true }))}
+                              onClick={() => setSettings((s) => ({ ...s, menuItemCornerStyle: corner.id }))}
                               style={{
-                                padding: '6px 13px', borderRadius: 99, border: 'none', cursor: 'pointer',
-                                fontFamily: 'Outfit', fontWeight: 700, fontSize: 12,
-                                transition: 'all 0.15s',
-                                background: isSelected ? pal.accent : 'var(--color-card)',
-                                color: isSelected ? '#ffffff' : 'var(--color-text-secondary)',
-                                border: isSelected ? 'none' : '1px solid var(--color-border)',
-                                boxShadow: isSelected ? `0 3px 10px ${pal.accent}40` : 'none',
+                                background: isSelected ? 'var(--color-surface)' : 'var(--color-card)',
+                                border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+                                borderRadius: 14, padding: '12px 10px', cursor: 'pointer',
+                                textAlign: 'center', transition: 'all 0.15s',
+                                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
                               }}
                             >
-                              {isSelected ? '✓ ' : ''}{saleName}
+                              <div style={{
+                                width: 42, height: 28, background: 'var(--color-accent)',
+                                borderRadius: corner.radius, opacity: isSelected ? 1 : 0.5,
+                                transition: 'all 0.15s',
+                                boxShadow: isSelected ? '0 2px 8px var(--btn-shadow)' : 'none'
+                              }} />
+                              <div>
+                                <p style={{ fontWeight: 800, fontSize: 12, color: isSelected ? 'var(--color-accent)' : 'var(--color-text)' }}>
+                                  {corner.name}
+                                </p>
+                                <p style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: 2 }}>
+                                  {corner.desc}
+                                </p>
+                              </div>
                             </button>
                           );
                         })}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
+                  </div>
+                </motion.div>
 
-            {/* ════ THEME PICKER ════ */}
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-              style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
-              {/* Section header */}
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Palette size={20} color="#fff" />
-                </div>
-                <div>
-                  <p style={{ fontWeight: 800, fontSize: 16 }}>Appearance</p>
-                  <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Choose a theme for your customer-facing pages</p>
-                </div>
-              </div>
-
-              <div style={{ padding: 20 }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 14 }}>
-                  Hover to preview · Click to select
-                </p>
-                {/* 5-column grid of swatches */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 12 }}>
-                  {THEME_IDS.map((id) => (
-                    <div key={id}
-                      onMouseEnter={() => handleSwatchHover(id)}
-                      onMouseLeave={handleSwatchLeave}
-                    >
-                      <ThemeSwatch
-                        theme={id}
-                        selected={settings.theme === id}
-                        onClick={() => selectTheme(id)}
-                      />
+                {/* Custom Colors */}
+                <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+                  style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
+                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Pipette size={20} color="#fff" />
+                      </div>
+                      <div>
+                        <p style={{ fontWeight: 800, fontSize: 16 }}>Custom Palette Colours</p>
+                        <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Fine-tune the selected theme colours</p>
+                      </div>
                     </div>
-                  ))}
+                    {Object.keys(cc).length > 0 && (
+                      <button onClick={resetColors}
+                        style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', background: 'none', border: '1px solid var(--color-border)', borderRadius: 99, padding: '5px 12px', cursor: 'pointer' }}>
+                        <RefreshCw size={12} /> Reset
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <ColorRow label="Accent (light)" desc="Button highlights, icons" varName="--color-accent-light" value={effectiveAccent} onChange={handleColorChange} />
+                    <ColorRow label="Accent (dark)"  desc="Text, deep highlights"   varName="--color-accent"       value={effectivePrimary} onChange={handleColorChange} />
+                    <ColorRow label="Background"      desc="Page background colour"  varName="--color-bg"           value={effectiveBg}     onChange={handleColorChange} />
+                    <ColorRow label="Card"            desc="Card / panel background" varName="--color-card"         value={effectiveCard}   onChange={handleColorChange} />
+                    <ColorRow label="Text"            desc="Primary text colour"     varName="--color-text"         value={effectiveText}   onChange={handleColorChange} />
+                  </div>
+                </motion.div>
+              </div>
+            )}
+
+            {/* ════ 3. COUPON CODES & DISCOUNTS ════ */}
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'coupons') && (
+              <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Tag size={20} color="#fff" />
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 800, fontSize: 16 }}>Coupon Codes &amp; Offers</p>
+                      <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Create promo codes with minimum purchase limits &amp; discount rules</p>
+                    </div>
+                  </div>
+                  <button onClick={openAddCoupon} className="btn-primary" style={{ padding: '8px 14px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Plus size={14} /> Add Coupon
+                  </button>
                 </div>
 
-                {/* Live preview badge */}
-                <AnimatePresence>
-                  {previewTheme && (
-                    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                      style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 7, background: 'var(--color-accent-bg)', border: '1px solid var(--color-accent-border)', borderRadius: 99, padding: '5px 12px', fontSize: 12, color: 'var(--color-accent-dark)', fontWeight: 600 }}>
-                      <span style={{ width: 7, height: 7, borderRadius: 99, background: 'var(--color-accent)', display: 'inline-block' }} />
-                      Previewing {THEMES[previewTheme]?.name}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* ── Menu Item Card Corner Style Customization ── */}
-                <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--color-border)' }}>
-                  <p style={{ fontWeight: 800, fontSize: 15, marginBottom: 4, color: 'var(--color-text)' }}>
-                    Menu Item Card Customization
-                  </p>
-                  <p style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 14 }}>
-                    Customize corner shape &amp; curvature specifically for your food &amp; beverage menu cards
-                  </p>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
-                    {Object.values(CORNER_STYLES).map((corner) => {
-                      const isSelected = (settings.menuItemCornerStyle || 'rounded-md') === corner.id;
-                      return (
-                        <button
-                          key={`menu-${corner.id}`}
-                          type="button"
-                          onClick={() => setSettings((s) => ({ ...s, menuItemCornerStyle: corner.id }))}
-                          style={{
-                            background: isSelected ? 'var(--color-surface)' : 'var(--color-card)',
-                            border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
-                            borderRadius: 14, padding: '12px 10px', cursor: 'pointer',
-                            textAlign: 'center', transition: 'all 0.15s',
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                          }}
-                        >
-                          {/* Visual box preview */}
-                          <div style={{
-                            width: 42, height: 28, background: 'var(--color-accent)',
-                            borderRadius: corner.radius, opacity: isSelected ? 1 : 0.5,
-                            transition: 'all 0.15s',
-                            boxShadow: isSelected ? '0 2px 8px var(--btn-shadow)' : 'none'
-                          }} />
-                          <div>
-                            <p style={{ fontWeight: 800, fontSize: 12, color: isSelected ? 'var(--color-accent)' : 'var(--color-text)' }}>
-                              {corner.name}
-                            </p>
-                            <p style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: 2 }}>
-                              {corner.desc}
-                            </p>
+                <div style={{ padding: 20 }}>
+                  {coupons.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--color-muted)' }}>
+                      <Gift size={36} style={{ margin: '0 auto 8px', display: 'block' }} />
+                      <p style={{ fontWeight: 600 }}>No coupon codes added yet</p>
+                      <button onClick={openAddCoupon} className="btn-primary" style={{ marginTop: 12, padding: '8px 16px', fontSize: 13 }}>
+                        + Create your first coupon
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {coupons.map((c) => (
+                        <div key={c.id} style={{ padding: '12px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, opacity: c.active ? 1 : 0.6 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
+                            <span style={{ fontWeight: 800, fontSize: 14, background: 'var(--color-accent-bg)', color: 'var(--color-accent-dark)', border: '1px solid var(--color-accent-border)', padding: '4px 10px', borderRadius: 8 }}>
+                              {c.code}
+                            </span>
+                            <div>
+                              <p style={{ fontWeight: 700, fontSize: 13 }}>
+                                {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `Flat ₹${c.discountValue} OFF`}
+                                {c.maxDiscount ? ` (Max ₹${c.maxDiscount})` : ''}
+                              </p>
+                              <p style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                                {c.minOrderAmount > 0 ? `Min purchase limit: ₹${c.minOrderAmount}` : 'No min limit'}
+                              </p>
+                            </div>
                           </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
 
-            {/* ════ CUSTOM COLOURS ════ */}
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-              style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Pipette size={20} color="#fff" />
-                  </div>
-                  <div>
-                    <p style={{ fontWeight: 800, fontSize: 16 }}>Custom Colours</p>
-                    <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Fine-tune the selected theme</p>
-                  </div>
-                </div>
-                {Object.keys(cc).length > 0 && (
-                  <button onClick={resetColors}
-                    style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', background: 'none', border: '1px solid var(--color-border)', borderRadius: 99, padding: '5px 12px', cursor: 'pointer' }}>
-                    <RefreshCw size={12} /> Reset
-                  </button>
-                )}
-              </div>
-
-              <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <ColorRow label="Accent (light)" desc="Button highlights, icons" varName="--color-accent-light" value={effectiveAccent} onChange={handleColorChange} />
-                <ColorRow label="Accent (dark)"  desc="Text, deep highlights"   varName="--color-accent"       value={effectivePrimary} onChange={handleColorChange} />
-                <ColorRow label="Background"      desc="Page background colour"  varName="--color-bg"           value={effectiveBg}     onChange={handleColorChange} />
-                <ColorRow label="Card"            desc="Card / panel background" varName="--color-card"         value={effectiveCard}   onChange={handleColorChange} />
-                <ColorRow label="Text"            desc="Primary text colour"     varName="--color-text"         value={effectiveText}   onChange={handleColorChange} />
-              </div>
-            </motion.div>
-
-            {/* ════ GOOGLE REVIEWS ════ */}
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Star size={20} color="#fff" fill="#fff" />
-                </div>
-                <div>
-                  <p style={{ fontWeight: 800, fontSize: 16 }}>Google Reviews</p>
-                  <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Show a review banner on customer pages</p>
-                </div>
-              </div>
-              <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {/* Toggle */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'var(--color-surface)', borderRadius: 12, border: '1px solid var(--color-border)' }}>
-                  <div>
-                    <p style={{ fontWeight: 700, fontSize: 14 }}>Show Review Banner</p>
-                    <p style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>Displays on Home & Order Status pages</p>
-                  </div>
-                  <button onClick={() => setSettings((s) => ({ ...s, showReviewBanner: !s.showReviewBanner }))}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: settings.showReviewBanner ? '#15803d' : 'var(--color-muted)' }}>
-                    {settings.showReviewBanner ? <ToggleRight size={34} /> : <ToggleLeft size={34} />}
-                  </button>
-                </div>
-                {/* Link input */}
-                <div>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
-                    <Link size={12} /> Google Review Link
-                  </label>
-                  <input className="input-field" type="url"
-                    placeholder="https://g.page/r/YOUR-PLACE-ID/review"
-                    value={settings.googleReviewLink}
-                    onChange={(e) => setSettings((s) => ({ ...s, googleReviewLink: e.target.value }))}
-                  />
-                  {settings.googleReviewLink && isValidUrl(settings.googleReviewLink) && (
-                    <a href={settings.googleReviewLink} target="_blank" rel="noopener noreferrer"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8, fontSize: 12, color: 'var(--color-accent)', fontWeight: 600, textDecoration: 'none' }}>
-                      <ExternalLink size={12} /> Test link →
-                    </a>
-                  )}
-                  <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-                    Get from <strong>Google Business Profile</strong> → Get more reviews → Copy link
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* ════ COUPON CODES MANAGEMENT ════ */}
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-              style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Tag size={20} color="#fff" />
-                  </div>
-                  <div>
-                    <p style={{ fontWeight: 800, fontSize: 16 }}>Coupon Codes &amp; Discounts</p>
-                    <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Create promo codes with minimum purchase limits &amp; discount rules</p>
-                  </div>
-                </div>
-                <button onClick={openAddCoupon} className="btn-primary" style={{ padding: '8px 14px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Plus size={14} /> Add Coupon
-                </button>
-              </div>
-
-              <div style={{ padding: 20 }}>
-                {coupons.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--color-muted)' }}>
-                    <Gift size={36} style={{ margin: '0 auto 8px', display: 'block' }} />
-                    <p style={{ fontWeight: 600 }}>No coupon codes added yet</p>
-                    <button onClick={openAddCoupon} className="btn-primary" style={{ marginTop: 12, padding: '8px 16px', fontSize: 13 }}>
-                      + Create your first coupon
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {coupons.map((c) => (
-                      <div key={c.id} style={{ padding: '12px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, opacity: c.active ? 1 : 0.6 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', flex: 1, minWidth: 0 }}>
-                          <span style={{ fontWeight: 800, fontSize: 14, background: 'var(--color-accent-bg)', color: 'var(--color-accent-dark)', border: '1px solid var(--color-accent-border)', padding: '4px 10px', borderRadius: 8 }}>
-                            {c.code}
-                          </span>
-                          <div>
-                            <p style={{ fontWeight: 700, fontSize: 13 }}>
-                              {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `Flat ₹${c.discountValue} OFF`}
-                              {c.maxDiscount ? ` (Max ₹${c.maxDiscount})` : ''}
-                            </p>
-                            <p style={{ fontSize: 11, color: 'var(--color-muted)' }}>
-                              {c.minOrderAmount > 0 ? `Min purchase limit: ₹${c.minOrderAmount}` : 'No min limit'}
-                            </p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                            <button onClick={() => toggleCouponActive(c)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: c.active ? '#15803d' : 'var(--color-muted)', padding: 0 }} title={c.active ? 'Deactivate coupon' : 'Activate coupon'}>
+                              {c.active ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
+                            </button>
+                            <button onClick={() => openEditCoupon(c)} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 8, padding: 6, cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex' }}>
+                              <Edit3 size={14} />
+                            </button>
+                            <button onClick={() => deleteCoupon(c)} disabled={deletingCouponId === c.id} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: 6, cursor: 'pointer', color: '#dc2626', display: 'flex' }}>
+                              {deletingCouponId === c.id ? <div className="spinner" style={{ width: 14, height: 14 }} /> : <Trash2 size={14} />}
+                            </button>
                           </div>
                         </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                          <button onClick={() => toggleCouponActive(c)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: c.active ? '#15803d' : 'var(--color-muted)', padding: 0 }} title={c.active ? 'Deactivate coupon' : 'Activate coupon'}>
-                            {c.active ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
+            {/* ════ 4. FESTIVAL & SALE BANNERS ════ */}
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'festival') && (
+              <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Sparkles size={20} color="#fff" />
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 800, fontSize: 16 }}>Festival &amp; Sale Banners</p>
+                      <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Display a floating festival banner card on customer pages</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSettings((s) => ({ ...s, showFestivalBanner: !s.showFestivalBanner }))}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: settings.showFestivalBanner ? 'var(--color-accent)' : 'var(--color-muted)', padding: 0, display: 'flex' }}
+                  >
+                    {settings.showFestivalBanner ? <ToggleRight size={36} /> : <ToggleLeft size={36} />}
+                  </button>
+                </div>
+
+                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 18 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+                      Live Banner Preview
+                    </label>
+                    {(() => {
+                      const pal = getFestivalPalette(settings.festivalSaleName);
+                      const radius = getCornerRadius(settings.cardCornerStyle);
+                      return (
+                        <div style={{
+                          background: pal.gradient,
+                          color: '#ffffff',
+                          borderRadius: radius, padding: '14px 18px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                          boxShadow: `0 4px 16px ${pal.accent}40`,
+                          border: `1.5px solid ${pal.border}`,
+                          opacity: settings.showFestivalBanner ? 1 : 0.45,
+                          transition: 'all 0.2s',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <Sparkles size={18} color="#fff" />
+                            </div>
+                            <div>
+                              <p style={{ fontWeight: 800, fontSize: 14, letterSpacing: '0.2px' }}>
+                                {settings.festivalSaleName || 'Diwali Light-Up Sale'} is going on!
+                              </p>
+                              <p style={{ fontSize: 11, opacity: 0.92, fontWeight: 500 }}>
+                                ORDER NOW &amp; enjoy special offers
+                              </p>
+                            </div>
+                          </div>
+                          <span style={{
+                            background: '#ffffff', color: pal.accent,
+                            fontWeight: 800, fontSize: 11, padding: '6px 12px', borderRadius: 99,
+                            letterSpacing: '0.4px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4
+                          }}>
+                            ORDER NOW <ArrowRight size={12} />
+                          </span>
+                        </div>
+                      );
+                    })()}
+                    
+                    <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowPopupPreview(true)}
+                        style={{
+                          background: 'var(--color-surface)', border: '1.5px solid var(--color-border)',
+                          borderRadius: 10, padding: '7px 14px', cursor: 'pointer',
+                          fontFamily: 'Outfit', fontWeight: 700, fontSize: 12, color: 'var(--color-accent)',
+                          display: 'flex', alignItems: 'center', gap: 6
+                        }}
+                      >
+                        <Sparkles size={14} /> Preview Full-Screen Celebration Popup
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
+                      Active Sale Name
+                    </label>
+                    <input
+                      className="input-field"
+                      value={settings.festivalSaleName || ''}
+                      onChange={(e) => setSettings((s) => ({ ...s, festivalSaleName: e.target.value }))}
+                      placeholder="e.g. Diwali Light-Up Sale"
+                    />
+                  </div>
+
+                  {/* Card Corner Style */}
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
+                      Card Corner &amp; Shape Style
+                    </label>
+                    <p style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 12 }}>
+                      Customize corner curvature for celebration cards &amp; banners
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
+                      {Object.values(CORNER_STYLES).map((corner) => {
+                        const isSelected = (settings.cardCornerStyle || 'rounded-full') === corner.id;
+                        return (
+                          <button
+                            key={corner.id}
+                            type="button"
+                            onClick={() => setSettings((s) => ({ ...s, cardCornerStyle: corner.id }))}
+                            style={{
+                              background: isSelected ? 'var(--color-surface)' : 'var(--color-card)',
+                              border: isSelected ? '2px solid var(--color-accent)' : '1px solid var(--color-border)',
+                              borderRadius: 14, padding: '12px 10px', cursor: 'pointer',
+                              textAlign: 'center', transition: 'all 0.15s',
+                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                            }}
+                          >
+                            <div style={{
+                              width: 40, height: 26, background: 'var(--color-accent)',
+                              borderRadius: corner.radius, opacity: isSelected ? 1 : 0.5,
+                              transition: 'all 0.15s'
+                            }} />
+                            <div>
+                              <p style={{ fontWeight: 800, fontSize: 12, color: isSelected ? 'var(--color-accent)' : 'var(--color-text)' }}>
+                                {corner.name}
+                              </p>
+                              <p style={{ fontSize: 10, color: 'var(--color-muted)', marginTop: 2 }}>
+                                {corner.desc}
+                              </p>
+                            </div>
                           </button>
-                          <button onClick={() => openEditCoupon(c)} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 8, padding: 6, cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex' }}>
-                            <Edit3 size={14} />
-                          </button>
-                          <button onClick={() => deleteCoupon(c)} disabled={deletingCouponId === c.id} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: 6, cursor: 'pointer', color: '#dc2626', display: 'flex' }}>
-                            {deletingCouponId === c.id ? <div className="spinner" style={{ width: 14, height: 14 }} /> : <Trash2 size={14} />}
-                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Festival Presets */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Select a Sale Theme Preset
+                    </p>
+
+                    {FESTIVAL_SALE_CATEGORIES.map((cat) => (
+                      <div key={cat.name} style={{ background: 'var(--color-surface)', borderRadius: 14, padding: 14, border: '1px solid var(--color-border)' }}>
+                        <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: 'var(--color-text)' }}>
+                          {cat.name}
+                        </p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                          {cat.sales.map((saleName) => {
+                            const isSelected = settings.festivalSaleName === saleName;
+                            const pal = getFestivalPalette(saleName);
+                            return (
+                              <button
+                                key={saleName}
+                                type="button"
+                                onClick={() => setSettings((s) => ({ ...s, festivalSaleName: saleName, showFestivalBanner: true }))}
+                                style={{
+                                  padding: '6px 13px', borderRadius: 99, border: 'none', cursor: 'pointer',
+                                  fontFamily: 'Outfit', fontWeight: 700, fontSize: 12,
+                                  transition: 'all 0.15s',
+                                  background: isSelected ? pal.accent : 'var(--color-card)',
+                                  color: isSelected ? '#ffffff' : 'var(--color-text-secondary)',
+                                  border: isSelected ? 'none' : '1px solid var(--color-border)',
+                                  boxShadow: isSelected ? `0 3px 10px ${pal.accent}40` : 'none',
+                                }}
+                              >
+                                {isSelected ? '✓ ' : ''}{saleName}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
                   </div>
-                )}
-              </div>
-            </motion.div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ════ 5. GOOGLE REVIEWS & SOCIAL ════ */}
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'reviews') && (
+              <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Star size={20} color="#fff" fill="#fff" />
+                  </div>
+                  <div>
+                    <p style={{ fontWeight: 800, fontSize: 16 }}>Google Reviews &amp; Ratings</p>
+                    <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Show a review banner on customer pages</p>
+                  </div>
+                </div>
+                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'var(--color-surface)', borderRadius: 12, border: '1px solid var(--color-border)' }}>
+                    <div>
+                      <p style={{ fontWeight: 700, fontSize: 14 }}>Show Review Banner</p>
+                      <p style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>Displays on Home &amp; Order Status pages</p>
+                    </div>
+                    <button onClick={() => setSettings((s) => ({ ...s, showReviewBanner: !s.showReviewBanner }))}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: settings.showReviewBanner ? '#15803d' : 'var(--color-muted)' }}>
+                      {settings.showReviewBanner ? <ToggleRight size={34} /> : <ToggleLeft size={34} />}
+                    </button>
+                  </div>
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+                      <Link size={12} /> Google Review Link
+                    </label>
+                    <input className="input-field" type="url"
+                      placeholder="https://g.page/r/YOUR-PLACE-ID/review"
+                      value={settings.googleReviewLink}
+                      onChange={(e) => setSettings((s) => ({ ...s, googleReviewLink: e.target.value }))}
+                    />
+                    {settings.googleReviewLink && isValidUrl(settings.googleReviewLink) && (
+                      <a href={settings.googleReviewLink} target="_blank" rel="noopener noreferrer"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8, fontSize: 12, color: 'var(--color-accent)', fontWeight: 600, textDecoration: 'none' }}>
+                        <ExternalLink size={12} /> Test link →
+                      </a>
+                    )}
+                    <p style={{ marginTop: 8, fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+                      Get from <strong>Google Business Profile</strong> → Get more reviews → Copy link
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
           </div>
         )}
-        {/* ── Save Settings Button Floating Bar ── */}
+
+        {/* Save Settings Button Floating Bar */}
         <div style={{ position: 'sticky', bottom: 20, marginTop: 32, zIndex: 40, display: 'flex', justifyContent: 'center' }}>
           <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
             onClick={save} disabled={saving}
@@ -840,7 +872,7 @@ export default function AdminSettings() {
         })()}
       </AnimatePresence>
 
-      {/* ── Add / Edit Coupon Modal ── */}
+      {/* Add / Edit Coupon Modal */}
       <AnimatePresence>
         {showCouponModal && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
