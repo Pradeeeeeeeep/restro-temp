@@ -11,9 +11,11 @@ import AdminOrders from './pages/admin/AdminOrders';
 import AdminMenu from './pages/admin/AdminMenu';
 import AdminSettings from './pages/admin/AdminSettings';
 import ProtectedRoute from './components/ProtectedRoute';
+import { ThemeProvider } from './theme/ThemeProvider';
 
 export default function App() {
   return (
+    <ThemeProvider>
     <BrowserRouter>
       <Toaster
         position="top-center"
@@ -48,5 +50,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </ThemeProvider>
   );
 }
