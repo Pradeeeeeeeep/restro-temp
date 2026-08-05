@@ -562,7 +562,7 @@ export default function AdminSettings() {
                         Remote Controller Simulator (Test External Site Change)
                       </p>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                        {['shopify-crave', 'warm-cafe', 'midnight', 'clean-pro', 'forest', 'sweet-pink'].map((tId) => (
+                        {['shopify-crave', 'neo-brutalism', 'warm-cafe', 'midnight', 'clean-pro', 'forest', 'sweet-pink'].map((tId) => (
                           <button
                             key={`remote-${tId}`}
                             type="button"

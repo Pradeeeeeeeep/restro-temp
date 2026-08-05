@@ -187,6 +187,37 @@ export const THEMES = {
       '--btn-shadow':          'rgba(255,77,46,0.38)',
     },
   },
+
+  'neo-brutalism': {
+    id: 'neo-brutalism',
+    name: 'Neo Brutalism',
+    desc: 'High-contrast pop art style',
+    dark: false,
+    preview: { bg: '#fef9ef', accent: '#4361ee', surface: '#ffde59', text: '#000000' },
+    vars: {
+      '--color-bg':            '#fef9ef',
+      '--color-surface':       '#ffde59',
+      '--color-card':          '#ffffff',
+      '--color-card-hover':    '#fff5cb',
+      '--color-border':        '#000000',
+      '--color-border-strong': '#000000',
+      '--color-accent':        '#4361ee',
+      '--color-accent-dark':   '#3a0ca3',
+      '--color-accent-light':  '#4cc9f0',
+      '--color-accent-bg':     '#eef2ff',
+      '--color-accent-border': '#000000',
+      '--color-text':          '#000000',
+      '--color-text-secondary':'#111111',
+      '--color-muted':         '#444444',
+      '--color-muted-light':   '#666666',
+      '--glass-bg':            'rgba(254,249,239,0.95)',
+      '--shimmer-from':        '#ffde59',
+      '--shimmer-mid':         '#fef9ef',
+      '--focus-ring':          'rgba(67,97,238,0.30)',
+      '--card-shadow':         'rgba(0,0,0,1)',
+      '--btn-shadow':          'rgba(0,0,0,1)',
+    },
+  },
 };
 
 export const THEME_IDS = Object.keys(THEMES);

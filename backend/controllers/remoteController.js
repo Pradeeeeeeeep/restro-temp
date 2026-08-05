@@ -31,7 +31,7 @@ const getRemoteThemeConfig = (req, res) => {
     festivalSaleName: settings.festivalSaleName || 'Diwali Light-Up Sale',
     cardCornerStyle: settings.cardCornerStyle || 'rounded-full',
     menuItemCornerStyle: settings.menuItemCornerStyle || 'rounded-md',
-    allowedThemes: ['warm-cafe', 'midnight', 'clean-pro', 'forest', 'sweet-pink', 'shopify-crave'],
+    allowedThemes: ['warm-cafe', 'midnight', 'clean-pro', 'forest', 'sweet-pink', 'shopify-crave', 'neo-brutalism'],
     remoteControlActive: true,
   });
 };
@@ -55,7 +55,7 @@ const updateRemoteThemeConfig = (req, res) => {
       menuItemCornerStyle,
     } = req.body;
 
-    const allowedThemes = ['warm-cafe', 'midnight', 'clean-pro', 'forest', 'sweet-pink', 'shopify-crave'];
+    const allowedThemes = ['warm-cafe', 'midnight', 'clean-pro', 'forest', 'sweet-pink', 'shopify-crave', 'neo-brutalism'];
 
     if (theme && !allowedThemes.includes(theme)) {
       return res.status(400).json({

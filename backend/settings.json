@@ -5,8 +5,8 @@
   "showReviewBanner": true,
   "showFestivalBanner": true,
   "festivalSaleName": "Holi",
-  "theme": "clean-pro",
+  "theme": "shopify-crave",
   "customColors": {},
   "cardCornerStyle": "rounded-md",
-  "menuItemCornerStyle": "sharp"
+  "menuItemCornerStyle": "rounded-md"
 }
