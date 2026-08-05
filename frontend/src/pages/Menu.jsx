@@ -221,9 +221,10 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           style={{
-            width: '100%', maxWidth: 420, maxHeight: '70vh', overflowY: 'auto',
+            width: '100%', maxWidth: 420, maxHeight: '82vh', overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
             background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: cardRadius,
-            boxShadow: '0 24px 64px rgba(0,0,0,0.22)', overflow: 'hidden', flexShrink: 0
+            boxShadow: '0 24px 64px rgba(0,0,0,0.25)', flexShrink: 0
           }}>
           {/* Header Image */}
           <div style={{ position: 'relative', height: 190, background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -341,8 +342,13 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
               );
             })()}
 
-            {/* Action Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, paddingTop: 10, borderTop: '1px solid var(--color-border)' }}>
+            {/* Action Bar — Sticky at bottom of card */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              position: 'sticky', bottom: 0, background: 'var(--color-card)',
+              marginTop: 4, paddingTop: 12, paddingBottom: 4,
+              borderTop: '1px solid var(--color-border)', zIndex: 10
+            }}>
               <div>
                 <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Total</p>
                 <p style={{ fontSize: 18, fontWeight: 800, color: 'var(--color-text)' }}>₹{((cartQty || 1) * unitPrice).toFixed(0)}</p>
