@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Star, Link, ToggleLeft, ToggleRight, Save, ExternalLink,
-  Palette, Check, RefreshCw, Pipette, Upload, Image, Edit3, Coffee, Sparkles, Tag, ArrowRight
+  Palette, Check, RefreshCw, Pipette, Upload, Image, Edit3, Coffee, Sparkles, Tag, ArrowRight, ShoppingBag, X
 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
@@ -123,6 +123,7 @@ export default function AdminSettings() {
   const [saving, setSaving]       = useState(false);
   const [previewTheme, setPreviewTheme] = useState(null);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [showPopupPreview, setShowPopupPreview] = useState(false);
 
   useEffect(() => {
     api.get('/admin/settings')
@@ -337,6 +338,21 @@ export default function AdminSettings() {
                       ORDER NOW <ArrowRight size={12} />
                     </span>
                   </div>
+                  
+                  <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowPopupPreview(true)}
+                      style={{
+                        background: 'var(--color-surface)', border: '1.5px solid var(--color-border)',
+                        borderRadius: 10, padding: '7px 14px', cursor: 'pointer',
+                        fontFamily: 'Outfit', fontWeight: 700, fontSize: 12, color: 'var(--color-accent)',
+                        display: 'flex', alignItems: 'center', gap: 6
+                      }}
+                    >
+                      <Sparkles size={14} /> Preview Full-Screen Celebration Popup
+                    </button>
+                  </div>
                 </div>
 
                 {/* Custom Sale Name Input */}
@@ -515,27 +531,52 @@ export default function AdminSettings() {
                 </div>
               </div>
             </motion.div>
-
-            {/* ── Save button ── */}
-            <motion.button
-              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-              whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={save} disabled={saving}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-                padding: '15px 24px', borderRadius: 14, border: 'none',
-                cursor: saving ? 'not-allowed' : 'pointer',
-                background: 'var(--color-accent)',
-                color: '#fff', fontFamily: 'Outfit', fontWeight: 800, fontSize: 16,
-                boxShadow: '0 4px 16px var(--btn-shadow)',
-              }}>
-              {saving
-                ? <><div className="spinner" style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} /> Saving…</>
-                : <><Save size={18} /> Save All Settings</>}
-            </motion.button>
           </div>
         )}
+        {/* ── Save Settings Button Floating Bar ── */}
+        <div style={{ position: 'sticky', bottom: 20, marginTop: 32, zIndex: 40, display: 'flex', justifyContent: 'center' }}>
+          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+            onClick={save} disabled={saving}
+            className="btn-primary"
+            style={{
+              padding: '14px 36px', fontSize: 16, display: 'flex', alignItems: 'center', gap: 8,
+              boxShadow: '0 8px 24px var(--btn-shadow)',
+            }}>
+            {saving ? <div className="spinner" style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} /> : <Save size={18} />}
+            {saving ? 'Saving...' : 'Save All Settings'}
+          </motion.button>
+        </div>
       </div>
+
+      {/* Full-Screen Popup Preview Modal */}
+      <AnimatePresence>
+        {showPopupPreview && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setShowPopupPreview(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(10px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }}
+              style={{ width: '100%', maxWidth: 420, background: 'var(--color-card)', border: '2px solid var(--color-accent-border)', borderRadius: 32, boxShadow: '0 32px 80px rgba(0,0,0,0.4)', overflow: 'hidden', position: 'relative' }}>
+              <div style={{ position: 'relative', background: 'var(--color-accent)', padding: '36px 24px 28px', textAlign: 'center', color: '#fff', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 18, left: -34, background: '#fff', color: 'var(--color-accent)', transform: 'rotate(-45deg)', padding: '4px 38px', fontSize: 10, fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase' }}>LIMITED OFFER</div>
+                <button onClick={() => setShowPopupPreview(false)} style={{ position: 'absolute', top: 14, right: 14, width: 36, height: 36, borderRadius: 99, background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={18} /></button>
+                <div style={{ width: 76, height: 76, borderRadius: 24, background: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.4)', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Sparkles size={40} color="#fff" /></div>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.35)', padding: '4px 14px', borderRadius: 99, fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 10 }}>🎉 CELEBRATING FESTIVAL SALE 🎉</div>
+                <h2 style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.2, marginBottom: 6 }}>{settings.festivalSaleName || 'Diwali Light-Up Sale'}</h2>
+                <p style={{ fontSize: 14, opacity: 0.92, fontWeight: 600 }}>is going on right now!</p>
+              </div>
+              <div style={{ padding: '24px 24px 28px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ background: 'var(--color-surface)', borderRadius: 18, padding: 16, border: '1px solid var(--color-border)' }}>
+                  <p style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-text)', marginBottom: 4 }}>Special Festival Discounts Applied!</p>
+                  <p style={{ fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>Order your favorite food &amp; drinks today and celebrate with festive deals.</p>
+                </div>
+                <button onClick={() => setShowPopupPreview(false)} className="btn-primary" style={{ width: '100%', padding: '16px 24px', fontSize: 17, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16 }}><ShoppingBag size={20} /><span>ORDER NOW</span><ArrowRight size={18} /></button>
+                <button onClick={() => setShowPopupPreview(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', fontSize: 13, fontWeight: 600, fontFamily: 'Outfit', textDecoration: 'underline' }}>Close preview</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

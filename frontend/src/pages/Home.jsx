@@ -98,6 +98,9 @@ export default function Home() {
   const [reviewDismissed, setReviewDismissed] = useState(() =>
     localStorage.getItem('review_dismissed') === 'true'
   );
+  const [festivalModalDismissed, setFestivalModalDismissed] = useState(() =>
+    sessionStorage.getItem('festival_modal_dismissed') === 'true'
+  );
   const reviewSettings = siteSettings;
 
   const navigate = useNavigate();
@@ -467,6 +470,172 @@ export default function Home() {
         </AnimatePresence>
 
       </div>
+
+      {/* ── BIG CANCELABLE FESTIVAL CELEBRATION MODAL ── */}
+      {!festivalModalDismissed && (
+        <FestivalCelebrationModal
+          settings={siteSettings}
+          onOrderNow={() => {
+            sessionStorage.setItem('festival_modal_dismissed', 'true');
+            setFestivalModalDismissed(true);
+            navigate('/menu');
+          }}
+          onClose={() => {
+            sessionStorage.setItem('festival_modal_dismissed', 'true');
+            setFestivalModalDismissed(true);
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+/* ─── Big Festival Celebration Card Modal ─── */
+function FestivalCelebrationModal({ settings, onOrderNow, onClose }) {
+  if (!settings?.showFestivalBanner || !settings?.festivalSaleName) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(15, 10, 5, 0.65)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          zIndex: 200,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: 20, overflowY: 'auto'
+        }}
+      >
+        <motion.div
+          onClick={(e) => e.stopPropagation()}
+          initial={{ opacity: 0, scale: 0.85, y: 30 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.85, y: 30 }}
+          transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+          style={{
+            width: '100%', maxWidth: 420,
+            background: 'var(--color-card)',
+            border: '2px solid var(--color-accent-border)',
+            borderRadius: 32,
+            boxShadow: '0 32px 80px rgba(0,0,0,0.4)',
+            overflow: 'hidden',
+            position: 'relative'
+          }}
+        >
+          {/* Festive Ribbon Banner Header */}
+          <div style={{
+            position: 'relative',
+            background: 'var(--color-accent)',
+            padding: '36px 24px 28px',
+            textAlign: 'center',
+            color: '#ffffff',
+            overflow: 'hidden'
+          }}>
+            {/* Corner Ribbon Tag */}
+            <div style={{
+              position: 'absolute', top: 18, left: -34,
+              background: '#ffffff', color: 'var(--color-accent)',
+              transform: 'rotate(-45deg)',
+              padding: '4px 38px',
+              fontSize: 10, fontWeight: 800, letterSpacing: '1px',
+              textTransform: 'uppercase',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+            }}>
+              LIMITED OFFER
+            </div>
+
+            {/* Cancel / Close Button */}
+            <button
+              onClick={onClose}
+              style={{
+                position: 'absolute', top: 14, right: 14,
+                width: 36, height: 36, borderRadius: 99,
+                background: 'rgba(0,0,0,0.25)', backdropFilter: 'blur(4px)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                color: '#fff', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.2s'
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            {/* Glowing Icon Badge */}
+            <div style={{
+              width: 76, height: 76, borderRadius: 24,
+              background: 'rgba(255,255,255,0.2)',
+              border: '2px solid rgba(255,255,255,0.4)',
+              margin: '0 auto 16px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.2)'
+            }}>
+              <Sparkles size={40} color="#ffffff" />
+            </div>
+
+            {/* Ribbon Banner Badge */}
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.35)',
+              padding: '4px 14px', borderRadius: 99,
+              fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px',
+              marginBottom: 10
+            }}>
+              <span>🎉 CELEBRATING FESTIVAL SALE 🎉</span>
+            </div>
+
+            <h2 style={{ fontSize: 24, fontWeight: 800, lineHeight: 1.2, letterSpacing: '-0.3px', marginBottom: 6 }}>
+              {settings.festivalSaleName}
+            </h2>
+            <p style={{ fontSize: 14, opacity: 0.92, fontWeight: 600 }}>
+              is going on right now!
+            </p>
+          </div>
+
+          {/* Body Content */}
+          <div style={{ padding: '24px 24px 28px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ background: 'var(--color-surface)', borderRadius: 18, padding: 16, border: '1px solid var(--color-border)' }}>
+              <p style={{ fontWeight: 700, fontSize: 14, color: 'var(--color-text)', marginBottom: 4 }}>
+                Special Festival Discounts Applied!
+              </p>
+              <p style={{ fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+                Order your favorite food &amp; drinks today and celebrate with festive deals &amp; fast pickup.
+              </p>
+            </div>
+
+            {/* Big Order Now Button */}
+            <button
+              className="btn-primary"
+              onClick={onOrderNow}
+              style={{
+                width: '100%', padding: '16px 24px', fontSize: 17, fontWeight: 800,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                borderRadius: 16, boxShadow: '0 6px 20px var(--btn-shadow)'
+              }}
+            >
+              <ShoppingBag size={20} />
+              <span>ORDER NOW</span>
+              <ArrowRight size={18} />
+            </button>
+
+            {/* Cancelable Dismiss Link */}
+            <button
+              onClick={onClose}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--color-muted)', fontSize: 13, fontWeight: 600,
+                fontFamily: 'Outfit', textDecoration: 'underline'
+              }}
+            >
+              Maybe later
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
