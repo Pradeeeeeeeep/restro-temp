@@ -134,10 +134,12 @@ const parseCustomizations = (cust) => {
 
       if (imageFile) fd.append('image', imageFile);
       else if (existingImage) fd.append('image', existingImage);
-      const cfg = { headers: { 'Content-Type': 'multipart/form-data' } };
+
+      // Do NOT explicitly set 'Content-Type': 'multipart/form-data' in Axios (it strips boundary)
       editItem
-        ? await api.put(`/admin/menu/${editItem.id}`, fd, cfg)
-        : await api.post('/admin/menu', fd, cfg);
+        ? await api.put(`/admin/menu/${editItem.id}`, fd)
+        : await api.post('/admin/menu', fd);
+
       toast.success(editItem ? 'Item updated!' : 'Item added to menu!');
       closeItemForm(); fetchData();
     } catch (err) { toast.error(err.response?.data?.error || 'Failed to save'); }
@@ -635,7 +637,7 @@ const parseCustomizations = (cust) => {
                         Add-on Options List
                       </p>
 
-                      {itemForm.customizations.map((addon, index) => (
+                      {(itemForm.customizations || []).map((addon, index) => (
                         <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <input
                             className="input-field"
