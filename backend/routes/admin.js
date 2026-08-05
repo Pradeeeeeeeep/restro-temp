@@ -20,6 +20,10 @@ const {
   getSettings,
   updateSettings,
   uploadLogo,
+  getAdminCoupons,
+  createCoupon,
+  updateCoupon,
+  deleteCoupon,
 } = require('../controllers/adminController');
 
 // Multer config for image uploads
@@ -65,5 +69,10 @@ router.delete('/categories/:id', deleteCategory);
 router.get('/settings', getSettings);
 router.put('/settings', updateSettings);
 router.post('/settings/logo', upload.single('logo'), uploadLogo);
+
+router.get('/coupons', getAdminCoupons);
+router.post('/coupons', createCoupon);
+router.put('/coupons/:id', updateCoupon);
+router.delete('/coupons/:id', deleteCoupon);
 
 module.exports = router;

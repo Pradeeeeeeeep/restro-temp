@@ -42,6 +42,8 @@ model Order {
   paymentStatus String      @default("pending") // "pending" | "paid"
   status        String      @default("placed")  // "placed" | "accepted" | "preparing" | "ready" | "completed"
   total         Float
+  discount      Float       @default(0)
+  couponCode    String?
   note          String?
   createdAt     DateTime    @default(now())
   items         OrderItem[]
@@ -56,4 +58,15 @@ model OrderItem {
   quantity       Int
   price          Float
   customizations String?
+}
+
+model Coupon {
+  id             Int       @id @default(autoincrement())
+  code           String    @unique
+  discountType   String    @default("fixed") // "fixed" | "percentage"
+  discountValue  Float
+  minOrderAmount Float     @default(0)
+  maxDiscount    Float?
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
 }

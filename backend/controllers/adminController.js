@@ -338,6 +338,78 @@ const uploadLogo = (req, res) => {
   }
 };
 
+// GET /api/admin/coupons
+const getAdminCoupons = async (req, res, next) => {
+  try {
+    const coupons = await prisma.coupon.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json({ coupons });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// POST /api/admin/coupons
+const createCoupon = async (req, res, next) => {
+  try {
+    const { code, discountType, discountValue, minOrderAmount, maxDiscount, active } = req.body;
+    if (!code || !discountValue) {
+      return res.status(400).json({ error: 'code and discountValue are required' });
+    }
+
+    const coupon = await prisma.coupon.create({
+      data: {
+        code: code.trim().toUpperCase(),
+        discountType: discountType || 'fixed',
+        discountValue: parseFloat(discountValue),
+        minOrderAmount: parseFloat(minOrderAmount) || 0,
+        maxDiscount: maxDiscount ? parseFloat(maxDiscount) : null,
+        active: active !== undefined ? active === true || active === 'true' : true,
+      },
+    });
+    res.status(201).json({ coupon });
+  } catch (err) {
+    if (err.code === 'P2002') return res.status(400).json({ error: 'Coupon code already exists' });
+    next(err);
+  }
+};
+
+// PUT /api/admin/coupons/:id
+const updateCoupon = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { code, discountType, discountValue, minOrderAmount, maxDiscount, active } = req.body;
+
+    const updateData = {};
+    if (code !== undefined) updateData.code = code.trim().toUpperCase();
+    if (discountType !== undefined) updateData.discountType = discountType;
+    if (discountValue !== undefined) updateData.discountValue = parseFloat(discountValue);
+    if (minOrderAmount !== undefined) updateData.minOrderAmount = parseFloat(minOrderAmount);
+    if (maxDiscount !== undefined) updateData.maxDiscount = maxDiscount ? parseFloat(maxDiscount) : null;
+    if (active !== undefined) updateData.active = active === true || active === 'true';
+
+    const coupon = await prisma.coupon.update({
+      where: { id: parseInt(id) },
+      data: updateData,
+    });
+    res.json({ coupon });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// DELETE /api/admin/coupons/:id
+const deleteCoupon = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await prisma.coupon.delete({ where: { id: parseInt(id) } });
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   login,
   getOrders,
@@ -354,4 +426,8 @@ module.exports = {
   getSettings,
   updateSettings,
   uploadLogo,
+  getAdminCoupons,
+  createCoupon,
+  updateCoupon,
+  deleteCoupon,
 };

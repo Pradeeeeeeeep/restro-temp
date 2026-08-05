@@ -6,7 +6,7 @@ const VALID_STATUSES = ['placed', 'accepted', 'preparing', 'ready', 'completed']
 // POST /api/orders — place a new order
 const placeOrder = async (req, res, next) => {
   try {
-    const { customerId, items, paymentMethod, note } = req.body;
+    const { customerId, items, paymentMethod, note, couponCode, discount } = req.body;
 
     if (!customerId) return res.status(400).json({ error: 'Customer ID is required' });
     if (!items || items.length === 0) return res.status(400).json({ error: 'Order must have at least one item' });
@@ -28,12 +28,12 @@ const placeOrder = async (req, res, next) => {
       return res.status(400).json({ error: 'One or more items are unavailable or not found' });
     }
 
-    let total = 0;
+    let subtotal = 0;
     const orderItemsData = items.map((i) => {
       const menuItem = menuItems.find((m) => m.id === i.menuItemId);
       const itemPrice = i.price && !isNaN(i.price) ? parseFloat(i.price) : menuItem.price;
       const lineTotal = itemPrice * i.quantity;
-      total += lineTotal;
+      subtotal += lineTotal;
 
       let custStr = null;
       if (i.customizations) {
@@ -48,11 +48,16 @@ const placeOrder = async (req, res, next) => {
       };
     });
 
+    const discountVal = discount && !isNaN(discount) ? parseFloat(discount) : 0;
+    const finalTotal = Math.max(0, subtotal - discountVal);
+
     const order = await prisma.order.create({
       data: {
         customerId,
         paymentMethod,
-        total: Math.round(total * 100) / 100,
+        total: Math.round(finalTotal * 100) / 100,
+        discount: Math.round(discountVal * 100) / 100,
+        couponCode: couponCode ? couponCode.trim().toUpperCase() : null,
         note: note || null,
         status: 'placed',
         paymentStatus: 'pending',
