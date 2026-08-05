@@ -7,7 +7,6 @@ import api from '../api/axios';
 import useCartStore from '../store/useCartStore';
 import useCustomerStore from '../store/useCustomerStore';
 import { getFestivalPalette, getCornerRadius } from '../theme/festivalThemes';
-import { FastFoodComboCards } from '../components/FastFoodFeatures';
 
 const parseCustomizations = (cust) => {
   if (!cust) return [];
@@ -662,11 +661,6 @@ export default function Menu() {
             </div>
           )}
         </div>
-      </div>
-
-      {/* ── FAST FOOD COMBO MEAL CARDS ── */}
-      <div style={{ maxWidth: 768, margin: '16px auto 0', padding: '0 16px' }}>
-        <FastFoodComboCards />
       </div>
 
       {/* ── FESTIVAL / EVENT SALE BANNER ── */}

@@ -2,11 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Edit3, Trash2, X, Check, ToggleLeft, ToggleRight,
-  Upload, UtensilsCrossed, Tag, GripVertical, Utensils
+  Upload, UtensilsCrossed, Tag, GripVertical, Utensils, Flame
 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
 import { AdminNav } from './AdminDashboard';
+import { getStoredCombos, isCombosSectionEnabled } from '../../components/FastFoodFeatures';
 
 /* ─────────────────────────── constants ─────────────────────────── */
 const EMPTY_ITEM = { name: '', description: '', price: '', categoryId: '', available: true, customizations: [] };
@@ -52,6 +53,15 @@ export default function AdminMenu() {
   const [deletingCat, setDeletingCat] = useState(null);
   const [editCat, setEditCat] = useState(null);       // category being renamed
   const [editCatName, setEditCatName] = useState(''); // new name (without emoji)
+
+  /* ── combos state ── */
+  const [combosEnabled, setCombosEnabled] = useState(isCombosSectionEnabled());
+  const [combosList, setCombosList] = useState(getStoredCombos());
+  const [showComboModal, setShowComboModal] = useState(false);
+  const [editingCombo, setEditingCombo] = useState(null);
+  const [comboForm, setComboForm] = useState({
+    name: '', desc: '', originalPrice: '', comboPrice: '', badge: '', image: '', available: true
+  });
 
   useEffect(() => { fetchData(); }, []);
 
@@ -195,14 +205,88 @@ const parseCustomizations = (cust) => {
     setEditCatName(cat.name);
   };
 
-  const saveEditCat = async () => {
-    if (!editCatName.trim()) return toast.error('Name is required');
-    try {
-      await api.put(`/admin/categories/${editCat.id}`, { name: editCatName.trim() });
-      toast.success('Category renamed!');
-      setEditCat(null); setEditCatName('');
-      fetchData();
-    } catch (err) { toast.error(err.response?.data?.error || 'Failed to rename'); }
+  /* ── combos helpers ── */
+  const updateCombosStorage = (newList, isEnabled = combosEnabled) => {
+    setCombosList(newList);
+    localStorage.setItem('admin_combos', JSON.stringify(newList));
+    localStorage.setItem('admin_combos_enabled', isEnabled ? 'true' : 'false');
+    window.dispatchEvent(new Event('combos-updated'));
+  };
+
+  const toggleCombosSectionMaster = () => {
+    const nextState = !combosEnabled;
+    setCombosEnabled(nextState);
+    localStorage.setItem('admin_combos_enabled', nextState ? 'true' : 'false');
+    window.dispatchEvent(new Event('combos-updated'));
+    toast.success(`Combos section ${nextState ? 'enabled' : 'disabled'}`);
+  };
+
+  const toggleSingleComboActive = (id) => {
+    const updated = combosList.map((c) =>
+      c.id === id ? { ...c, available: c.available === false ? true : false } : c
+    );
+    updateCombosStorage(updated);
+    toast.success('Combo toggle updated!');
+  };
+
+  const deleteSingleCombo = (id) => {
+    if (!window.confirm('Delete this combo meal?')) return;
+    const updated = combosList.filter((c) => c.id !== id);
+    updateCombosStorage(updated);
+    toast.success('Combo deleted!');
+  };
+
+  const openAddCombo = () => {
+    setEditingCombo(null);
+    setComboForm({ name: '', desc: '', originalPrice: '', comboPrice: '', badge: 'SPECIAL OFFER ⚡', image: '', available: true });
+    setShowComboModal(true);
+  };
+
+  const openEditCombo = (c) => {
+    setEditingCombo(c);
+    setComboForm({
+      name: c.name,
+      desc: c.desc,
+      originalPrice: c.originalPrice ? String(c.originalPrice) : '',
+      comboPrice: String(c.comboPrice),
+      badge: c.badge || '',
+      image: c.image || '',
+      available: c.available !== false,
+    });
+    setShowComboModal(true);
+  };
+
+  const saveCombo = () => {
+    if (!comboForm.name.trim()) return toast.error('Combo name is required');
+    if (!comboForm.comboPrice || isNaN(comboForm.comboPrice)) return toast.error('Valid combo price required');
+
+    const origPrice = comboForm.originalPrice ? parseFloat(comboForm.originalPrice) : null;
+    const cPrice = parseFloat(comboForm.comboPrice);
+    const savingsAmount = origPrice && origPrice > cPrice ? (origPrice - cPrice) : null;
+
+    const payload = {
+      id: editingCombo ? editingCombo.id : `combo-${Date.now()}`,
+      name: comboForm.name.trim(),
+      desc: comboForm.desc.trim(),
+      originalPrice: origPrice,
+      comboPrice: cPrice,
+      savings: savingsAmount,
+      badge: comboForm.badge.trim(),
+      image: comboForm.image.trim(),
+      available: comboForm.available,
+    };
+
+    let updated;
+    if (editingCombo) {
+      updated = combosList.map((c) => (c.id === editingCombo.id ? payload : c));
+      toast.success('Combo updated!');
+    } else {
+      updated = [...combosList, payload];
+      toast.success('New combo created!');
+    }
+
+    updateCombosStorage(updated);
+    setShowComboModal(false);
   };
 
   const filtered = filterCat ? items.filter((i) => i.categoryId === parseInt(filterCat)) : items;
@@ -219,10 +303,10 @@ const parseCustomizations = (cust) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 }}>
           <div>
             <h1 style={{ fontWeight: 800, fontSize: 24 }}><span className="gradient-text">Menu Management</span></h1>
-            <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>{items.length} items · {categories.length} categories</p>
+            <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>{items.length} items · {categories.length} categories · {combosList.length} combos</p>
           </div>
           <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
-            onClick={tab === 'items' ? openAddItem : () => setShowCatForm(true)}
+            onClick={tab === 'items' ? openAddItem : tab === 'combos' ? () => { setEditingCombo(null); setComboForm({ name: '', desc: '', originalPrice: '', comboPrice: '', badge: 'SPECIAL OFFER ⚡', image: '', available: true }); setShowComboModal(true); } : () => setShowCatForm(true)}
             style={{
               display: 'flex', alignItems: 'center', gap: 8, padding: '12px 22px', borderRadius: 14,
               border: 'none', cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 700, fontSize: 15,
@@ -230,7 +314,7 @@ const parseCustomizations = (cust) => {
               boxShadow: '0 4px 16px rgba(194,112,15,0.35)',
             }}>
             <Plus size={20} />
-            {tab === 'items' ? 'Add to Menu' : 'Add Category'}
+            {tab === 'items' ? 'Add to Menu' : tab === 'combos' ? 'Add New Combo' : 'Add Category'}
           </motion.button>
         </div>
 
@@ -238,6 +322,7 @@ const parseCustomizations = (cust) => {
         <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--color-surface)', borderRadius: 14, padding: 4, width: 'fit-content', border: '1px solid var(--color-border)' }}>
           {[
             { id: 'items', label: 'Menu Items', icon: UtensilsCrossed },
+            { id: 'combos', label: 'Fast Food Combos', icon: Flame },
             { id: 'categories', label: 'Categories', icon: Tag },
           ].map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => setTab(id)}
@@ -318,13 +403,15 @@ const parseCustomizations = (cust) => {
                             );
                           })()}
                         </div>
-                        <p style={{ color: 'var(--color-muted)', fontSize: 12 }}>{item.category?.name}</p>
+                        <p style={{ color: 'var(--color-muted)', fontSize: 12 }}>
+                          {item.category?.name || 'Uncategorised'} · ₹{item.price}
+                        </p>
                       </div>
-                      <p style={{ fontWeight: 800, color: 'var(--color-accent-dark)', fontSize: 15, minWidth: 55, textAlign: 'right' }}>₹{item.price}</p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                        <button onClick={() => toggleItem(item)} title={item.available ? 'Mark unavailable' : 'Mark available'}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: item.available ? '#15803d' : 'var(--color-muted)', padding: 2 }}>
-                          {item.available ? <ToggleRight size={26} /> : <ToggleLeft size={26} />}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                        <button onClick={() => toggleItem(item)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: item.available ? '#15803d' : 'var(--color-muted)', padding: 0 }}
+                          title={item.available ? 'Mark unavailable' : 'Mark available'}>
+                          {item.available ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
                         </button>
                         <button onClick={() => openEditItem(item)}
                           style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, padding: 6, cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex' }}>
@@ -761,6 +848,82 @@ const parseCustomizations = (cust) => {
                     ? <><div className="spinner" style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} /> Saving…</>
                     : editItem ? <><Check size={18} /> Update Item</> : <><Plus size={18} /> Add to Menu</>}
                 </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═════════════════ ADD / EDIT COMBO MODAL ═════════════════ */}
+      <AnimatePresence>
+        {showComboModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setShowComboModal(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', zIndex: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              style={{ width: '100%', maxWidth: 440, background: 'var(--color-card)', border: '1.5px solid var(--color-border)', borderRadius: 20, padding: 22, boxShadow: '0 20px 50px rgba(0,0,0,0.25)' }}>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                <h3 style={{ fontWeight: 800, fontSize: 17 }}>{editingCombo ? 'Edit Fast Food Combo' : 'New Fast Food Combo'}</h3>
+                <button onClick={() => setShowComboModal(false)} style={{ background: 'var(--color-surface)', border: 'none', borderRadius: 99, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Combo Name *</label>
+                  <input className="input-field" type="text" placeholder="e.g. Crispy Burger Saver Combo"
+                    value={comboForm.name} onChange={(e) => setComboForm({ ...comboForm, name: e.target.value })} />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Combo Description</label>
+                  <textarea className="input-field" rows={2} placeholder="e.g. Double Cheeseburger + Large Fries + Coke"
+                    value={comboForm.desc} onChange={(e) => setComboForm({ ...comboForm, desc: e.target.value })} />
+                </div>
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Combo Price (₹) *</label>
+                    <input className="input-field" type="number" placeholder="249"
+                      value={comboForm.comboPrice} onChange={(e) => setComboForm({ ...comboForm, comboPrice: e.target.value })} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Original Price (₹)</label>
+                    <input className="input-field" type="number" placeholder="309"
+                      value={comboForm.originalPrice} onChange={(e) => setComboForm({ ...comboForm, originalPrice: e.target.value })} />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Badge / Tag</label>
+                    <input className="input-field" type="text" placeholder="e.g. BESTSELLER ⚡"
+                      value={comboForm.badge} onChange={(e) => setComboForm({ ...comboForm, badge: e.target.value })} />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', marginBottom: 6 }}>Image URL</label>
+                  <input className="input-field" type="url" placeholder="https://..."
+                    value={comboForm.image} onChange={(e) => setComboForm({ ...comboForm, image: e.target.value })} />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'var(--color-surface)', borderRadius: 12, border: '1px solid var(--color-border)' }}>
+                  <span style={{ fontWeight: 700, fontSize: 13 }}>Active / Visible on Store</span>
+                  <button type="button" onClick={() => setComboForm({ ...comboForm, available: !comboForm.available })} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: comboForm.available ? '#15803d' : 'var(--color-muted)' }}>
+                    {comboForm.available ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                  <button type="button" onClick={() => setShowComboModal(false)} className="btn-secondary" style={{ flex: 1, padding: 12 }}>Cancel</button>
+                  <button type="button" onClick={saveCombo} className="btn-primary" style={{ flex: 1, padding: 12 }}>
+                    {editingCombo ? 'Update Combo' : 'Create Combo'}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

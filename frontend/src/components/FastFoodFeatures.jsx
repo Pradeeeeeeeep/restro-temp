@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Flame, Clock, ShoppingBag, Plus, Check, Sparkles, Award } from 'lucide-react';
+import { Zap, Flame, Clock, Plus, Check } from 'lucide-react';
 import useCartStore from '../store/useCartStore';
 import toast from 'react-hot-toast';
 
-export const FAST_FOOD_COMBOS = [
+export const DEFAULT_FAST_FOOD_COMBOS = [
   {
     id: 'combo-1',
     name: 'Crispy Burger Saver Combo',
@@ -13,8 +13,8 @@ export const FAST_FOOD_COMBOS = [
     comboPrice: 249,
     savings: 60,
     badge: 'BESTSELLER ⚡',
+    available: true,
     image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80',
-    item: { id: 901, name: 'Crispy Burger Saver Combo', price: 249, category: 'Fast Food Combos' }
   },
   {
     id: 'combo-2',
@@ -24,8 +24,8 @@ export const FAST_FOOD_COMBOS = [
     comboPrice: 399,
     savings: 110,
     badge: 'POPULAR COMBO 🔥',
+    available: true,
     image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80',
-    item: { id: 902, name: 'Cheesy Pizza Party Combo', price: 399, category: 'Fast Food Combos' }
   },
   {
     id: 'combo-3',
@@ -35,10 +35,24 @@ export const FAST_FOOD_COMBOS = [
     comboPrice: 499,
     savings: 120,
     badge: 'MEGA SAVER 🎉',
+    available: true,
     image: 'https://images.unsplash.com/photo-1626645738196-c2a7c87a8f58?auto=format&fit=crop&w=600&q=80',
-    item: { id: 903, name: 'Family Crispy Bucket Combo', price: 499, category: 'Fast Food Combos' }
   }
 ];
+
+export function getStoredCombos() {
+  try {
+    const raw = localStorage.getItem('admin_combos');
+    if (!raw) return DEFAULT_FAST_FOOD_COMBOS;
+    return JSON.parse(raw);
+  } catch {
+    return DEFAULT_FAST_FOOD_COMBOS;
+  }
+}
+
+export function isCombosSectionEnabled() {
+  return localStorage.getItem('admin_combos_enabled') !== 'false';
+}
 
 /* ─── 1. Express Pickup Countdown Timer ─── */
 export function PickupTimerWidget({ initialMinutes = 15 }) {
@@ -104,7 +118,6 @@ export function FastFoodBigCTA({ onOrderClick }) {
         border: '3px solid #ffc72c',
         marginBottom: 24,
       }}>
-      {/* Top Banner Tag */}
       <div style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
         background: '#ffc72c', color: '#1a0000',
@@ -122,7 +135,6 @@ export function FastFoodBigCTA({ onOrderClick }) {
         Skip the line! Order fast food burgers, pizzas &amp; buckets now and pick up hot &amp; fresh.
       </p>
 
-      {/* Big Action CTA Button */}
       <motion.button
         whileHover={{ scale: 1.04 }}
         whileTap={{ scale: 0.96 }}
@@ -145,13 +157,30 @@ export function FastFoodBigCTA({ onOrderClick }) {
   );
 }
 
-/* ─── 3. Combo Cards Section with Add to Cart Animation ─── */
+/* ─── 3. Combo Cards Section (Filters for Admin Toggled Active Combos) ─── */
 export function FastFoodComboCards() {
   const addToCart = useCartStore((s) => s.addToCart);
   const [animatingId, setAnimatingId] = useState(null);
+  const [combos, setCombos] = useState(getStoredCombos());
+  const [enabled, setEnabled] = useState(isCombosSectionEnabled());
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setCombos(getStoredCombos());
+      setEnabled(isCombosSectionEnabled());
+    };
+    window.addEventListener('combos-updated', handleUpdate);
+    return () => window.removeEventListener('combos-updated', handleUpdate);
+  }, []);
+
+  // Filter only available/active combos
+  const activeCombos = combos.filter((c) => c.available !== false);
+
+  if (!enabled || activeCombos.length === 0) return null;
 
   const handleAddCombo = (combo) => {
-    addToCart(combo.item, []);
+    const itemPayload = { id: combo.id, name: combo.name, price: combo.comboPrice, category: 'Fast Food Combos' };
+    addToCart(itemPayload, []);
     setAnimatingId(combo.id);
     toast.success(`Added ${combo.name} to cart! 🍔`, {
       style: { background: '#dc2626', color: '#fff', fontWeight: 700 }
@@ -169,12 +198,12 @@ export function FastFoodComboCards() {
           <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Super saver burger, pizza &amp; bucket combos</p>
         </div>
         <span style={{ fontSize: 11, fontWeight: 800, background: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5', padding: '4px 10px', borderRadius: 99 }}>
-          UP TO 30% OFF
+          SPECIAL OFFER ⚡
         </span>
       </div>
 
       <div className="no-scrollbar" style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 6 }}>
-        {FAST_FOOD_COMBOS.map((combo) => {
+        {activeCombos.map((combo) => {
           const isAnimating = animatingId === combo.id;
 
           return (
@@ -194,15 +223,17 @@ export function FastFoodComboCards() {
             >
               {/* Image + Badge */}
               <div style={{ height: 130, position: 'relative', overflow: 'hidden' }}>
-                <img src={combo.image} alt={combo.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                <div style={{
-                  position: 'absolute', top: 10, left: 10,
-                  background: '#dc2626', color: '#ffffff',
-                  fontWeight: 900, fontSize: 10, padding: '4px 9px', borderRadius: 99,
-                  letterSpacing: '0.4px', boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
-                }}>
-                  {combo.badge}
-                </div>
+                <img src={combo.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'} alt={combo.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                {combo.badge && (
+                  <div style={{
+                    position: 'absolute', top: 10, left: 10,
+                    background: '#dc2626', color: '#ffffff',
+                    fontWeight: 900, fontSize: 10, padding: '4px 9px', borderRadius: 99,
+                    letterSpacing: '0.4px', boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+                  }}>
+                    {combo.badge}
+                  </div>
+                )}
               </div>
 
               {/* Content */}
@@ -220,12 +251,16 @@ export function FastFoodComboCards() {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
                       <span style={{ fontWeight: 900, fontSize: 17, color: '#dc2626' }}>₹{combo.comboPrice}</span>
-                      <span style={{ fontSize: 12, color: 'var(--color-muted)', textDecoration: 'line-through' }}>₹{combo.originalPrice}</span>
+                      {combo.originalPrice && (
+                        <span style={{ fontSize: 12, color: 'var(--color-muted)', textDecoration: 'line-through' }}>₹{combo.originalPrice}</span>
+                      )}
                     </div>
-                    <p style={{ fontSize: 10, fontWeight: 800, color: '#16a34a', marginTop: 1 }}>Save ₹{combo.savings}!</p>
+                    {combo.savings && (
+                      <p style={{ fontSize: 10, fontWeight: 800, color: '#16a34a', marginTop: 1 }}>Save ₹{combo.savings}!</p>
+                    )}
                   </div>
 
-                  {/* Add to Cart Animated Button */}
+                  {/* Add to Cart Button */}
                   <motion.button
                     whileTap={{ scale: 0.88 }}
                     animate={isAnimating ? { scale: [1, 1.25, 0.95, 1], rotate: [0, 8, -8, 0] } : {}}
@@ -241,15 +276,7 @@ export function FastFoodComboCards() {
                       transition: 'background 0.2s',
                     }}
                   >
-                    {isAnimating ? (
-                      <>
-                        <Check size={14} /> Added!
-                      </>
-                    ) : (
-                      <>
-                        <Plus size={14} /> Add Combo
-                      </>
-                    )}
+                    {isAnimating ? <><Check size={14} /> Added!</> : <><Plus size={14} /> Add Combo</>}
                   </motion.button>
                 </div>
               </div>

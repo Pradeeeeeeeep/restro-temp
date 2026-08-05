@@ -218,37 +218,6 @@ export const THEMES = {
       '--btn-shadow':          'rgba(0,0,0,1)',
     },
   },
-
-  'fast-food': {
-    id: 'fast-food',
-    name: 'Fast Food Express',
-    desc: 'High-energy Red, Golden Yellow & White',
-    dark: false,
-    preview: { bg: '#fffbe8', accent: '#dc2626', surface: '#ffc72c', text: '#1a0000' },
-    vars: {
-      '--color-bg':            '#fffbe8',
-      '--color-surface':       '#fff3c4',
-      '--color-card':          '#ffffff',
-      '--color-card-hover':    '#fffdf0',
-      '--color-border':        '#fcd34d',
-      '--color-border-strong': '#fbbf24',
-      '--color-accent':        '#dc2626',
-      '--color-accent-dark':   '#b91c1c',
-      '--color-accent-light':  '#ffc72c',
-      '--color-accent-bg':     '#fef2f2',
-      '--color-accent-border': '#fca5a5',
-      '--color-text':          '#1a0000',
-      '--color-text-secondary':'#450a0a',
-      '--color-muted':         '#7f1d1d',
-      '--color-muted-light':   '#991b1b',
-      '--glass-bg':            'rgba(255,251,232,0.95)',
-      '--shimmer-from':        '#fff3c4',
-      '--shimmer-mid':         '#fffbe8',
-      '--focus-ring':          'rgba(220,38,38,0.25)',
-      '--card-shadow':         'rgba(220,38,38,0.12)',
-      '--btn-shadow':          'rgba(220,38,38,0.40)',
-    },
-  },
 };
 
 export const THEME_IDS = Object.keys(THEMES);
