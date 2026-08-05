@@ -38,7 +38,7 @@ export default function AdminLogin() {
       <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
         style={{ width: '100%', maxWidth: 380, position: 'relative' }}>
         {/* Card */}
-        <div style={{ background: '#fff', borderRadius: 24, padding: '36px 32px', border: '1px solid var(--color-border)', boxShadow: '0 8px 32px rgba(100,60,20,0.1)' }}>
+        <div style={{ background: 'var(--color-card)', borderRadius: 24, padding: '36px 32px', border: '1px solid var(--color-border)', boxShadow: '0 8px 32px var(--card-shadow)' }}>
           <div style={{ textAlign: 'center', marginBottom: 28 }}>
             <div style={{ width: 62, height: 62, borderRadius: 18, margin: '0 auto 14px', background: 'linear-gradient(135deg, #e8901f, #c2700f)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(194,112,15,0.25)' }}>
               <Coffee size={30} color="#fff" />

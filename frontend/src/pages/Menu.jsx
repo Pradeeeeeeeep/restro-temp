@@ -375,7 +375,7 @@ function CartDrawer({ open, onClose, cartItems, updateQuantity, addItem, total, 
           <motion.div
             initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: '100%', maxWidth: 380, background: '#fff', borderLeft: '1px solid var(--color-border)', zIndex: 101, display: 'flex', flexDirection: 'column' }}>
+            style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: '100%', maxWidth: 380, background: 'var(--color-card)', borderLeft: '1px solid var(--color-border)', zIndex: 101, display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <h2 style={{ fontWeight: 800, fontSize: 18 }}>Your Cart</h2>
               <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)' }}><X size={20} /></button>
@@ -393,7 +393,7 @@ function CartDrawer({ open, onClose, cartItems, updateQuantity, addItem, total, 
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                           <button onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)}
-                            style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--color-border)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Minus size={13} />
                           </button>
                           <span style={{ fontWeight: 700, minWidth: 18, textAlign: 'center', fontSize: 14 }}>{item.quantity}</span>
@@ -545,7 +545,7 @@ export default function Menu() {
                 style={{
                   whiteSpace: 'nowrap', padding: '6px 14px', borderRadius: 99, border: '1px solid var(--color-border)',
                   cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 600, fontSize: 13,
-                  background: '#fff', color: 'var(--color-text-secondary)', transition: 'all 0.15s',
+                  background: 'var(--color-card)', color: 'var(--color-text-secondary)', transition: 'all 0.15s',
                 }}>{cat.name}</button>
             ))}
           </div>

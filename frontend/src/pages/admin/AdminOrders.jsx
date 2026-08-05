@@ -168,7 +168,7 @@ export default function AdminOrders() {
             <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>{orders.length} order{orders.length !== 1 ? 's' : ''}</p>
           </div>
           <button onClick={fetchOrders}
-            style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 10, padding: '8px 13px', cursor: 'pointer', color: 'var(--color-muted)', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Outfit', fontSize: 13, fontWeight: 600 }}>
+            style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 10, padding: '8px 13px', cursor: 'pointer', color: 'var(--color-muted)', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Outfit', fontSize: 13, fontWeight: 600 }}>
             <RefreshCw size={13} /> Refresh
           </button>
         </div>
@@ -180,7 +180,7 @@ export default function AdminOrders() {
               style={{
                 padding: '6px 13px', borderRadius: 99, border: 'none', cursor: 'pointer',
                 fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, transition: 'all 0.15s',
-                background: filter === s ? (s ? STATUS_COLOR[s] || 'var(--color-accent)' : 'var(--color-accent)') : '#fff',
+                background: filter === s ? (s ? STATUS_COLOR[s] || 'var(--color-accent)' : 'var(--color-accent)') : 'var(--color-card)',
                 color: filter === s ? '#fff' : 'var(--color-text-secondary)',
                 border: filter === s ? 'none' : '1px solid var(--color-border)',
                 boxShadow: filter === s ? `0 3px 10px ${(STATUS_COLOR[s] || 'var(--color-accent)')}44` : 'none',
@@ -213,7 +213,7 @@ export default function AdminOrders() {
 
                 return (
                   <motion.div key={order.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
-                    style={{ background: '#fff', border: `1.5px solid ${open ? color + '44' : 'var(--color-border)'}`, borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 4px rgba(100,60,20,0.06)', transition: 'border 0.2s' }}>
+                    style={{ background: 'var(--color-card)', border: `1.5px solid ${open ? color + '44' : 'var(--color-border)'}`, borderRadius: 16, overflow: 'hidden', boxShadow: '0 1px 4px var(--card-shadow)', transition: 'border 0.2s' }}>
 
                     {/* Header row */}
                     <div onClick={() => setExpanded(open ? null : order.id)}
@@ -285,7 +285,7 @@ export default function AdminOrders() {
                               <div style={{ display: 'flex', gap: 8 }}>
                                 {/* Print */}
                                 <button onClick={() => printInvoice(order)}
-                                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '10px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', background: '#fff', cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, color: 'var(--color-text-secondary)', transition: 'all 0.15s' }}>
+                                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '10px 14px', borderRadius: 12, border: '1.5px solid var(--color-border)', background: 'var(--color-card)', cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, color: 'var(--color-text-secondary)', transition: 'all 0.15s' }}>
                                   <Printer size={15} /> Print Invoice
                                 </button>
                                 {/* WhatsApp */}

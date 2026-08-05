@@ -51,7 +51,7 @@ export default function Cart() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <button onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)}
-                      style={{ width: 30, height: 30, borderRadius: 9, border: '1px solid var(--color-border)', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      style={{ width: 30, height: 30, borderRadius: 9, border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <Minus size={13} />
                     </button>
                     <span style={{ fontWeight: 700, minWidth: 22, textAlign: 'center' }}>{item.quantity}</span>

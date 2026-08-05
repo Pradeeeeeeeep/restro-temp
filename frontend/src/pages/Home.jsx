@@ -44,10 +44,10 @@ function OrderCard({ order, onClick }) {
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       style={{
-        background: '#fff', border: `1.5px solid ${isActive ? cfg.border : 'var(--color-border)'}`,
+        background: 'var(--color-card)', border: `1.5px solid ${isActive ? cfg.border : 'var(--color-border)'}`,
         borderRadius: '14px', padding: '14px 16px', cursor: 'pointer',
         display: 'flex', alignItems: 'center', gap: '12px',
-        boxShadow: isActive ? `0 2px 12px ${cfg.color}15` : '0 1px 4px rgba(100,60,20,0.06)',
+        boxShadow: isActive ? `0 2px 12px ${cfg.color}15` : '0 1px 4px var(--card-shadow)',
         transition: 'all 0.2s'
       }}
     >
@@ -397,21 +397,21 @@ export default function Home() {
                 style={{ textDecoration: 'none', display: 'block' }}
               >
                 <div style={{
-                  background: 'linear-gradient(135deg, #fef3e2, #fff8f0)',
-                  border: '1.5px solid #f9d89a',
+                  background: 'var(--color-accent-bg)',
+                  border: '1.5px solid var(--color-accent-border)',
                   borderRadius: 16, padding: '16px 18px',
                   display: 'flex', alignItems: 'center', gap: 14,
-                  boxShadow: '0 2px 12px rgba(194,112,15,0.1)',
+                  boxShadow: '0 2px 12px var(--card-shadow)',
                   position: 'relative',
                 }}>
                   <div style={{ width: 46, height: 46, borderRadius: 14, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Star size={22} color="#fff" fill="#fff" />
                   </div>
                   <div>
-                    <p style={{ fontWeight: 800, fontSize: 15, color: '#92400e', marginBottom: 3 }}>
+                    <p style={{ fontWeight: 800, fontSize: 15, color: 'var(--color-accent-dark)', marginBottom: 3 }}>
                       Enjoyed your visit?
                     </p>
-                    <p style={{ fontSize: 12, color: '#b45309', fontWeight: 500 }}>
+                    <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
                       Leave us a Google review — it means the world!
                     </p>
                   </div>
@@ -422,7 +422,7 @@ export default function Home() {
                       setReviewDismissed(true);
                       localStorage.setItem('review_dismissed', 'true');
                     }}
-                    style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#b45309', opacity: 0.6, display: 'flex' }}
+                    style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', opacity: 0.8, display: 'flex' }}
                   >
                     <X size={15} />
                   </button>

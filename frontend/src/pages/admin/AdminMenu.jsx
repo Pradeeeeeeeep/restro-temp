@@ -253,11 +253,11 @@ export default function AdminMenu() {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {filtered.map((item) => (
-                    <motion.div key={item.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                    <motion.div key={item.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96 }}
                       style={{
-                        background: '#fff', border: '1px solid var(--color-border)', borderRadius: 14,
-                        padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 12,
-                        opacity: item.available ? 1 : 0.58, transition: 'opacity 0.2s',
+                        background: 'var(--color-card)', border: '1.5px solid var(--color-border)', borderRadius: 14,
+                        padding: '11px 13px', display: 'flex', alignItems: 'center', gap: 12,
+                        opacity: item.available ? 1 : 0.6, transition: 'all 0.2s',
                       }}>
                       <div style={{ width: 50, height: 50, borderRadius: 11, background: 'var(--color-surface)', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
                         {item.image
@@ -300,7 +300,7 @@ export default function AdminMenu() {
                   <motion.div
                     initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
                     style={{ overflow: 'hidden', marginBottom: 16 }}>
-                    <div style={{ background: '#fff', border: '2px solid var(--color-accent-border)', borderRadius: 18, padding: 22, boxShadow: '0 4px 20px rgba(194,112,15,0.1)' }}>
+                    <div style={{ background: 'var(--color-card)', border: '2px solid var(--color-accent-border)', borderRadius: 18, padding: 22, boxShadow: '0 4px 20px var(--card-shadow)' }}>
                       <h3 style={{ fontWeight: 700, fontSize: 16, marginBottom: 16 }}>New Category</h3>
 
                       {/* Name input */}
@@ -365,9 +365,9 @@ export default function AdminMenu() {
                     return (
                       <motion.div key={cat.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                         style={{
-                          background: '#fff', border: `1.5px solid ${isEditing ? 'var(--color-accent-border)' : 'var(--color-border)'}`,
+                          background: 'var(--color-card)', border: `1.5px solid ${isEditing ? 'var(--color-accent-border)' : 'var(--color-border)'}`,
                           borderRadius: 14, padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 12,
-                          boxShadow: isEditing ? '0 2px 12px rgba(194,112,15,0.1)' : 'none', transition: 'all 0.2s',
+                          boxShadow: isEditing ? '0 2px 12px var(--card-shadow)' : 'none', transition: 'all 0.2s',
                         }}>
                         {/* Icon */}
                         <div style={{ width: 46, height: 46, borderRadius: 12, background: 'var(--color-accent-bg)', border: '1px solid var(--color-accent-border)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -463,8 +463,8 @@ export default function AdminMenu() {
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               style={{
                 width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto',
-                background: '#fff', border: '1px solid var(--color-border)', borderRadius: 24,
-                padding: 28, boxShadow: '0 24px 64px rgba(100,60,20,0.18)',
+                background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 24,
+                padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
               }}>
 
               {/* Modal header */}
@@ -492,10 +492,10 @@ export default function AdminMenu() {
                       <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: 0, transition: 'opacity 0.2s' }}
                         onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
                         onMouseLeave={(e) => e.currentTarget.style.opacity = 0}>
-                        <button onClick={() => fileInputRef.current?.click()} style={{ background: '#fff', border: 'none', borderRadius: 10, padding: '8px 14px', cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button onClick={() => fileInputRef.current?.click()} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', color: 'var(--color-text)', borderRadius: 10, padding: '8px 14px', cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
                           <Upload size={14} /> Change
                         </button>
-                        <button onClick={() => { setImageFile(null); setImagePreview(null); setExistingImage(null); }} style={{ background: '#fff', border: 'none', borderRadius: 10, padding: '8px 14px', cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, color: '#dc2626', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <button onClick={() => { setImageFile(null); setImagePreview(null); setExistingImage(null); }} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 10, padding: '8px 14px', cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 700, fontSize: 13, color: '#dc2626', display: 'flex', alignItems: 'center', gap: 6 }}>
                           <Trash2 size={14} /> Remove
                         </button>
                       </div>

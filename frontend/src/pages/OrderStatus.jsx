@@ -131,7 +131,7 @@ export default function OrderStatus() {
 
         {/* Progress timeline */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 18, padding: '20px 22px', marginBottom: 16 }}>
+          style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, padding: '20px 22px', marginBottom: 16 }}>
           <p style={{ fontWeight: 700, fontSize: 12, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 18 }}>Order Progress</p>
 
           <div style={{ position: 'relative' }}>
@@ -175,7 +175,7 @@ export default function OrderStatus() {
 
         {/* Order details */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-          style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 18, padding: 18, marginBottom: 14 }}>
+          style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, padding: 18, marginBottom: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
             <h3 style={{ fontWeight: 700, fontSize: 15 }}>Order #{order.id}</h3>
             <span style={{ color: 'var(--color-muted)', fontSize: 12 }}>
@@ -218,25 +218,25 @@ export default function OrderStatus() {
               <a href={reviewSettings.googleReviewLink} target="_blank" rel="noopener noreferrer"
                 style={{ textDecoration: 'none', display: 'block' }}>
                 <div style={{
-                  background: 'linear-gradient(135deg, #fef3e2, #fff8f0)',
-                  border: '1.5px solid #f9d89a', borderRadius: 16,
+                  background: 'var(--color-accent-bg)',
+                  border: '1.5px solid var(--color-accent-border)', borderRadius: 16,
                   padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14,
-                  boxShadow: '0 2px 12px rgba(194,112,15,0.1)', position: 'relative',
+                  boxShadow: '0 2px 12px var(--card-shadow)', position: 'relative',
                 }}>
                   <div style={{ width: 46, height: 46, borderRadius: 14, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Star size={22} color="#fff" fill="#fff" />
                   </div>
                   <div>
-                    <p style={{ fontWeight: 800, fontSize: 15, color: '#92400e', marginBottom: 3 }}>
+                    <p style={{ fontWeight: 800, fontSize: 15, color: 'var(--color-accent-dark)', marginBottom: 3 }}>
                       Enjoyed your order?
                     </p>
-                    <p style={{ fontSize: 12, color: '#b45309', fontWeight: 500 }}>
+                    <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
                       Leave us a Google review — it means the world!
                     </p>
                   </div>
                   <button
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReviewDismissed(true); localStorage.setItem('review_dismissed', 'true'); }}
-                    style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#b45309', opacity: 0.6, display: 'flex' }}>
+                    style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', opacity: 0.8, display: 'flex' }}>
                     <X size={15} />
                   </button>
                 </div>

@@ -21,7 +21,7 @@ export function AdminNav({ active }) {
     { path: '/admin/settings', label: 'Settings',  icon: Settings },
   ];
   return (
-    <div style={{ background: '#fff', borderBottom: '1px solid var(--color-border)', padding: '10px 20px', position: 'sticky', top: 0, zIndex: 50 }}>
+    <div style={{ background: 'var(--color-card)', borderBottom: '1px solid var(--color-border)', padding: '10px 20px', position: 'sticky', top: 0, zIndex: 50 }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg, #e8901f, #c2700f)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -54,7 +54,7 @@ export function AdminNav({ active }) {
 function StatCard({ icon: Icon, label, value, sub, color }) {
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-      style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 16, padding: 20, boxShadow: '0 1px 4px rgba(100,60,20,0.06)' }}>
+      style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 16, padding: 20, boxShadow: '0 1px 4px var(--card-shadow)' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
           <p style={{ color: 'var(--color-muted)', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 8 }}>{label}</p>
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {recentOrders.map((order) => (
                   <motion.div key={order.id} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }}
-                    style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                    style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 14, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
                     <div style={{ width: 42, height: 42, borderRadius: 12, background: STATUS_BG[order.status], border: `1px solid ${STATUS_BG[order.status]}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {(() => { const Icon = STATUS_ICON[order.status] || Coffee; return <Icon size={18} color={STATUS_COLOR[order.status]} />; })()}
                     </div>
