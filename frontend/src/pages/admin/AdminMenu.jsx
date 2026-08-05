@@ -306,7 +306,18 @@ const parseCustomizations = (cust) => {
                           : <Utensils size={22} color="var(--color-muted-light)" />}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontWeight: 700, fontSize: 14 }}>{item.name}</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <p style={{ fontWeight: 700, fontSize: 14 }}>{item.name}</p>
+                          {(() => {
+                            const custs = parseCustomizations(item.customizations);
+                            if (custs.length === 0) return null;
+                            return (
+                              <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--color-accent-dark)', background: 'var(--color-accent-bg)', padding: '2px 7px', borderRadius: 99, border: '1px solid var(--color-accent-border)' }}>
+                                ✨ {custs.length} Add-on{custs.length > 1 ? 's' : ''}
+                              </span>
+                            );
+                          })()}
+                        </div>
                         <p style={{ color: 'var(--color-muted)', fontSize: 12 }}>{item.category?.name}</p>
                       </div>
                       <p style={{ fontWeight: 800, color: 'var(--color-accent-dark)', fontSize: 15, minWidth: 55, textAlign: 'right' }}>₹{item.price}</p>
@@ -621,8 +632,11 @@ const parseCustomizations = (cust) => {
                       onClick={() => {
                         const nextState = !hasCustomizations;
                         setHasCustomizations(nextState);
-                        if (nextState && (!itemForm.customizations || itemForm.customizations.length === 0)) {
-                          setItemForm({ ...itemForm, customizations: [{ name: 'Extra Cheese', price: 20 }] });
+                        if (nextState) {
+                          const currentList = itemForm.customizations || [];
+                          if (currentList.length === 0) {
+                            setItemForm({ ...itemForm, customizations: [{ name: 'Extra Cheese', price: 20 }] });
+                          }
                         }
                       }}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: hasCustomizations ? 'var(--color-accent)' : 'var(--color-muted)', padding: 0, display: 'flex' }}
@@ -684,7 +698,8 @@ const parseCustomizations = (cust) => {
                         <button
                           type="button"
                           onClick={() => {
-                            setItemForm({ ...itemForm, customizations: [...itemForm.customizations, { name: '', price: 0 }] });
+                            const list = itemForm.customizations || [];
+                            setItemForm({ ...itemForm, customizations: [...list, { name: '', price: 0 }] });
                           }}
                           style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', color: 'var(--color-accent)', display: 'flex', alignItems: 'center', gap: 5 }}
                         >
@@ -699,14 +714,15 @@ const parseCustomizations = (cust) => {
                         </p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                           {PRESET_ADDONS.map((preset) => {
-                            const exists = itemForm.customizations.some((a) => a.name === preset.name);
+                            const list = itemForm.customizations || [];
+                            const exists = list.some((a) => a && a.name === preset.name);
                             return (
                               <button
                                 key={preset.name}
                                 type="button"
                                 onClick={() => {
                                   if (!exists) {
-                                    setItemForm({ ...itemForm, customizations: [...itemForm.customizations, preset] });
+                                    setItemForm({ ...itemForm, customizations: [...list, preset] });
                                   }
                                 }}
                                 disabled={exists}
