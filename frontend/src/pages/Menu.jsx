@@ -11,21 +11,28 @@ import useCustomerStore from '../store/useCustomerStore';
 function CartSnackbar({ count, total, lastAdded, onCheckout }) {
   if (count === 0) return null;
   return (
-    <motion.div
-      initial={{ y: 100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 100, opacity: 0 }}
-      transition={{ type: 'spring', damping: 22, stiffness: 300 }}
-      style={{
-        position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)',
-        zIndex: 90, width: 'calc(100% - 32px)', maxWidth: 440,
-      }}
-    >
+    // Static outer container handles position — Framer Motion doesn't fight transform
+    <div style={{
+      position: 'fixed',
+      bottom: 20,
+      left: 0,
+      right: 0,
+      zIndex: 90,
+      display: 'flex',
+      justifyContent: 'center',
+      padding: '0 16px',
+      pointerEvents: 'none', // let clicks pass through transparent area
+    }}>
       <AnimatePresence mode="wait">
         {lastAdded ? (
           <motion.div key="added"
-            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+            initial={{ y: 80, opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 20, opacity: 0, scale: 0.95 }}
+            transition={{ type: 'spring', damping: 22, stiffness: 300 }}
             style={{
+              width: '100%', maxWidth: 440,
+              pointerEvents: 'auto',
               background: '#1a0f05', color: '#fff', borderRadius: 16,
               padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 10,
               boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
@@ -41,13 +48,18 @@ function CartSnackbar({ count, total, lastAdded, onCheckout }) {
           </motion.div>
         ) : (
           <motion.button key="checkout"
-            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+            initial={{ y: 80, opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 20, opacity: 0, scale: 0.95 }}
+            transition={{ type: 'spring', damping: 22, stiffness: 300 }}
             whileTap={{ scale: 0.97 }}
             onClick={onCheckout}
             style={{
-              width: '100%', background: 'linear-gradient(135deg, #e8901f, #c2700f)', color: '#fff',
+              width: '100%', maxWidth: 440,
+              pointerEvents: 'auto',
+              background: 'linear-gradient(135deg, #e8901f, #c2700f)', color: '#fff',
               borderRadius: 16, padding: '14px 20px', border: 'none', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: 0,
+              display: 'flex', alignItems: 'center',
               boxShadow: '0 8px 24px rgba(194,112,15,0.4)', fontFamily: 'Outfit',
             }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
@@ -65,7 +77,7 @@ function CartSnackbar({ count, total, lastAdded, onCheckout }) {
           </motion.button>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 }
 
@@ -353,15 +365,11 @@ export default function Menu() {
       />
 
       {/* ── Bottom snackbar ── */}
-      <AnimatePresence>
-        {count > 0 && (
-          <CartSnackbar
-            count={count} total={total}
-            lastAdded={lastAdded}
-            onCheckout={() => navigate('/checkout')}
-          />
-        )}
-      </AnimatePresence>
+      <CartSnackbar
+        count={count} total={total}
+        lastAdded={lastAdded}
+        onCheckout={() => navigate('/checkout')}
+      />
     </div>
   );
 }

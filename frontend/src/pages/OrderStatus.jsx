@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Coffee, CheckCircle, ChefHat, Bell, Home, RefreshCw, Clock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Coffee, CheckCircle, ChefHat, Bell, Home, RefreshCw, Clock, Star, X } from 'lucide-react';
 import api from '../api/axios';
 
 const STEPS = [
@@ -29,6 +29,15 @@ export default function OrderStatus() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [reviewSettings, setReviewSettings] = useState(null);
+  const [reviewDismissed, setReviewDismissed] = useState(() =>
+    localStorage.getItem('review_dismissed') === 'true'
+  );
+
+  // Fetch settings for review banner
+  useEffect(() => {
+    api.get('/settings').then(({ data }) => setReviewSettings(data.settings)).catch(() => {});
+  }, []);
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -191,6 +200,46 @@ export default function OrderStatus() {
             Auto-refreshing every 5s · Last at {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </p>
         )}
+
+        {/* ── Google Review Banner ── */}
+        <AnimatePresence>
+          {reviewSettings?.showReviewBanner && reviewSettings?.googleReviewLink &&
+           !reviewDismissed && (order?.status === 'completed' || order?.status === 'ready') && (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }} transition={{ delay: 0.5, duration: 0.4 }}
+              style={{ marginTop: 18 }}
+            >
+              <a href={reviewSettings.googleReviewLink} target="_blank" rel="noopener noreferrer"
+                style={{ textDecoration: 'none', display: 'block' }}>
+                <div style={{
+                  background: 'linear-gradient(135deg, #fef3e2, #fff8f0)',
+                  border: '1.5px solid #f9d89a', borderRadius: 16,
+                  padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14,
+                  boxShadow: '0 2px 12px rgba(194,112,15,0.1)', position: 'relative',
+                }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 14, background: 'linear-gradient(135deg, #e8901f, #c2700f)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Star size={22} color="#fff" fill="#fff" />
+                  </div>
+                  <div>
+                    <p style={{ fontWeight: 800, fontSize: 15, color: '#92400e', marginBottom: 3 }}>
+                      Enjoyed your order? ☕
+                    </p>
+                    <p style={{ fontSize: 12, color: '#b45309', fontWeight: 500 }}>
+                      Leave us a Google review — it means the world!
+                    </p>
+                  </div>
+                  <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setReviewDismissed(true); localStorage.setItem('review_dismissed', 'true'); }}
+                    style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', color: '#b45309', opacity: 0.6, display: 'flex' }}>
+                    <X size={15} />
+                  </button>
+                </div>
+              </a>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </div>
     </div>
   );
