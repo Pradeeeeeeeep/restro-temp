@@ -1,8 +1,10 @@
 {
-  "cafeName": "Pika Bites",
+  "cafeName": "Brew & Bites",
   "cafeLogoUrl": "",
   "googleReviewLink": "g.page/dd",
   "showReviewBanner": true,
+  "showFestivalBanner": true,
+  "festivalSaleName": "Diwali Light-Up Sale",
   "theme": "warm-cafe",
   "customColors": {}
 }

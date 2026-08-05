@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Star, Link, ToggleLeft, ToggleRight, Save, ExternalLink,
-  Palette, Check, RefreshCw, Pipette, Upload, Image, Edit3, Coffee,
+  Palette, Check, RefreshCw, Pipette, Upload, Image, Edit3, Coffee, Sparkles, Tag, ArrowRight
 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
@@ -65,6 +65,50 @@ function ColorRow({ label, desc, varName, value, onChange }) {
   );
 }
 
+/* ── Festival Sale Presets ── */
+const FESTIVAL_SALE_CATEGORIES = [
+  {
+    name: 'Holiday & Cultural Themes',
+    sales: [
+      'Valentine’s Cupid Deals',
+      'Christmas Cheer Carnival',
+      'Durga Puja Dhamaaka',
+      'Diwali Light-Up Sale',
+      'Eid Mubarak Specials',
+      'Halloween Spooktacular Savings',
+      'New Year, New Looks',
+    ]
+  },
+  {
+    name: 'Seasonal & Weather Themes',
+    sales: [
+      'Summer Splash Sale',
+      'Monsoon Madness Markdown',
+      'Winter Warm-Up Event',
+      'Spring Renewal Showcase',
+      'Autumn Harvest Discounts',
+    ]
+  },
+  {
+    name: 'National & Cultural Themes',
+    sales: [
+      'Independence Day Freedom Sale',
+      'Republic Day Parade of Savings',
+      'Rakhi Bond of Love Deals',
+      'Holi Color Fest Offers',
+    ]
+  },
+  {
+    name: 'Milestone & Event Themes',
+    sales: [
+      'Black Friday Bonanza',
+      'Cyber Monday Tech Blowout',
+      'Anniversary Appreciation Sale',
+      'Mid-Year Mega Clearance',
+    ]
+  }
+];
+
 /* ════════════════════════════════════════
    ADMIN SETTINGS PAGE
 ════════════════════════════════════════ */
@@ -84,6 +128,7 @@ export default function AdminSettings() {
     api.get('/admin/settings')
       .then(({ data }) => setSettings({
         googleReviewLink: '', showReviewBanner: false, cafeName: 'Brew & Bites', cafeLogoUrl: '',
+        showFestivalBanner: false, festivalSaleName: 'Diwali Light-Up Sale',
         ...data.settings,
       }))
       .catch(() => toast.error('Failed to load settings'))
@@ -229,6 +274,120 @@ export default function AdminSettings() {
                     placeholder="e.g. Brew &amp; Bites"
                     style={{ maxWidth: 340 }} />
                   <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 5 }}>Shown in the app header and browser tab</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* ════ FESTIVAL & SALE THEMES ════ */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+              style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Sparkles size={20} color="#fff" />
+                  </div>
+                  <div>
+                    <p style={{ fontWeight: 800, fontSize: 16 }}>Festival &amp; Sale Themes</p>
+                    <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Display a floating festival banner card on customer pages</p>
+                  </div>
+                </div>
+                {/* Toggle button */}
+                <button
+                  type="button"
+                  onClick={() => setSettings((s) => ({ ...s, showFestivalBanner: !s.showFestivalBanner }))}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: settings.showFestivalBanner ? 'var(--color-accent)' : 'var(--color-muted)', padding: 0, display: 'flex' }}
+                >
+                  {settings.showFestivalBanner ? <ToggleRight size={36} /> : <ToggleLeft size={36} />}
+                </button>
+              </div>
+
+              <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 18 }}>
+                {/* Banner Live Card Preview */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>
+                    Live Banner Preview
+                  </label>
+                  <div style={{
+                    background: 'var(--color-accent)',
+                    color: '#ffffff',
+                    borderRadius: 16, padding: '14px 18px',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                    boxShadow: '0 4px 16px var(--btn-shadow)',
+                    opacity: settings.showFestivalBanner ? 1 : 0.45,
+                    transition: 'all 0.2s',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ width: 34, height: 34, borderRadius: 10, background: 'rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Sparkles size={18} color="#fff" />
+                      </div>
+                      <div>
+                        <p style={{ fontWeight: 800, fontSize: 14, letterSpacing: '0.2px' }}>
+                          {settings.festivalSaleName || 'Diwali Light-Up Sale'} is going on!
+                        </p>
+                        <p style={{ fontSize: 11, opacity: 0.9, fontWeight: 500 }}>
+                          ORDER NOW &amp; enjoy special offers
+                        </p>
+                      </div>
+                    </div>
+                    <span style={{
+                      background: '#ffffff', color: 'var(--color-accent)',
+                      fontWeight: 800, fontSize: 11, padding: '6px 12px', borderRadius: 99,
+                      letterSpacing: '0.4px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4
+                    }}>
+                      ORDER NOW <ArrowRight size={12} />
+                    </span>
+                  </div>
+                </div>
+
+                {/* Custom Sale Name Input */}
+                <div>
+                  <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
+                    Active Sale Name
+                  </label>
+                  <input
+                    className="input-field"
+                    value={settings.festivalSaleName || ''}
+                    onChange={(e) => setSettings((s) => ({ ...s, festivalSaleName: e.target.value }))}
+                    placeholder="e.g. Diwali Light-Up Sale"
+                  />
+                </div>
+
+                {/* Category Presets Selector */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Select a Sale Theme Preset
+                  </p>
+
+                  {FESTIVAL_SALE_CATEGORIES.map((cat) => (
+                    <div key={cat.name} style={{ background: 'var(--color-surface)', borderRadius: 14, padding: 14, border: '1px solid var(--color-border)' }}>
+                      <p style={{ fontWeight: 700, fontSize: 13, marginBottom: 10, color: 'var(--color-text)' }}>
+                        {cat.name}
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                        {cat.sales.map((saleName) => {
+                          const isSelected = settings.festivalSaleName === saleName;
+                          return (
+                            <button
+                              key={saleName}
+                              type="button"
+                              onClick={() => setSettings((s) => ({ ...s, festivalSaleName: saleName, showFestivalBanner: true }))}
+                              style={{
+                                padding: '6px 13px', borderRadius: 99, border: 'none', cursor: 'pointer',
+                                fontFamily: 'Outfit', fontWeight: 700, fontSize: 12,
+                                transition: 'all 0.15s',
+                                background: isSelected ? 'var(--color-accent)' : 'var(--color-card)',
+                                color: isSelected ? '#ffffff' : 'var(--color-text-secondary)',
+                                border: isSelected ? 'none' : '1px solid var(--color-border)',
+                                boxShadow: isSelected ? '0 3px 10px var(--btn-shadow)' : 'none',
+                              }}
+                            >
+                              {isSelected ? '✓ ' : ''}{saleName}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </motion.div>

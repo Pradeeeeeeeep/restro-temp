@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Coffee, User, Phone, ArrowRight, ChevronRight,
   Clock, CheckCircle, ChefHat, Bell, ShoppingBag, RefreshCw, LogOut, Star, X,
-  Banknote, House, CreditCard, Check, Lock
+  Banknote, House, CreditCard, Check, Lock, Sparkles
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
@@ -200,6 +200,40 @@ export default function Home() {
           </h1>
           <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>Your neighbourhood café</p>
         </motion.div>
+
+        {/* ── FESTIVAL / EVENT SALE BANNER CARD ── */}
+        {siteSettings?.showFestivalBanner && siteSettings?.festivalSaleName && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            onClick={() => navigate('/menu')}
+            style={{
+              background: 'var(--color-accent)',
+              color: '#ffffff',
+              borderRadius: 18, padding: '14px 18px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+              boxShadow: '0 4px 18px var(--btn-shadow)', marginBottom: 22,
+            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Sparkles size={20} color="#fff" />
+              </div>
+              <div>
+                <p style={{ fontWeight: 800, fontSize: 14, letterSpacing: '0.2px' }}>
+                  {siteSettings.festivalSaleName} is going on!
+                </p>
+                <p style={{ fontSize: 11, opacity: 0.9, fontWeight: 500 }}>
+                  ORDER NOW &amp; get special discounts
+                </p>
+              </div>
+            </div>
+            <span style={{
+              background: '#ffffff', color: 'var(--color-accent)',
+              fontWeight: 800, fontSize: 11, padding: '7px 13px', borderRadius: 99,
+              letterSpacing: '0.4px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4
+            }}>
+              ORDER NOW <ArrowRight size={12} />
+            </span>
+          </motion.div>
+        )}
 
         {/* ── RETURNING CUSTOMER VIEW ── */}
         <AnimatePresence mode="wait">

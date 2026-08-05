@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Search, Plus, ArrowLeft, X, Minus, ArrowRight, Coffee, Utensils, ClipboardList, Star } from 'lucide-react';
+import { ShoppingCart, Search, Plus, ArrowLeft, X, Minus, ArrowRight, Coffee, Utensils, ClipboardList, Star, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 import useCartStore from '../store/useCartStore';
@@ -549,6 +549,39 @@ export default function Menu() {
                 }}>{cat.name}</button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* ── FESTIVAL / EVENT SALE BANNER ── */}
+      {siteSettings?.showFestivalBanner && siteSettings?.festivalSaleName && (
+        <div style={{ maxWidth: 768, margin: '12px auto 0', padding: '0 16px' }}>
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            style={{
+              background: 'var(--color-accent-bg)',
+              border: '1.5px solid var(--color-accent-border)',
+              borderRadius: 16, padding: '12px 16px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+              boxShadow: '0 2px 10px var(--card-shadow)'
+            }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Sparkles size={20} color="var(--color-accent)" />
+              <div>
+                <p style={{ fontWeight: 800, fontSize: 13, color: 'var(--color-accent-dark)' }}>
+                  {siteSettings.festivalSaleName} is going on!
+                </p>
+                <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
+                  Special deals &amp; seasonal offers available now
+                </p>
+              </div>
+            </div>
+            <span style={{
+              background: 'var(--color-accent)', color: '#ffffff',
+              fontWeight: 800, fontSize: 11, padding: '6px 12px', borderRadius: 99,
+              letterSpacing: '0.4px', flexShrink: 0
+            }}>
+              ORDER NOW
+            </span>
+          </motion.div>
         </div>
       )}
 
