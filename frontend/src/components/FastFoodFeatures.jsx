@@ -261,7 +261,7 @@ export function FastFoodComboCards() {
                     {combo.name}
                   </h4>
                   <p style={{ fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.35 }}>
-                    {combo.desc}
+                    {combo.desc || combo.description}
                   </p>
                 </div>
 

@@ -7,6 +7,7 @@ import api from '../api/axios';
 import useCartStore from '../store/useCartStore';
 import useCustomerStore from '../store/useCustomerStore';
 import { getFestivalPalette, getCornerRadius } from '../theme/festivalThemes';
+import { FastFoodComboCards } from '../components/FastFoodFeatures';
 
 const parseCustomizations = (cust) => {
   if (!cust) return [];
@@ -701,6 +702,8 @@ export default function Menu() {
 
       {/* ── Items — ALL categories shown as sections ── */}
       <div style={{ maxWidth: 768, margin: '0 auto', padding: '14px 16px' }}>
+        {!search && <FastFoodComboCards />}
+
         {loading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(170px,1fr))', gap: 14 }}>
             {Array.from({ length: 8 }).map((_, i) => <div key={i} className="shimmer" style={{ height: 210, borderRadius: 14 }} />)}
