@@ -58,8 +58,32 @@ const deleteReview = async (req, res) => {
   }
 };
 
+// POST /api/reviews — Public endpoint for customer app to submit item/food review
+const createPublicReview = async (req, res) => {
+  try {
+    const { author, rating, comment, avatar, itemTitle } = req.body;
+    if (!author || !author.trim()) return res.status(400).json({ error: 'Customer name is required' });
+    if (!comment || !comment.trim()) return res.status(400).json({ error: 'Review text is required' });
+
+    const review = await prisma.review.create({
+      data: {
+        author: author.trim(),
+        rating: rating ? parseInt(rating) : 5,
+        comment: comment.trim(),
+        avatar: avatar ? avatar.trim() : null,
+        itemTitle: itemTitle ? itemTitle.trim() : null,
+      },
+    });
+
+    res.status(201).json({ success: true, review });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to submit review' });
+  }
+};
+
 module.exports = {
   getPublicReviews,
+  createPublicReview,
   getAdminReviews,
   createReview,
   deleteReview,
