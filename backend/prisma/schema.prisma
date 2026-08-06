@@ -90,6 +90,7 @@ model Review {
   rating    Int      @default(5)
   comment   String
   avatar    String?
+  itemTitle String?
   createdAt DateTime @default(now())
 }
 

@@ -493,10 +493,17 @@ export default function Home() {
                   boxShadow: '0 2px 10px var(--card-shadow)', flexShrink: 0
                 }}>
                   <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 8 }}>
-                      {Array.from({ length: r.rating || 5 }).map((_, i) => (
-                        <Star key={i} size={14} fill="#e8901f" color="#e8901f" />
-                      ))}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, marginBottom: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        {Array.from({ length: r.rating || 5 }).map((_, i) => (
+                          <Star key={i} size={14} fill="#e8901f" color="#e8901f" />
+                        ))}
+                      </div>
+                      {r.itemTitle && (
+                        <span style={{ fontSize: 10, fontWeight: 800, background: 'var(--color-accent-bg)', color: 'var(--color-accent-dark)', border: '1px solid var(--color-accent-border)', padding: '2px 8px', borderRadius: 99, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: 140 }}>
+                          {r.itemTitle}
+                        </span>
+                      )}
                     </div>
                     <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.45, fontStyle: 'italic' }}>
                       "{r.comment}"

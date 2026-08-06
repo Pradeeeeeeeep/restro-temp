@@ -10,5 +10,13 @@
   "cardCornerStyle": "rounded-md",
   "menuItemCornerStyle": "rounded-md",
   "combosEnabled": true,
-  "combosTitle": "Biggest Saver"
+  "combosTitle": "Biggest Saver",
+  "festivalSaleDescription": "Special deals & seasonal offers available now",
+  "socialLinks": {
+    "instagram": "",
+    "facebook": "afbf",
+    "whatsapp": "",
+    "twitter": "",
+    "youtube": ""
+  }
 }

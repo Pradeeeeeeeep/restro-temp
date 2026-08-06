@@ -142,8 +142,9 @@ export default function AdminSettings() {
 
   // Custom Reviews state
   const [reviewsList, setReviewsList] = useState([]);
+  const [menuItemsList, setMenuItemsList] = useState([]);
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [reviewForm, setReviewForm] = useState({ author: '', rating: 5, comment: '', avatar: '' });
+  const [reviewForm, setReviewForm] = useState({ author: '', rating: 5, comment: '', avatar: '', itemTitle: '' });
   const [savingReview, setSavingReview] = useState(false);
   const [deletingReviewId, setDeletingReviewId] = useState(null);
 
@@ -171,7 +172,20 @@ export default function AdminSettings() {
     fetchCoupons();
     fetchReviews();
     fetchAdmins();
+    fetchMenuItems();
   }, []);
+
+  const fetchMenuItems = async () => {
+    try {
+      const [menuRes, comboRes] = await Promise.all([
+        api.get('/menu'),
+        api.get('/combos').catch(() => ({ data: { combos: [] } }))
+      ]);
+      const items = (menuRes.data.items || []).map((i) => ({ id: `item-${i.id}`, name: i.name, isCombo: false }));
+      const combos = (comboRes.data.combos || []).map((c) => ({ id: `combo-${c.id}`, name: c.name, isCombo: true }));
+      setMenuItemsList([...items, ...combos]);
+    } catch {}
+  };
 
   const fetchCoupons = async () => {
     try {
@@ -204,10 +218,11 @@ export default function AdminSettings() {
         rating: parseInt(reviewForm.rating) || 5,
         comment: reviewForm.comment.trim(),
         avatar: reviewForm.avatar?.trim() || null,
+        itemTitle: reviewForm.itemTitle?.trim() || null,
       });
       toast.success('Review added!');
       setShowReviewModal(false);
-      setReviewForm({ author: '', rating: 5, comment: '', avatar: '' });
+      setReviewForm({ author: '', rating: 5, comment: '', avatar: '', itemTitle: '' });
       fetchReviews();
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to add review');
@@ -1103,13 +1118,18 @@ export default function AdminSettings() {
                       {reviewsList.map((r) => (
                         <div key={r.id} style={{ padding: '14px 16px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                               <span style={{ fontWeight: 800, fontSize: 14 }}>{r.author}</span>
                               <div style={{ display: 'flex', gap: 2 }}>
                                 {Array.from({ length: r.rating || 5 }).map((_, i) => (
                                   <Star key={i} size={13} fill="#e8901f" color="#e8901f" />
                                 ))}
                               </div>
+                              {r.itemTitle && (
+                                <span style={{ fontSize: 11, fontWeight: 800, background: 'var(--color-accent-bg)', color: 'var(--color-accent-dark)', border: '1px solid var(--color-accent-border)', padding: '2px 8px', borderRadius: 99 }}>
+                                  For: {r.itemTitle}
+                                </span>
+                              )}
                             </div>
                             <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>"{r.comment}"</p>
                           </div>
@@ -1355,6 +1375,24 @@ export default function AdminSettings() {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                    Select Reviewed Item (Optional)
+                  </label>
+                  <select
+                    className="input-field"
+                    value={reviewForm.itemTitle || ''}
+                    onChange={(e) => setReviewForm({ ...reviewForm, itemTitle: e.target.value })}
+                  >
+                    <option value="">General Café Review (No Specific Item)</option>
+                    {menuItemsList.map((item) => (
+                      <option key={item.id} value={item.name}>
+                        {item.isCombo ? '⚡ Combo: ' : '🍽️ '} {item.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>

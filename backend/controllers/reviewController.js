@@ -27,7 +27,7 @@ const getAdminReviews = async (req, res) => {
 // POST /api/admin/reviews — Add a custom review
 const createReview = async (req, res) => {
   try {
-    const { author, rating, comment, avatar } = req.body;
+    const { author, rating, comment, avatar, itemTitle } = req.body;
     if (!author || !author.trim()) return res.status(400).json({ error: 'Author name is required' });
     if (!comment || !comment.trim()) return res.status(400).json({ error: 'Review comment is required' });
 
@@ -37,6 +37,7 @@ const createReview = async (req, res) => {
         rating: rating ? parseInt(rating) : 5,
         comment: comment.trim(),
         avatar: avatar ? avatar.trim() : null,
+        itemTitle: itemTitle ? itemTitle.trim() : null,
       },
     });
 
