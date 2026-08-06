@@ -217,7 +217,7 @@ export default function OrderStatus() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginBottom: 12 }}>
             {order.items.map((item) => (
               <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                <span style={{ color: 'var(--color-muted)' }}>{item.menuItem.name} × {item.quantity}</span>
+                <span style={{ color: 'var(--color-muted)' }}>{item.menuItem?.name || item.name || 'Combo / Special Item'} × {item.quantity}</span>
                 <span style={{ fontWeight: 600 }}>₹{(item.price * item.quantity).toFixed(0)}</span>
               </div>
             ))}
@@ -335,11 +335,14 @@ export default function OrderStatus() {
                     value={selectedItemTitle}
                     onChange={(e) => setSelectedItemTitle(e.target.value)}
                   >
-                    {order?.items?.map((item) => (
-                      <option key={item.id} value={item.menuItem.name}>
-                        🍽️ {item.menuItem.name}
-                      </option>
-                    ))}
+                    {order?.items?.map((item) => {
+                      const title = item.menuItem?.name || item.name || 'Combo / Special Item';
+                      return (
+                        <option key={item.id} value={title}>
+                          🍽️ {title}
+                        </option>
+                      );
+                    })}
                     <option value="Entire Order">🍔 Entire Order / Overall Experience</option>
                   </select>
                 </div>
