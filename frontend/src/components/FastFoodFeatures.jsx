@@ -172,9 +172,18 @@ export function FastFoodComboCards() {
 
   const fetchCombos = async () => {
     try {
-      const { data } = await api.get('/combos');
-      if (data.combos) {
-        setCombos(data.combos);
+      const [combosRes, settingsRes] = await Promise.all([
+        api.get('/combos').catch(() => ({ data: { combos: DEFAULT_FAST_FOOD_COMBOS } })),
+        api.get('/settings').catch(() => ({ data: { settings: {} } }))
+      ]);
+      if (combosRes.data?.combos) {
+        setCombos(combosRes.data.combos);
+      }
+      if (settingsRes.data?.settings?.combosEnabled !== undefined) {
+        setEnabled(settingsRes.data.settings.combosEnabled !== false);
+        localStorage.setItem('admin_combos_enabled', settingsRes.data.settings.combosEnabled !== false ? 'true' : 'false');
+      } else {
+        setEnabled(isCombosSectionEnabled());
       }
     } catch {
       setCombos(DEFAULT_FAST_FOOD_COMBOS);
@@ -185,7 +194,6 @@ export function FastFoodComboCards() {
     fetchCombos();
     const handleUpdate = () => {
       fetchCombos();
-      setEnabled(isCombosSectionEnabled());
     };
     window.addEventListener('combos-updated', handleUpdate);
     return () => window.removeEventListener('combos-updated', handleUpdate);

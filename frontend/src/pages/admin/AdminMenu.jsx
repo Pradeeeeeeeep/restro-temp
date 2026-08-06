@@ -67,15 +67,20 @@ export default function AdminMenu() {
 
   const fetchData = async () => {
     try {
-      const [ir, cr, combRes] = await Promise.all([
+      const [ir, cr, combRes, settRes] = await Promise.all([
         api.get('/admin/menu'),
         api.get('/admin/categories'),
-        api.get('/admin/combos').catch(() => ({ data: { combos: [] } }))
+        api.get('/admin/combos').catch(() => ({ data: { combos: [] } })),
+        api.get('/settings').catch(() => ({ data: { settings: {} } }))
       ]);
       setItems(ir.data.items);
       setCategories(cr.data.categories);
       if (combRes.data?.combos) {
         setCombosList(combRes.data.combos.map(c => ({ ...c, desc: c.description || c.desc })));
+      }
+      if (settRes.data?.settings?.combosEnabled !== undefined) {
+        setCombosEnabled(settRes.data.settings.combosEnabled !== false);
+        localStorage.setItem('admin_combos_enabled', settRes.data.settings.combosEnabled !== false ? 'true' : 'false');
       }
     } catch { toast.error('Failed to load data'); }
     finally { setLoading(false); }
@@ -223,12 +228,17 @@ const parseCustomizations = (cust) => {
   };
 
   /* ── combos helpers ── */
-  const toggleCombosSectionMaster = () => {
+  const toggleCombosSectionMaster = async () => {
     const nextState = !combosEnabled;
     setCombosEnabled(nextState);
     localStorage.setItem('admin_combos_enabled', nextState ? 'true' : 'false');
-    window.dispatchEvent(new Event('combos-updated'));
-    toast.success(`Combos section ${nextState ? 'enabled' : 'disabled'}`);
+    try {
+      await api.put('/admin/settings', { combosEnabled: nextState });
+      toast.success(`Combos section ${nextState ? 'enabled' : 'disabled'}`);
+      window.dispatchEvent(new Event('combos-updated'));
+    } catch {
+      toast.error('Failed to update combo settings');
+    }
   };
 
   const toggleSingleComboActive = async (id) => {
