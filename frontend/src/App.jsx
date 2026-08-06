@@ -11,6 +11,7 @@ import AdminOrders from './pages/admin/AdminOrders';
 import AdminMenu from './pages/admin/AdminMenu';
 import AdminSettings from './pages/admin/AdminSettings';
 import ProtectedRoute from './components/ProtectedRoute';
+import Orders from './pages/Orders';
 import { ThemeProvider } from './theme/ThemeProvider';
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order/:id" element={<OrderStatus />} />
+          <Route path="/order" element={<Orders />} />
 
         {/* Admin routes */}
         <Route path="/admin/login" element={<AdminLogin />} />

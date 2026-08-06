@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
-import { AdminNav } from './AdminDashboard';
+import { AdminNav, getAdminAuthInfo } from './AdminDashboard';
 import { getStoredCombos, isCombosSectionEnabled } from '../../components/FastFoodFeatures';
 
 /* ─────────────────────────── constants ─────────────────────────── */
@@ -27,6 +27,23 @@ const CATEGORY_ICON = UtensilsCrossed;
    ADMIN MENU PAGE
 ══════════════════════════════════════════════════════════════════ */
 export default function AdminMenu() {
+  const { hasPermission } = getAdminAuthInfo();
+
+  if (!hasPermission('menu')) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--color-bg)' }}>
+        <AdminNav active="/admin/menu" />
+        <div style={{ maxWidth: 500, margin: '60px auto', padding: 30, background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 20, textAlign: 'center' }}>
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: '#fef2f2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <UtensilsCrossed size={32} />
+          </div>
+          <h2 style={{ fontWeight: 800, fontSize: 20, marginBottom: 8 }}>Access Restricted</h2>
+          <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>Your staff account does not have permission to access Menu &amp; Categories Management.</p>
+        </div>
+      </div>
+    );
+  }
+
   const [tab, setTab] = useState('items'); // 'items' | 'categories'
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);

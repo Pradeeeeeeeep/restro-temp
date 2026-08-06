@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Star, Link, ToggleLeft, ToggleRight, Save, ExternalLink,
-  Palette, Check, RefreshCw, Pipette, Upload, Image, Edit3, Coffee, Sparkles, Tag, ArrowRight, ShoppingBag, X, Plus, Trash2, Gift, Percent, Sliders, Share2, UserPlus, Users, Lock, Shield, MessageSquare
+  Palette, Check, RefreshCw, Pipette, Upload, Image, Edit3, Coffee, Sparkles, Tag, ArrowRight, ShoppingBag, X, Plus, Trash2, Gift, Percent, Sliders, Share2, UserPlus, Users, Lock, Shield, MessageSquare, Key
 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
-import { AdminNav } from './AdminDashboard';
+import { AdminNav, getAdminAuthInfo } from './AdminDashboard';
 import { THEMES, THEME_IDS, applyTheme } from '../../theme/themes';
 import { useTheme } from '../../theme/ThemeProvider';
 import { getFestivalPalette, CORNER_STYLES, getCornerRadius } from '../../theme/festivalThemes';
@@ -116,6 +116,7 @@ const SETTINGS_TABS = [
 ════════════════════════════════════════ */
 export default function AdminSettings() {
   const { themeId: activeThemeId, customColors: activeCustomColors, updateTheme, updateCustomColors } = useTheme();
+  const { isSuper, hasPermission, username } = getAdminAuthInfo();
 
   const [settings, setSettings] = useState({
     googleReviewLink: '', showReviewBanner: false,
@@ -148,12 +149,46 @@ export default function AdminSettings() {
   const [savingReview, setSavingReview] = useState(false);
   const [deletingReviewId, setDeletingReviewId] = useState(null);
 
+const AVAILABLE_PERMISSIONS = [
+  { id: 'branding', label: '🎨 Branding & Theme', desc: 'Theme colors, logo, cafe name, tagline & social links' },
+  { id: 'sales', label: '🎉 Sales & Offers', desc: 'Festival sale banners, discount %, price overrides & item eligibility' },
+  { id: 'menu', label: '🍕 Menu & Combos', desc: 'Add/edit categories, menu items, prices & combos' },
+  { id: 'orders', label: '📋 Order Management', desc: 'View live customer orders & update order statuses' },
+  { id: 'reviews', label: '⭐ Customer Reviews', desc: 'Add & delete custom customer feedback' },
+  { id: 'coupons', label: '🏷️ Coupons & Offers', desc: 'Create & manage promo codes & discount rules' },
+  { id: 'admins', label: '👥 Admin Management', desc: 'Manage & create other admin user accounts' },
+];
+
   // Admin Users state
   const [adminsList, setAdminsList] = useState([]);
   const [showAdminModal, setShowAdminModal] = useState(false);
-  const [adminForm, setAdminForm] = useState({ username: '', password: '', name: '' });
+  const [adminForm, setAdminForm] = useState({
+    username: '', password: '', name: '', role: 'custom',
+    permissions: ['orders']
+  });
   const [savingAdmin, setSavingAdmin] = useState(false);
   const [deletingAdminId, setDeletingAdminId] = useState(null);
+
+  // Change Password state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordTargetAdmin, setPasswordTargetAdmin] = useState(null);
+  const [newPasswordValue, setNewPasswordValue] = useState('');
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+
+  // Dedicated inline password change per admin card
+  const [inlinePasswords, setInlinePasswords] = useState({});
+  const [updatingPasswordId, setUpdatingPasswordId] = useState(null);
+
+  // Edit Admin state
+  const [editingAdminId, setEditingAdminId] = useState(null);
+  const [editAdminForm, setEditAdminForm] = useState({
+    name: '', role: 'custom', permissions: [], password: ''
+  });
+  const [savingEditAdmin, setSavingEditAdmin] = useState(false);
+
+  // Self password change state for Super Admin
+  const [myPasswordValue, setMyPasswordValue] = useState('');
+  const [updatingMyPassword, setUpdatingMyPassword] = useState(false);
 
   useEffect(() => {
     api.get('/admin/settings')
@@ -161,6 +196,7 @@ export default function AdminSettings() {
         googleReviewLink: '', showReviewBanner: false, cafeName: 'Brew & Bites', cafeLogoUrl: '',
         showFestivalBanner: false, festivalSaleName: 'Diwali Light-Up Sale',
         festivalSaleDescription: 'Special deals & seasonal offers available now',
+        festivalDiscountType: 'percentage', festivalDiscountValue: 15, festivalDiscountPercent: 15, excludedFestivalItemIds: [], customFestivalPrices: {},
         cardCornerStyle: 'rounded-full', menuItemCornerStyle: 'rounded-md',
         socialLinks: { instagram: '', facebook: '', whatsapp: '', twitter: '', youtube: '' },
         ...data.settings,
@@ -184,12 +220,12 @@ export default function AdminSettings() {
 
       let items = [];
       if (menuRes.data?.items) {
-        items = menuRes.data.items.map((i) => ({ id: `item-${i.id}`, name: i.name, isCombo: false }));
+        items = menuRes.data.items.map((i) => ({ rawId: i.id, id: `item-${i.id}`, name: i.name, price: i.price, isCombo: false }));
       } else if (menuRes.data?.categories) {
-        items = menuRes.data.categories.flatMap((cat) => cat.items || []).map((i) => ({ id: `item-${i.id}`, name: i.name, isCombo: false }));
+        items = menuRes.data.categories.flatMap((cat) => cat.items || []).map((i) => ({ rawId: i.id, id: `item-${i.id}`, name: i.name, price: i.price, isCombo: false }));
       }
 
-      const combos = (comboRes.data?.combos || []).map((c) => ({ id: `combo-${c.id}`, name: c.name, isCombo: true }));
+      const combos = (comboRes.data?.combos || []).map((c) => ({ rawId: c.id, id: `combo-${c.id}`, name: c.name, price: c.comboPrice, isCombo: true }));
       setMenuItemsList([...items, ...combos]);
     } catch {}
   };
@@ -255,16 +291,24 @@ export default function AdminSettings() {
   const saveAdminUser = async () => {
     if (!adminForm.username.trim()) return toast.error('Username is required');
     if (!adminForm.password.trim()) return toast.error('Password is required');
+    if (adminForm.role === 'custom' && adminForm.permissions.length === 0) {
+      return toast.error('Please select at least one permission for custom role');
+    }
     setSavingAdmin(true);
     try {
       await api.post('/admin/users', {
         username: adminForm.username.trim(),
         password: adminForm.password.trim(),
         name: adminForm.name?.trim() || null,
+        role: adminForm.role,
+        permissions: adminForm.role === 'super_admin' ? ['all'] : adminForm.permissions,
       });
-      toast.success('Admin user added!');
+      toast.success('Admin user account created!');
       setShowAdminModal(false);
-      setAdminForm({ username: '', password: '', name: '' });
+      setAdminForm({
+        username: '', password: '', name: '', role: 'custom',
+        permissions: ['orders']
+      });
       fetchAdmins();
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to add admin user');
@@ -284,6 +328,99 @@ export default function AdminSettings() {
       toast.error('Failed to remove admin');
     } finally {
       setDeletingAdminId(null);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!newPasswordValue || !newPasswordValue.trim()) {
+      return toast.error('Please enter a new password');
+    }
+    setUpdatingPassword(true);
+    try {
+      await api.put(`/admin/users/${passwordTargetAdmin.id}/password`, { password: newPasswordValue.trim() });
+      toast.success(`Password updated for @${passwordTargetAdmin.username}!`);
+      setShowPasswordModal(false);
+      setPasswordTargetAdmin(null);
+      setNewPasswordValue('');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to update password');
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
+  const handleInlinePasswordUpdate = async (adminId, username) => {
+    const newPwd = (inlinePasswords[adminId] || '').trim();
+    if (!newPwd) {
+      return toast.error('Type a new password first');
+    }
+    setUpdatingPasswordId(adminId);
+    try {
+      await api.put(`/admin/users/${adminId}/password`, { password: newPwd });
+      toast.success(`Password updated for @${username}!`);
+      setInlinePasswords((prev) => ({ ...prev, [adminId]: '' }));
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to update password');
+    } finally {
+      setUpdatingPasswordId(null);
+    }
+  };
+
+  const openEditAdmin = (ad) => {
+    if (editingAdminId === ad.id) {
+      setEditingAdminId(null);
+      return;
+    }
+    const isSuper = ad.role === 'super_admin' || ad.permissions === 'all' || !ad.permissions;
+    const perms = isSuper
+      ? ['branding', 'sales', 'menu', 'orders', 'reviews', 'coupons', 'admins']
+      : typeof ad.permissions === 'string'
+      ? ad.permissions.split(',')
+      : ad.permissions || [];
+
+    setEditingAdminId(ad.id);
+    setEditAdminForm({
+      name: ad.name || '',
+      role: isSuper ? 'super_admin' : ad.role || 'custom',
+      permissions: perms,
+      password: ''
+    });
+  };
+
+  const saveUpdateAdmin = async (id) => {
+    if (editAdminForm.role === 'custom' && editAdminForm.permissions.length === 0) {
+      return toast.error('Please select at least one permission for custom role');
+    }
+    setSavingEditAdmin(true);
+    try {
+      await api.put(`/admin/users/${id}`, {
+        name: editAdminForm.name?.trim() || null,
+        role: editAdminForm.role,
+        permissions: editAdminForm.role === 'super_admin' ? ['all'] : editAdminForm.permissions,
+        password: editAdminForm.password?.trim() || undefined,
+      });
+      toast.success('Admin permissions and details updated!');
+      setEditingAdminId(null);
+      fetchAdmins();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to update admin account');
+    } finally {
+      setSavingEditAdmin(false);
+    }
+  };
+
+  const handleUpdateMyPassword = async () => {
+    const newPwd = myPasswordValue.trim();
+    if (!newPwd) return toast.error('Please enter a new password');
+    setUpdatingMyPassword(true);
+    try {
+      await api.put('/admin/users/self/password', { password: newPwd });
+      toast.success('Your Super Admin password has been updated!');
+      setMyPasswordValue('');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to update password');
+    } finally {
+      setUpdatingMyPassword(false);
     }
   };
 
@@ -450,7 +587,15 @@ export default function AdminSettings() {
 
         {/* Category Navigation Pills */}
         <div className="no-scrollbar" style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 24, paddingBottom: 4 }}>
-          {SETTINGS_TABS.map(({ id, label, icon: Icon }) => {
+          {SETTINGS_TABS.filter(({ id }) => {
+            if (id === 'all') return true;
+            if (id === 'branding' || id === 'appearance') return hasPermission('branding');
+            if (id === 'coupons') return hasPermission('coupons');
+            if (id === 'festival') return hasPermission('sales');
+            if (id === 'reviews') return hasPermission('reviews') || hasPermission('branding');
+            if (id === 'admins') return hasPermission('admins');
+            return true;
+          }).map(({ id, label, icon: Icon }) => {
             const sel = activeCategoryTab === id;
             return (
               <button
@@ -481,7 +626,7 @@ export default function AdminSettings() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
             {/* ════ 1. CAFÉ BRANDING ════ */}
-            {(activeCategoryTab === 'all' || activeCategoryTab === 'branding') && (
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'branding') && hasPermission('branding') && (
               <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
                 style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -520,7 +665,7 @@ export default function AdminSettings() {
                     </div>
                   </div>
                   {/* Café Name */}
-                  <div>
+                  <div style={{ marginBottom: 14 }}>
                     <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Café Name</label>
                     <input className="input-field"
                       value={settings.cafeName || ''}
@@ -529,12 +674,22 @@ export default function AdminSettings() {
                       style={{ maxWidth: 340 }} />
                     <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 5 }}>Shown in the app header and browser tab</p>
                   </div>
+                  {/* Café Tagline */}
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Café Tagline / Subtitle</label>
+                    <input className="input-field"
+                      value={settings.cafeTagline || ''}
+                      onChange={(e) => setSettings((s) => ({ ...s, cafeTagline: e.target.value }))}
+                      placeholder="e.g. Your neighbourhood café"
+                      style={{ maxWidth: 340 }} />
+                    <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 5 }}>Shown directly below the café name on the home page</p>
+                  </div>
                 </div>
               </motion.div>
             )}
 
-            {/* ════ 2. THEME & APPEARANCE ════ */}
-            {(activeCategoryTab === 'all' || activeCategoryTab === 'appearance') && (
+            {/* ════ 2. THEME & PALETTE ════ */}
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'appearance') && hasPermission('branding') && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {/* Theme Swatches */}
                 <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
@@ -655,78 +810,11 @@ export default function AdminSettings() {
                   </div>
                 </motion.div>
 
-                {/* ════ REMOTE MASTER THEME CONTROL ════ */}
-                <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}
-                  style={{ background: 'var(--color-card)', border: '2px solid var(--color-accent-border)', borderRadius: 18, overflow: 'hidden' }}>
-                  <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-accent-bg)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <ExternalLink size={20} color="#fff" />
-                      </div>
-                      <div>
-                        <p style={{ fontWeight: 800, fontSize: 16, color: 'var(--color-accent-dark)' }}>Remote Master Theme Controller API</p>
-                        <p style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>Control store theme &amp; banners remotely from an external master site</p>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: 11, fontWeight: 800, background: 'var(--color-accent)', color: '#fff', padding: '4px 10px', borderRadius: 99 }}>
-                      API LIVE
-                    </span>
-                  </div>
-
-                  <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    <div style={{ background: 'var(--color-surface)', borderRadius: 12, padding: 14, border: '1px solid var(--color-border)' }}>
-                      <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
-                        Remote Control Endpoint
-                      </p>
-                      <code style={{ display: 'block', background: 'var(--color-card)', padding: '8px 12px', borderRadius: 8, fontSize: 13, fontWeight: 700, color: 'var(--color-accent-dark)', border: '1px solid var(--color-border)' }}>
-                        POST /api/remote/theme
-                      </code>
-                      <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 6 }}>
-                        Header: <code style={{ fontWeight: 700 }}>X-Remote-Secret: super-secret-remote-key</code>
-                      </p>
-                    </div>
-
-                    <div>
-                      <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: 'var(--color-text)' }}>
-                        Remote Controller Simulator (Test External Site Change)
-                      </p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                        {['shopify-crave', 'neo-brutalism', 'warm-cafe', 'midnight', 'clean-pro', 'forest', 'sweet-pink'].map((tId) => (
-                          <button
-                            key={`remote-${tId}`}
-                            type="button"
-                            onClick={async () => {
-                              try {
-                                await api.post('/remote/theme', { theme: tId }, {
-                                  headers: { 'x-remote-secret': 'super-secret-remote-key' }
-                                });
-                                selectTheme(tId);
-                                toast.success(`Remote command executed: Switched to ${tId}!`);
-                              } catch {
-                                toast.error('Remote command failed');
-                              }
-                            }}
-                            style={{
-                              padding: '7px 14px', borderRadius: 10, cursor: 'pointer',
-                              fontFamily: 'Outfit', fontWeight: 700, fontSize: 12,
-                              background: settings.theme === tId ? 'var(--color-accent)' : 'var(--color-surface)',
-                              color: settings.theme === tId ? '#ffffff' : 'var(--color-text)',
-                              border: settings.theme === tId ? 'none' : '1px solid var(--color-border)',
-                              transition: 'all 0.15s'
-                            }}
-                          >
-                            {tId === 'shopify-crave' ? '🔥 Shopify Crave' : tId}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
               </div>
             )}
 
-            {/* ════ 3. COUPON CODES & DISCOUNTS ════ */}
-            {(activeCategoryTab === 'all' || activeCategoryTab === 'coupons') && (
+            {/* ════ 5. COUPONS & DISCOUNTS MANAGEMENT ════ */}
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'coupons') && hasPermission('coupons') && (
               <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
                 style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -791,8 +879,8 @@ export default function AdminSettings() {
               </motion.div>
             )}
 
-            {/* ════ 4. FESTIVAL & SALE BANNERS ════ */}
-            {(activeCategoryTab === 'all' || activeCategoryTab === 'festival') && (
+            {/* ════ 3. FESTIVAL SALE BANNER ════ */}
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'festival') && hasPermission('sales') && (
               <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
                 style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -897,6 +985,281 @@ export default function AdminSettings() {
                     />
                   </div>
 
+                  {/* Festival Discount Type & Value */}
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
+                      Festival Sale Discount Type &amp; Value
+                    </label>
+                    <div style={{ display: 'flex', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => setSettings((s) => ({ ...s, festivalDiscountType: 'percentage' }))}
+                        style={{
+                          padding: '8px 16px', borderRadius: 10, cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 800, fontSize: 13,
+                          background: (settings.festivalDiscountType || 'percentage') === 'percentage' ? 'var(--color-accent)' : 'var(--color-surface)',
+                          color: (settings.festivalDiscountType || 'percentage') === 'percentage' ? '#ffffff' : 'var(--color-text)',
+                          border: (settings.festivalDiscountType || 'percentage') === 'percentage' ? 'none' : '1px solid var(--color-border)',
+                        }}
+                      >
+                        Percentage OFF (%)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSettings((s) => ({ ...s, festivalDiscountType: 'fixed' }))}
+                        style={{
+                          padding: '8px 16px', borderRadius: 10, cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 800, fontSize: 13,
+                          background: settings.festivalDiscountType === 'fixed' ? 'var(--color-accent)' : 'var(--color-surface)',
+                          color: settings.festivalDiscountType === 'fixed' ? '#ffffff' : 'var(--color-text)',
+                          border: settings.festivalDiscountType === 'fixed' ? 'none' : '1px solid var(--color-border)',
+                        }}
+                      >
+                        Flat Amount OFF (₹)
+                      </button>
+                    </div>
+
+                    <input
+                      type="number"
+                      min="0"
+                      className="input-field"
+                      value={settings.festivalDiscountValue ?? settings.festivalDiscountPercent ?? ''}
+                      onChange={(e) => {
+                        const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
+                        setSettings((s) => ({
+                          ...s,
+                          festivalDiscountValue: val,
+                          festivalDiscountPercent: val
+                        }));
+                      }}
+                      placeholder={settings.festivalDiscountType === 'fixed' ? 'e.g. 20 for Flat ₹20 off' : 'e.g. 15 for 15% off'}
+                      style={{ maxWidth: 260 }}
+                    />
+                    <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 5 }}>
+                      {settings.festivalDiscountType === 'fixed'
+                        ? 'Flat rupee amount subtracted from eligible items during festival sale'
+                        : 'Percentage discount applied to eligible items during festival sale'}
+                    </p>
+                  </div>
+
+                  {/* Item Eligibility Manager (Include / Exclude Items) */}
+                  <div style={{ background: 'var(--color-surface)', borderRadius: 16, padding: 18, border: '1px solid var(--color-border)', marginTop: 4 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
+                      <div>
+                        <p style={{ fontWeight: 800, fontSize: 15, color: 'var(--color-text)' }}>
+                          Item Eligibility (Include / Exclude Items)
+                        </p>
+                        <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                          Click items below to toggle whether they are included in the {settings.festivalDiscountType === 'fixed' ? `Flat ₹${settings.festivalDiscountValue || 0} OFF` : `${settings.festivalDiscountValue || settings.festivalDiscountPercent || 0}% OFF`} sale.
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          type="button"
+                          onClick={() => setSettings((s) => ({ ...s, excludedFestivalItemIds: [] }))}
+                          style={{ padding: '6px 12px', borderRadius: 99, background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
+                        >
+                          ✓ Include All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSettings((s) => ({ ...s, excludedFestivalItemIds: menuItemsList.map((i) => i.rawId !== undefined ? i.rawId : i.id) }))}
+                          style={{ padding: '6px 12px', borderRadius: 99, background: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
+                        >
+                          ✕ Exclude All
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="no-scrollbar" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10, maxHeight: 340, overflowY: 'auto', paddingRight: 4 }}>
+                      {menuItemsList.map((item) => {
+                        const itemKey = item.rawId !== undefined ? item.rawId : item.id;
+                        const excludedList = (settings.excludedFestivalItemIds || []).map(id => String(id));
+                        const isExcluded = excludedList.includes(String(itemKey));
+                        const discountType = settings.festivalDiscountType || 'percentage';
+                        const discountVal = Number(settings.festivalDiscountValue ?? settings.festivalDiscountPercent) || 0;
+                        const originalPrice = Number(item.price) || 0;
+
+                        let salePrice = originalPrice;
+                        let badgeText = '';
+                        if (discountVal > 0) {
+                          if (discountType === 'fixed') {
+                            salePrice = Math.max(0, Math.round(originalPrice - discountVal));
+                            badgeText = `₹${discountVal} OFF`;
+                          } else {
+                            salePrice = Math.max(0, Math.round(originalPrice * (1 - discountVal / 100)));
+                            badgeText = `${discountVal}% OFF`;
+                          }
+                        }
+
+                        const isOnSale = !isExcluded && salePrice < originalPrice;
+
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => {
+                              setSettings((s) => {
+                                const currentExcluded = (s.excludedFestivalItemIds || []).map(id => String(id));
+                                const keyStr = String(itemKey);
+                                const newExcluded = currentExcluded.includes(keyStr)
+                                  ? currentExcluded.filter((id) => id !== keyStr)
+                                  : [...currentExcluded, itemKey];
+                                return { ...s, excludedFestivalItemIds: newExcluded };
+                              });
+                            }}
+                            style={{
+                              padding: '10px 12px',
+                              borderRadius: 12,
+                              cursor: 'pointer',
+                              border: !isExcluded ? '1.5px solid #16a34a' : '1px solid var(--color-border)',
+                              background: !isExcluded ? 'var(--color-card)' : 'var(--color-surface)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 10,
+                              transition: 'all 0.15s'
+                            }}
+                          >
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontWeight: 700, fontSize: 13, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                {item.isCombo ? '⚡ ' : ''}{item.name}
+                              </p>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                                {isOnSale ? (
+                                  <>
+                                    <span style={{ fontSize: 11, color: 'var(--color-muted)', textDecoration: 'line-through' }}>₹{originalPrice}</span>
+                                    <span style={{ fontSize: 12, fontWeight: 800, color: '#16a34a' }}>₹{salePrice}</span>
+                                  </>
+                                ) : (
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-muted)' }}>₹{originalPrice}</span>
+                                )}
+                              </div>
+                            </div>
+
+                            <span style={{
+                              padding: '4px 8px', borderRadius: 99, fontSize: 11, fontWeight: 800, flexShrink: 0,
+                              background: !isExcluded ? '#f0fdf4' : '#f3f4f6',
+                              color: !isExcluded ? '#16a34a' : '#6b7280',
+                              border: !isExcluded ? '1px solid #bbf7d0' : '1px solid #e5e7eb'
+                            }}>
+                              {!isExcluded ? (isOnSale ? `✓ ${badgeText}` : '✓ Included') : '✕ Excluded'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Custom Festival Item Prices (Special Price Overrides) */}
+                  <div style={{ background: 'var(--color-surface)', borderRadius: 16, padding: 18, border: '1px solid var(--color-border)', marginTop: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 10 }}>
+                      <div>
+                        <p style={{ fontWeight: 800, fontSize: 15, color: 'var(--color-text)' }}>
+                          Custom Festival Item Prices (Special Price Overrides)
+                        </p>
+                        <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                          Set custom sale prices for specific items to override percentage or flat discounts during the festival sale.
+                        </p>
+                      </div>
+                      {Object.keys(settings.customFestivalPrices || {}).length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSettings((s) => ({ ...s, customFestivalPrices: {} }))}
+                          style={{ padding: '6px 12px', borderRadius: 99, background: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
+                        >
+                          Clear All Custom Prices
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="no-scrollbar" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12, maxHeight: 360, overflowY: 'auto', paddingRight: 4 }}>
+                      {menuItemsList.map((item) => {
+                        const itemKey = item.rawId !== undefined ? String(item.rawId) : String(item.id);
+                        const excludedList = (settings.excludedFestivalItemIds || []).map(id => String(id));
+                        const isExcluded = excludedList.includes(itemKey);
+                        if (isExcluded) return null; // Only show included items for custom pricing
+
+                        const customPrices = settings.customFestivalPrices || {};
+                        const currentCustomVal = customPrices[itemKey] !== undefined ? customPrices[itemKey] : '';
+                        const originalPrice = Number(item.price) || 0;
+                        const discountType = settings.festivalDiscountType || 'percentage';
+                        const discountVal = Number(settings.festivalDiscountValue ?? settings.festivalDiscountPercent) || 0;
+                        
+                        let defaultAutoPrice = originalPrice;
+                        if (discountVal > 0) {
+                          if (discountType === 'fixed') {
+                            defaultAutoPrice = Math.max(0, Math.round(originalPrice - discountVal));
+                          } else {
+                            defaultAutoPrice = Math.max(0, Math.round(originalPrice * (1 - discountVal / 100)));
+                          }
+                        }
+
+                        return (
+                          <div
+                            key={`custom-price-${item.id}`}
+                            style={{
+                              padding: '12px 14px',
+                              borderRadius: 12,
+                              background: 'var(--color-card)',
+                              border: currentCustomVal !== '' ? '1.5px solid var(--color-accent)' : '1px solid var(--color-border)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 8,
+                              transition: 'all 0.15s'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                              <p style={{ fontWeight: 700, fontSize: 13, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                {item.isCombo ? '⚡ ' : ''}{item.name}
+                              </p>
+                              <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 600 }}>
+                                Reg: ₹{originalPrice}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--color-accent-dark)' }}>₹</span>
+                              <input
+                                type="number"
+                                min="0"
+                                className="input-field"
+                                value={currentCustomVal}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setSettings((s) => {
+                                    const nextCustom = { ...(s.customFestivalPrices || {}) };
+                                    if (val === '' || val === null) {
+                                      delete nextCustom[itemKey];
+                                    } else {
+                                      nextCustom[itemKey] = Math.max(0, Number(val));
+                                    }
+                                    return { ...s, customFestivalPrices: nextCustom };
+                                  });
+                                }}
+                                placeholder={`Auto: ₹${defaultAutoPrice}`}
+                                style={{ padding: '6px 10px', fontSize: 13, height: 36, flex: 1 }}
+                              />
+                              {currentCustomVal !== '' && (
+                                <button
+                                  type="button"
+                                  title="Reset to default discount"
+                                  onClick={() => {
+                                    setSettings((s) => {
+                                      const nextCustom = { ...(s.customFestivalPrices || {}) };
+                                      delete nextCustom[itemKey];
+                                      return { ...s, customFestivalPrices: nextCustom };
+                                    });
+                                  }}
+                                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', fontSize: 12, fontWeight: 700, padding: '4px 6px' }}
+                                >
+                                  Reset
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {/* Card Corner Style */}
                   <div>
                     <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
@@ -983,7 +1346,7 @@ export default function AdminSettings() {
             )}
 
             {/* ════ 5. GOOGLE REVIEWS & SOCIAL ════ */}
-            {(activeCategoryTab === 'all' || activeCategoryTab === 'reviews') && (
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'reviews') && (hasPermission('reviews') || hasPermission('branding')) && (
               <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
                 style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -1029,8 +1392,8 @@ export default function AdminSettings() {
               </motion.div>
             )}
 
-            {/* ════ 6. FOLLOW US ON SOCIALS ════ */}
-            {(activeCategoryTab === 'all' || activeCategoryTab === 'reviews') && (
+            {/* ════ 6. SOCIAL LINKS ════ */}
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'reviews') && (hasPermission('reviews') || hasPermission('branding')) && (
               <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
                 style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -1093,7 +1456,7 @@ export default function AdminSettings() {
             )}
 
             {/* ════ 7. CUSTOM REVIEWS MANAGEMENT ════ */}
-            {(activeCategoryTab === 'all' || activeCategoryTab === 'reviews') && (
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'reviews') && (hasPermission('reviews') || hasPermission('branding')) && (
               <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
                 style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1153,7 +1516,7 @@ export default function AdminSettings() {
             )}
 
             {/* ════ 8. ADMIN USER MANAGEMENT ════ */}
-            {(activeCategoryTab === 'all' || activeCategoryTab === 'admins') && (
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'admins') && hasPermission('admins') && (
               <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
                 style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1172,6 +1535,53 @@ export default function AdminSettings() {
                 </div>
 
                 <div style={{ padding: 20 }}>
+                  {/* 🔑 Dedicated Super Admin Self Password Change Box */}
+                  {isSuper && (
+                    <div style={{
+                      background: 'var(--color-surface)',
+                      border: '1.5px solid var(--color-accent-border)',
+                      borderRadius: 16,
+                      padding: 16,
+                      marginBottom: 20,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 10
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--color-accent-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Key size={18} color="var(--color-accent-dark)" />
+                        </div>
+                        <div>
+                          <p style={{ fontWeight: 800, fontSize: 14, color: 'var(--color-text)' }}>
+                            🔑 Change Super Admin Password
+                          </p>
+                          <p style={{ fontSize: 11, color: 'var(--color-muted)' }}>
+                            Update password for active super admin account (@{username || 'admin'})
+                          </p>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 2 }}>
+                        <input
+                          type="password"
+                          className="input-field"
+                          placeholder="Type new secure password..."
+                          value={myPasswordValue}
+                          onChange={(e) => setMyPasswordValue(e.target.value)}
+                          style={{ fontSize: 13, height: 38, flex: 1, minWidth: 200 }}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleUpdateMyPassword}
+                          disabled={updatingMyPassword || !myPasswordValue.trim()}
+                          className="btn-primary"
+                          style={{ padding: '8px 18px', fontSize: 13, height: 38, whiteSpace: 'nowrap' }}
+                        >
+                          {updatingMyPassword ? 'Updating…' : 'Update Password'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {adminsList.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--color-muted)' }}>
                       <Users size={36} style={{ margin: '0 auto 8px', display: 'block', opacity: 0.4 }} />
@@ -1183,22 +1593,315 @@ export default function AdminSettings() {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {adminsList.map((ad) => (
-                        <div key={ad.id} style={{ padding: '12px 16px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-                          <div>
-                            <p style={{ fontWeight: 800, fontSize: 14, color: 'var(--color-text)' }}>
-                              {ad.name ? `${ad.name} (@${ad.username})` : `@${ad.username}`}
-                            </p>
-                            <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 2 }}>
-                              Added: {new Date(ad.createdAt).toLocaleDateString('en-IN')}
-                            </p>
-                          </div>
+                      {adminsList.map((ad) => {
+                        const isSuper = ad.role === 'super_admin' || ad.permissions === 'all' || !ad.permissions;
+                        const permsList = isSuper ? [] : (typeof ad.permissions === 'string' ? ad.permissions.split(',') : ad.permissions || []);
+                        return (
+                          <div key={ad.id} style={{
+                            padding: '16px 18px', background: 'var(--color-surface)',
+                            border: '1px solid var(--color-border)', borderRadius: 16,
+                            display: 'flex', flexDirection: 'column', gap: 12
+                          }}>
+                            {/* Card Top Row: Info & Delete */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                              <div style={{ flex: 1, minWidth: 200 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+                                  <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--color-text)' }}>
+                                    {ad.name ? `${ad.name} (@${ad.username})` : `@${ad.username}`}
+                                  </span>
+                                  {isSuper ? (
+                                    <span style={{ fontSize: 11, fontWeight: 800, background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a', padding: '2px 8px', borderRadius: 99 }}>
+                                      👑 Super Admin (Full Access)
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontSize: 11, fontWeight: 800, background: 'var(--color-accent-bg)', color: 'var(--color-accent-dark)', border: '1px solid var(--color-accent-border)', padding: '2px 8px', borderRadius: 99 }}>
+                                      ⚙️ Custom Staff Role
+                                    </span>
+                                  )}
+                                </div>
+                                <p style={{ fontSize: 11, color: 'var(--color-muted)', marginBottom: 4 }}>
+                                  Added: {new Date(ad.createdAt).toLocaleDateString('en-IN')}
+                                </p>
+                                {!isSuper && permsList.length > 0 && (
+                                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                                    {permsList.map((pId) => {
+                                      const pObj = AVAILABLE_PERMISSIONS.find(p => p.id === pId);
+                                      return (
+                                        <span key={pId} style={{ fontSize: 10, fontWeight: 700, background: 'var(--color-card)', border: '1px solid var(--color-border)', padding: '2px 7px', borderRadius: 6, color: 'var(--color-text-secondary)' }}>
+                                          {pObj ? pObj.label : pId}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
 
-                          <button onClick={() => deleteAdminUser(ad.id)} disabled={deletingAdminId === ad.id} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: 6, cursor: 'pointer', color: '#dc2626', display: 'flex', flexShrink: 0 }}>
-                            {deletingAdminId === ad.id ? <div className="spinner" style={{ width: 14, height: 14 }} /> : <Trash2 size={14} />}
-                          </button>
-                        </div>
-                      ))}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <button
+                                  type="button"
+                                  onClick={() => openEditAdmin(ad)}
+                                  title="Edit Account & Permissions"
+                                  style={{
+                                    padding: '6px 12px', borderRadius: 8,
+                                    background: editingAdminId === ad.id ? 'var(--color-accent)' : 'var(--color-card)',
+                                    color: editingAdminId === ad.id ? '#ffffff' : 'var(--color-text)',
+                                    border: '1px solid var(--color-border)',
+                                    fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s'
+                                  }}
+                                >
+                                  <Edit3 size={13} /> {editingAdminId === ad.id ? 'Close Edit' : 'Edit Role & Permissions'}
+                                </button>
+
+                                <button onClick={() => deleteAdminUser(ad.id)} disabled={deletingAdminId === ad.id} title="Remove Account" style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: 7, cursor: 'pointer', color: '#dc2626', display: 'flex', flexShrink: 0 }}>
+                                  {deletingAdminId === ad.id ? <div className="spinner" style={{ width: 14, height: 14 }} /> : <Trash2 size={15} />}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Expandable Edit Account Panel */}
+                            <AnimatePresence>
+                              {editingAdminId === ad.id && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: 'auto' }}
+                                  exit={{ opacity: 0, height: 0 }}
+                                  style={{
+                                    background: 'var(--color-card)',
+                                    borderRadius: 14,
+                                    padding: 16,
+                                    border: '1.5px solid var(--color-accent-border)',
+                                    marginTop: 4,
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 14
+                                  }}
+                                >
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <p style={{ fontWeight: 800, fontSize: 14, color: 'var(--color-accent-dark)' }}>
+                                      ✏️ Edit Account: @{ad.username}
+                                    </p>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingAdminId(null)}
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)', fontSize: 12, fontWeight: 700 }}
+                                    >
+                                      ✕ Cancel
+                                    </button>
+                                  </div>
+
+                                  {/* Staff Name Edit */}
+                                  <div>
+                                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 4 }}>
+                                      Staff / Admin Name
+                                    </label>
+                                    <input
+                                      type="text"
+                                      className="input-field"
+                                      placeholder="e.g. Amit Kumar"
+                                      value={editAdminForm.name}
+                                      onChange={(e) => setEditAdminForm({ ...editAdminForm, name: e.target.value })}
+                                      style={{ fontSize: 13, height: 36 }}
+                                    />
+                                  </div>
+
+                                  {/* Role Selection */}
+                                  <div>
+                                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                                      Admin Role Type
+                                    </label>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditAdminForm(f => ({ ...f, role: 'custom' }))}
+                                        style={{
+                                          padding: '8px 10px', borderRadius: 10, cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 800, fontSize: 12,
+                                          background: editAdminForm.role === 'custom' ? 'var(--color-accent)' : 'var(--color-surface)',
+                                          color: editAdminForm.role === 'custom' ? '#ffffff' : 'var(--color-text)',
+                                          border: editAdminForm.role === 'custom' ? 'none' : '1px solid var(--color-border)',
+                                          textAlign: 'center'
+                                        }}
+                                      >
+                                        ⚙️ Custom Staff Role
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setEditAdminForm(f => ({ ...f, role: 'super_admin' }))}
+                                        style={{
+                                          padding: '8px 10px', borderRadius: 10, cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 800, fontSize: 12,
+                                          background: editAdminForm.role === 'super_admin' ? 'var(--color-accent)' : 'var(--color-surface)',
+                                          color: editAdminForm.role === 'super_admin' ? '#ffffff' : 'var(--color-text)',
+                                          border: editAdminForm.role === 'super_admin' ? 'none' : '1px solid var(--color-border)',
+                                          textAlign: 'center'
+                                        }}
+                                      >
+                                        👑 Super Admin
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Quick Role Presets (for Custom Role) */}
+                                  {editAdminForm.role === 'custom' && (
+                                    <div style={{ background: 'var(--color-surface)', borderRadius: 12, padding: 12, border: '1px solid var(--color-border)' }}>
+                                      <div style={{ marginBottom: 8 }}>
+                                        <p style={{ fontWeight: 800, fontSize: 12, color: 'var(--color-text)', marginBottom: 6 }}>
+                                          Quick Role Presets:
+                                        </p>
+                                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditAdminForm(f => ({ ...f, permissions: ['orders'] }))}
+                                            style={{ padding: '4px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: 'var(--color-card)', border: '1px solid var(--color-border)', cursor: 'pointer' }}
+                                          >
+                                            📋 Cashier / Orders
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditAdminForm(f => ({ ...f, permissions: ['menu'] }))}
+                                            style={{ padding: '4px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: 'var(--color-card)', border: '1px solid var(--color-border)', cursor: 'pointer' }}
+                                          >
+                                            🍕 Menu Manager
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditAdminForm(f => ({ ...f, permissions: ['sales', 'coupons'] }))}
+                                            style={{ padding: '4px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: 'var(--color-card)', border: '1px solid var(--color-border)', cursor: 'pointer' }}
+                                          >
+                                            🎉 Deals &amp; Promo
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => setEditAdminForm(f => ({ ...f, permissions: ['branding', 'sales', 'menu', 'orders', 'reviews', 'coupons'] }))}
+                                            style={{ padding: '4px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: 'var(--color-card)', border: '1px solid var(--color-border)', cursor: 'pointer' }}
+                                          >
+                                            🏬 Store Manager
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      <p style={{ fontWeight: 800, fontSize: 12, marginBottom: 6, color: 'var(--color-text)', borderTop: '1px solid var(--color-border)', paddingTop: 8 }}>
+                                        Assigned Permissions:
+                                      </p>
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                        {AVAILABLE_PERMISSIONS.map((perm) => {
+                                          const isChecked = (editAdminForm.permissions || []).includes(perm.id);
+                                          return (
+                                            <div
+                                              key={`edit-${ad.id}-${perm.id}`}
+                                              onClick={() => {
+                                                setEditAdminForm(f => {
+                                                  const cur = f.permissions || [];
+                                                  const next = cur.includes(perm.id)
+                                                    ? cur.filter(p => p !== perm.id)
+                                                    : [...cur, perm.id];
+                                                  return { ...f, permissions: next };
+                                                });
+                                              }}
+                                              style={{
+                                                padding: '6px 10px', borderRadius: 8, cursor: 'pointer',
+                                                background: isChecked ? 'var(--color-card)' : 'transparent',
+                                                border: isChecked ? '1.5px solid #16a34a' : '1px solid var(--color-border)',
+                                                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8
+                                              }}
+                                            >
+                                              <div>
+                                                <p style={{ fontWeight: 700, fontSize: 12, color: 'var(--color-text)' }}>{perm.label}</p>
+                                                <p style={{ fontSize: 10, color: 'var(--color-muted)' }}>{perm.desc}</p>
+                                              </div>
+                                              <span style={{
+                                                padding: '2px 6px', borderRadius: 99, fontSize: 10, fontWeight: 800,
+                                                background: isChecked ? '#f0fdf4' : '#f3f4f6',
+                                                color: isChecked ? '#16a34a' : '#9ca3af',
+                                                border: isChecked ? '1px solid #bbf7d0' : '1px solid #e5e7eb'
+                                              }}>
+                                                {isChecked ? '✓ Granted' : 'Disabled'}
+                                              </span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Embedded Password Reset inside Edit Card (Super Admin only) */}
+                                  {isSuper && (
+                                    <div>
+                                      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 4 }}>
+                                        Reset Password (Optional)
+                                      </label>
+                                      <input
+                                        type="password"
+                                        className="input-field"
+                                        placeholder="Leave blank to keep existing password"
+                                        value={editAdminForm.password}
+                                        onChange={(e) => setEditAdminForm({ ...editAdminForm, password: e.target.value })}
+                                        style={{ fontSize: 13, height: 36 }}
+                                      />
+                                    </div>
+                                  )}
+
+                                  <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingAdminId(null)}
+                                      className="btn-secondary"
+                                      style={{ flex: 1, padding: 9, fontSize: 12 }}
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => saveUpdateAdmin(ad.id)}
+                                      disabled={savingEditAdmin}
+                                      className="btn-primary"
+                                      style={{ flex: 1, padding: 9, fontSize: 12 }}
+                                    >
+                                      {savingEditAdmin ? 'Saving…' : 'Save Changes'}
+                                    </button>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+
+                            {/* Dedicated Change Password Box inside this Admin Card (Super Admin only) */}
+                            {isSuper && editingAdminId !== ad.id && (
+                              <div style={{
+                                display: 'flex', alignItems: 'center', gap: 8,
+                                background: 'var(--color-card)', padding: '8px 12px',
+                                borderRadius: 12, border: '1px solid var(--color-border)', flexWrap: 'wrap'
+                              }}>
+                                <Key size={14} color="var(--color-accent-dark)" style={{ flexShrink: 0 }} />
+                                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', flexShrink: 0 }}>
+                                  Change Password:
+                                </span>
+                                <input
+                                  type="password"
+                                  className="input-field"
+                                  placeholder="Type new password..."
+                                  value={inlinePasswords[ad.id] || ''}
+                                  onChange={(e) => setInlinePasswords({ ...inlinePasswords, [ad.id]: e.target.value })}
+                                  style={{ fontSize: 12, height: 34, padding: '4px 10px', flex: 1, minWidth: 140 }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleInlinePasswordUpdate(ad.id, ad.username)}
+                                  disabled={updatingPasswordId === ad.id || !(inlinePasswords[ad.id] || '').trim()}
+                                  style={{
+                                    padding: '6px 14px', borderRadius: 8,
+                                    background: (inlinePasswords[ad.id] || '').trim() ? 'var(--color-accent)' : 'var(--color-surface)',
+                                    color: (inlinePasswords[ad.id] || '').trim() ? '#ffffff' : 'var(--color-muted)',
+                                    border: (inlinePasswords[ad.id] || '').trim() ? 'none' : '1px solid var(--color-border)',
+                                    fontWeight: 800, fontSize: 12, cursor: (inlinePasswords[ad.id] || '').trim() ? 'pointer' : 'default',
+                                    flexShrink: 0, transition: 'all 0.15s'
+                                  }}
+                                >
+                                  {updatingPasswordId === ad.id ? 'Updating…' : 'Update'}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1432,7 +2135,8 @@ export default function AdminSettings() {
             style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', zIndex: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
             <motion.div onClick={(e) => e.stopPropagation()}
               initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-              style={{ width: '100%', maxWidth: 440, background: 'var(--color-card)', border: '1.5px solid var(--color-border)', borderRadius: 20, padding: 22, boxShadow: '0 20px 50px rgba(0,0,0,0.25)' }}>
+              className="no-scrollbar"
+              style={{ width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto', background: 'var(--color-card)', border: '1.5px solid var(--color-border)', borderRadius: 20, padding: 22, boxShadow: '0 20px 50px rgba(0,0,0,0.25)' }}>
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
                 <h3 style={{ fontWeight: 800, fontSize: 17 }}>Add Other Admin Account</h3>
@@ -1466,12 +2170,186 @@ export default function AdminSettings() {
                     value={adminForm.name} onChange={(e) => setAdminForm({ ...adminForm, name: e.target.value })} />
                 </div>
 
+                {/* Role Type Selection */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 8 }}>
+                    Select Admin Account Role
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <button
+                      type="button"
+                      onClick={() => setAdminForm((f) => ({ ...f, role: 'custom' }))}
+                      style={{
+                        padding: '10px 12px', borderRadius: 12, cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 800, fontSize: 13,
+                        background: adminForm.role === 'custom' ? 'var(--color-accent)' : 'var(--color-surface)',
+                        color: adminForm.role === 'custom' ? '#ffffff' : 'var(--color-text)',
+                        border: adminForm.role === 'custom' ? 'none' : '1px solid var(--color-border)',
+                        textAlign: 'center'
+                      }}
+                    >
+                      ⚙️ Custom Staff Role
+                      <span style={{ display: 'block', fontSize: 10, opacity: 0.8, fontWeight: 500, marginTop: 2 }}>Selective Permissions</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAdminForm((f) => ({ ...f, role: 'super_admin' }))}
+                      style={{
+                        padding: '10px 12px', borderRadius: 12, cursor: 'pointer', fontFamily: 'Outfit', fontWeight: 800, fontSize: 13,
+                        background: adminForm.role === 'super_admin' ? 'var(--color-accent)' : 'var(--color-surface)',
+                        color: adminForm.role === 'super_admin' ? '#ffffff' : 'var(--color-text)',
+                        border: adminForm.role === 'super_admin' ? 'none' : '1px solid var(--color-border)',
+                        textAlign: 'center'
+                      }}
+                    >
+                      👑 Super Admin
+                      <span style={{ display: 'block', fontSize: 10, opacity: 0.8, fontWeight: 500, marginTop: 2 }}>Full Unrestricted Access</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Granular Permissions Checklist (Only for Custom Role) */}
+                {adminForm.role === 'custom' && (
+                  <div style={{ background: 'var(--color-surface)', borderRadius: 14, padding: 14, border: '1px solid var(--color-border)' }}>
+                    <div style={{ marginBottom: 10 }}>
+                      <p style={{ fontWeight: 800, fontSize: 13, color: 'var(--color-text)', marginBottom: 6 }}>
+                        Quick Role Presets:
+                      </p>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => setAdminForm(f => ({ ...f, permissions: ['orders'] }))}
+                          style={{ padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: 'var(--color-card)', border: '1px solid var(--color-border)', cursor: 'pointer' }}
+                        >
+                          📋 Cashier / Orders
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdminForm(f => ({ ...f, permissions: ['menu'] }))}
+                          style={{ padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: 'var(--color-card)', border: '1px solid var(--color-border)', cursor: 'pointer' }}
+                        >
+                          🍕 Menu Manager
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdminForm(f => ({ ...f, permissions: ['sales', 'coupons'] }))}
+                          style={{ padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: 'var(--color-card)', border: '1px solid var(--color-border)', cursor: 'pointer' }}
+                        >
+                          🎉 Deals &amp; Promo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdminForm(f => ({ ...f, permissions: ['branding', 'sales', 'menu', 'orders', 'reviews', 'coupons'] }))}
+                          style={{ padding: '5px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, background: 'var(--color-card)', border: '1px solid var(--color-border)', cursor: 'pointer' }}
+                        >
+                          🏬 Store Manager
+                        </button>
+                      </div>
+                    </div>
+
+                    <p style={{ fontWeight: 800, fontSize: 13, marginBottom: 8, color: 'var(--color-text)', borderTop: '1px solid var(--color-border)', paddingTop: 10 }}>
+                      Assigned Permissions:
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {AVAILABLE_PERMISSIONS.map((perm) => {
+                        const isChecked = (adminForm.permissions || []).includes(perm.id);
+                        return (
+                          <div
+                            key={perm.id}
+                            onClick={() => {
+                              setAdminForm((f) => {
+                                const currentPerms = f.permissions || [];
+                                const newPerms = currentPerms.includes(perm.id)
+                                  ? currentPerms.filter((p) => p !== perm.id)
+                                  : [...currentPerms, perm.id];
+                                return { ...f, permissions: newPerms };
+                              });
+                            }}
+                            style={{
+                              padding: '8px 12px', borderRadius: 10, cursor: 'pointer',
+                              background: isChecked ? 'var(--color-card)' : 'transparent',
+                              border: isChecked ? '1.5px solid #16a34a' : '1px solid var(--color-border)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                              transition: 'all 0.15s'
+                            }}
+                          >
+                            <div>
+                              <p style={{ fontWeight: 700, fontSize: 13, color: 'var(--color-text)' }}>{perm.label}</p>
+                              <p style={{ fontSize: 11, color: 'var(--color-muted)' }}>{perm.desc}</p>
+                            </div>
+                            <span style={{
+                              padding: '3px 8px', borderRadius: 99, fontSize: 11, fontWeight: 800,
+                              background: isChecked ? '#f0fdf4' : '#f3f4f6',
+                              color: isChecked ? '#16a34a' : '#9ca3af',
+                              border: isChecked ? '1px solid #bbf7d0' : '1px solid #e5e7eb'
+                            }}>
+                              {isChecked ? '✓ Granted' : 'Disabled'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
                   <button type="button" onClick={() => setShowAdminModal(false)} className="btn-secondary" style={{ flex: 1, padding: 12 }}>
                     Cancel
                   </button>
                   <button type="button" onClick={saveAdminUser} disabled={savingAdmin} className="btn-primary" style={{ flex: 1, padding: 12 }}>
                     {savingAdmin ? 'Saving…' : 'Create Admin'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Change Admin Password Modal */}
+      <AnimatePresence>
+        {showPasswordModal && passwordTargetAdmin && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setShowPasswordModal(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', zIndex: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              style={{ width: '100%', maxWidth: 400, background: 'var(--color-card)', border: '1.5px solid var(--color-border)', borderRadius: 20, padding: 22, boxShadow: '0 20px 50px rgba(0,0,0,0.25)' }}>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--color-accent-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Key size={16} color="var(--color-accent-dark)" />
+                  </div>
+                  <div>
+                    <h3 style={{ fontWeight: 800, fontSize: 16 }}>Change Admin Password</h3>
+                    <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Account: @{passwordTargetAdmin.username}</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowPasswordModal(false)} style={{ background: 'var(--color-surface)', border: 'none', borderRadius: 99, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                    New Password *
+                  </label>
+                  <input
+                    className="input-field"
+                    type="password"
+                    placeholder="Enter new password"
+                    value={newPasswordValue}
+                    onChange={(e) => setNewPasswordValue(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
+                  <button type="button" onClick={() => setShowPasswordModal(false)} className="btn-secondary" style={{ flex: 1, padding: 12 }}>
+                    Cancel
+                  </button>
+                  <button type="button" onClick={handleUpdatePassword} disabled={updatingPassword} className="btn-primary" style={{ flex: 1, padding: 12 }}>
+                    {updatingPassword ? 'Updating…' : 'Update Password'}
                   </button>
                 </div>
               </div>

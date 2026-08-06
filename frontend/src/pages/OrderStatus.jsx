@@ -44,6 +44,9 @@ export default function OrderStatus() {
   const [orderReviewed, setOrderReviewed] = useState(() =>
     localStorage.getItem(`order_reviewed_${id}`) === 'true'
   );
+  const [reviewDismissed, setReviewDismissed] = useState(
+    localStorage.getItem('review_dismissed') === 'true'
+  );
 
   // Fetch settings for review banner
   useEffect(() => {
@@ -229,31 +232,38 @@ export default function OrderStatus() {
           </div>
 
           {/* ── Customer Food Review Section ── */}
-          {orderReviewed ? (
-            <div style={{ padding: '12px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 28, height: 28, borderRadius: 99, background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Check size={16} />
+          {order.status === 'completed' ? (
+            orderReviewed ? (
+              <div style={{ padding: '12px 14px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 99, background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Check size={16} />
+                </div>
+                <div>
+                  <p style={{ fontWeight: 800, fontSize: 13, color: '#16a34a' }}>Thank you for your review! ⭐</p>
+                  <p style={{ fontSize: 11, color: 'var(--color-muted)' }}>Your food feedback helps us maintain top quality!</p>
+                </div>
               </div>
-              <div>
-                <p style={{ fontWeight: 800, fontSize: 13, color: '#16a34a' }}>Thank you for your review! ⭐</p>
-                <p style={{ fontSize: 11, color: 'var(--color-muted)' }}>Your food feedback helps us maintain top quality!</p>
-              </div>
-            </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setSelectedItemTitle(order?.items?.[0]?.menuItem?.name || '');
+                  setShowFoodReviewModal(true);
+                }}
+                className="btn-primary"
+                style={{
+                  width: '100%', padding: '12px 18px', borderRadius: 14,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  fontSize: 14, fontWeight: 800,
+                }}
+              >
+                <Star size={16} fill="#fff" /> Rate &amp; Review Your Food
+              </button>
+            )
           ) : (
-            <button
-              onClick={() => {
-                setSelectedItemTitle(order?.items?.[0]?.menuItem?.name || '');
-                setShowFoodReviewModal(true);
-              }}
-              className="btn-primary"
-              style={{
-                width: '100%', padding: '12px 18px', borderRadius: 14,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                fontSize: 14, fontWeight: 800,
-              }}
-            >
-              <Star size={16} fill="#fff" /> Rate &amp; Review Your Food
-            </button>
+            <div style={{ padding: '10px 14px', background: 'var(--color-surface)', border: '1px dashed var(--color-border)', borderRadius: 12, textAlign: 'center', fontSize: 12, color: 'var(--color-muted)' }}>
+              <Star size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 5, opacity: 0.6 }} />
+              Food review will be available once your order is completed
+            </div>
           )}
         </motion.div>
 

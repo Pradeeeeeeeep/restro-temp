@@ -86,7 +86,7 @@ function CartSnackbar({ count, total, lastAdded, onCheckout }) {
             <span style={{ fontWeight: 800, fontSize: 16 }}>₹{total.toFixed(0)}</span>
             <span style={{ margin: '0 10px', opacity: 0.5 }}>·</span>
             <span style={{ fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 5 }}>
-              Checkout <ArrowRight size={16} />
+              View Cart <ArrowRight size={16} />
             </span>
           </motion.button>
         )}
@@ -95,11 +95,87 @@ function CartSnackbar({ count, total, lastAdded, onCheckout }) {
   );
 }
 
+export function calculateFestivalPrice(item, siteSettings) {
+  const discountType = siteSettings?.festivalDiscountType || 'percentage';
+  const discountVal = Number(siteSettings?.festivalDiscountValue ?? siteSettings?.festivalDiscountPercent) || 0;
+  const customPrices = siteSettings?.customFestivalPrices || {};
+  const hasCustomPrices = Object.keys(customPrices).length > 0;
+  const isSaleActive = siteSettings?.showFestivalBanner && (discountVal > 0 || hasCustomPrices);
+  const excludedIds = (siteSettings?.excludedFestivalItemIds || []).map(id => String(id));
+
+  const itemKey = item.rawId !== undefined ? String(item.rawId) : String(item.id);
+  const isExcluded = excludedIds.includes(itemKey) || excludedIds.includes(String(item.id));
+
+  if (isSaleActive && !isExcluded) {
+    const originalPrice = Number(item.price) || 0;
+    const customPriceVal = customPrices[itemKey] !== undefined && customPrices[itemKey] !== '' && customPrices[itemKey] !== null
+      ? Number(customPrices[itemKey])
+      : customPrices[String(item.id)] !== undefined && customPrices[String(item.id)] !== '' && customPrices[String(item.id)] !== null
+      ? Number(customPrices[String(item.id)])
+      : null;
+
+    let salePrice = originalPrice;
+    let badgeText = '';
+
+    if (customPriceVal !== null && !isNaN(customPriceVal) && customPriceVal >= 0) {
+      salePrice = Math.round(customPriceVal);
+      const diff = originalPrice - salePrice;
+      badgeText = diff > 0 ? `🔥 SPECIAL ₹${salePrice}` : `🔥 SPECIAL OFFER`;
+    } else if (discountType === 'fixed') {
+      salePrice = Math.max(0, Math.round(originalPrice - discountVal));
+      badgeText = `🔥 ₹${discountVal} OFF`;
+    } else if (discountVal > 0) {
+      salePrice = Math.max(0, Math.round(originalPrice * (1 - discountVal / 100)));
+      badgeText = `🔥 ${discountVal}% OFF`;
+    }
+
+    if (salePrice < originalPrice || (customPriceVal !== null && salePrice !== originalPrice)) {
+      return { originalPrice, salePrice, discountType, discountVal, badgeText, isOnSale: true };
+    }
+  }
+
+  return {
+    originalPrice: Number(item.price) || 0,
+    salePrice: Number(item.price) || 0,
+    discountType: 'percentage',
+    discountVal: 0,
+    badgeText: '',
+    isOnSale: false
+  };
+}
+
+export function getItemReviewStats(item, reviews = []) {
+  if (!item || !reviews || !Array.isArray(reviews) || reviews.length === 0) {
+    return { count: 0, avgRating: '0.0', hasMinReviews: false };
+  }
+
+  const itemName = (item.name || '').trim().toLowerCase();
+
+  const matched = reviews.filter((r) => {
+    if (!r.itemTitle) return false;
+    const title = r.itemTitle.trim().toLowerCase();
+    return title === itemName || title.includes(itemName) || itemName.includes(title);
+  });
+
+  const count = matched.length;
+  if (count < 2) {
+    return { count, avgRating: '0.0', hasMinReviews: false };
+  }
+
+  const sum = matched.reduce((acc, r) => acc + (Number(r.rating) || 5), 0);
+  const avgRating = (sum / count).toFixed(1);
+
+  return { count, avgRating, hasMinReviews: true };
+}
+
 /* ─── Menu card ─── */
-function MenuCard({ item, onAdd, onUpdate, cartQty, onClickCard, cornerStyle }) {
+function MenuCard({ item, onAdd, onUpdate, cartQty, onClickCard, cornerStyle, siteSettings, reviews = [] }) {
   const imgSrc = item.image || null;
-  const rating = (4.5 + (item.id % 5) * 0.1).toFixed(1);
+  const reviewStats = getItemReviewStats(item, reviews);
   const cardRadius = getCornerRadius(cornerStyle);
+
+  const priceInfo = calculateFestivalPrice(item, siteSettings);
+  const { originalPrice, salePrice, badgeText, isOnSale } = priceInfo;
 
   let imgRadius = '14px 14px 0 0';
   if (cornerStyle === 'rounded-full') imgRadius = '24px 24px 0 0';
@@ -117,18 +193,32 @@ function MenuCard({ item, onAdd, onUpdate, cartQty, onClickCard, cornerStyle }) 
           ? <img src={imgSrc} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           : <Utensils size={34} color="var(--color-muted-light)" />}
 
-        {/* Rating star badge */}
-        <div style={{
-          position: 'absolute', top: 8, left: 8,
-          display: 'flex', alignItems: 'center', gap: 3,
-          padding: '3px 8px', borderRadius: 99,
-          background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)',
-          fontSize: 11, fontWeight: 800, color: '#1a0f05',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.12)'
-        }}>
-          <Star size={11} fill="#e8901f" color="#e8901f" />
-          <span>{rating}</span>
-        </div>
+        {/* Rating star badge — Only show if product has 2 minimum reviews */}
+        {reviewStats.hasMinReviews && (
+          <div style={{
+            position: 'absolute', top: 8, left: 8,
+            display: 'flex', alignItems: 'center', gap: 3,
+            padding: '3px 8px', borderRadius: 99,
+            background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(4px)',
+            fontSize: 11, fontWeight: 800, color: '#1a0f05',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.12)'
+          }}>
+            <Star size={11} fill="#e8901f" color="#e8901f" />
+            <span>{reviewStats.avgRating} ({reviewStats.count})</span>
+          </div>
+        )}
+
+        {/* Festival Sale Badge */}
+        {isOnSale && (
+          <div style={{
+            position: 'absolute', top: 8, right: 8,
+            background: '#dc2626', color: '#ffffff',
+            fontWeight: 900, fontSize: 10, padding: '3px 8px', borderRadius: 99,
+            boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+          }}>
+            {badgeText}
+          </div>
+        )}
       </div>
 
       <div style={{ padding: '12px 14px 14px', display: 'flex', flexDirection: 'column', gap: 5 }}>
@@ -137,7 +227,16 @@ function MenuCard({ item, onAdd, onUpdate, cartQty, onClickCard, cornerStyle }) 
           <p style={{ color: 'var(--color-muted)', fontSize: 12, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.description}</p>
         )}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-          <span style={{ fontWeight: 800, fontSize: 17, color: 'var(--color-accent-dark)' }}>₹{item.price}</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+            {isOnSale ? (
+              <>
+                <span style={{ fontWeight: 800, fontSize: 17, color: '#dc2626' }}>₹{salePrice}</span>
+                <span style={{ fontSize: 12, color: 'var(--color-muted)', textDecoration: 'line-through' }}>₹{originalPrice}</span>
+              </>
+            ) : (
+              <span style={{ fontWeight: 800, fontSize: 17, color: 'var(--color-accent-dark)' }}>₹{item.price}</span>
+            )}
+          </div>
 
           <AnimatePresence mode="wait" initial={false}>
             {cartQty === 0 ? (
@@ -191,17 +290,19 @@ function MenuCard({ item, onAdd, onUpdate, cartQty, onClickCard, cornerStyle }) 
 }
 
 /* ─── Item Detail Floating Modal ─── */
-function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelectItem, cornerStyle }) {
+function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelectItem, cornerStyle, siteSettings, reviews = [] }) {
   if (!itemData) return null;
   const { item, catName, categoryItems } = itemData;
   const [selectedAddons, setSelectedAddons] = useState([]);
   const imgSrc = item.image || null;
-  const rating = (4.5 + (item.id % 5) * 0.1).toFixed(1);
-  const reviewsCount = 18 + (item.id * 7) % 45;
+  const reviewStats = getItemReviewStats(item, reviews);
   const cardRadius = getCornerRadius(cornerStyle);
 
+  const priceInfo = calculateFestivalPrice(item, siteSettings);
+  const { originalPrice, salePrice, badgeText, isOnSale } = priceInfo;
+
   const addonsTotal = selectedAddons.reduce((sum, a) => sum + (a.price || 0), 0);
-  const unitPrice = item.price + addonsTotal;
+  const unitPrice = salePrice + addonsTotal;
 
   return (
     <AnimatePresence>
@@ -247,19 +348,21 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
               <X size={18} />
             </button>
 
-            {/* Rating badge */}
-            <div style={{
-              position: 'absolute', bottom: 12, left: 12,
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '5px 12px', borderRadius: 99,
-              background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
-              fontSize: 13, fontWeight: 800, color: '#1a0f05'
-            }}>
-              <Star size={14} fill="#e8901f" color="#e8901f" />
-              <span>{rating}</span>
-              <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>({reviewsCount} reviews)</span>
-            </div>
+            {/* Rating badge — Only show if product has 2 minimum reviews */}
+            {reviewStats.hasMinReviews && (
+              <div style={{
+                position: 'absolute', bottom: 12, left: 12,
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '5px 12px', borderRadius: 99,
+                background: 'rgba(255,255,255,0.92)', backdropFilter: 'blur(6px)',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+                fontSize: 13, fontWeight: 800, color: '#1a0f05'
+              }}>
+                <Star size={14} fill="#e8901f" color="#e8901f" />
+                <span>{reviewStats.avgRating}</span>
+                <span style={{ fontSize: 11, color: 'var(--color-muted)', fontWeight: 500 }}>({reviewStats.count} reviews)</span>
+              </div>
+            )}
           </div>
 
           {/* Details Body */}
@@ -272,7 +375,17 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
 
             <div>
               <h2 style={{ fontWeight: 800, fontSize: 20, marginBottom: 4 }}>{item.name}</h2>
-              <span style={{ fontWeight: 800, fontSize: 22, color: 'var(--color-accent-dark)' }}>₹{item.price}</span>
+              {isOnSale ? (
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ fontWeight: 800, fontSize: 22, color: '#dc2626' }}>₹{salePrice}</span>
+                  <span style={{ fontSize: 14, color: 'var(--color-muted)', textDecoration: 'line-through' }}>₹{originalPrice}</span>
+                  <span style={{ background: '#dc2626', color: '#fff', fontSize: 11, fontWeight: 800, padding: '2px 8px', borderRadius: 99 }}>
+                    {badgeText}
+                  </span>
+                </div>
+              ) : (
+                <span style={{ fontWeight: 800, fontSize: 22, color: 'var(--color-accent-dark)' }}>₹{item.price}</span>
+              )}
             </div>
 
             {/* Description */}
@@ -457,74 +570,11 @@ function ItemDetailModal({ itemData, onClose, onAdd, onUpdate, cartQty, onSelect
   );
 }
 
-/* ─── Cart drawer ─── */
-function CartDrawer({ open, onClose, cartItems, updateQuantity, addItem, total, navigate }) {
-  return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={onClose}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(30,15,5,0.4)', zIndex: 100 }} />
-          <motion.div
-            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            style={{ position: 'fixed', right: 0, top: 0, bottom: 0, width: '100%', maxWidth: 380, background: 'var(--color-card)', borderLeft: '1px solid var(--color-border)', zIndex: 101, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h2 style={{ fontWeight: 800, fontSize: 18 }}>Your Cart</h2>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-muted)' }}><X size={20} /></button>
-            </div>
-            <div style={{ flex: 1, overflowY: 'auto', padding: 14 }}>
-              {cartItems.length === 0
-                ? <div style={{ textAlign: 'center', padding: '50px 0', color: 'var(--color-muted)' }}><ShoppingCart size={38} style={{ margin: '0 auto 10px', display: 'block' }} /><p>Cart is empty</p></div>
-                : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {cartItems.map((item) => (
-                      <div key={item.menuItemId} style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--color-surface)', borderRadius: 12, padding: 12 }}>
-                        <div style={{ flex: 1 }}>
-                          <p style={{ fontWeight: 600, fontSize: 14 }}>{item.name}</p>
-                          <p style={{ color: 'var(--color-accent-dark)', fontWeight: 700, fontSize: 13 }}>₹{(item.price * item.quantity).toFixed(0)}</p>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                          <button onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)}
-                            style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Minus size={13} />
-                          </button>
-                          <span style={{ fontWeight: 700, minWidth: 18, textAlign: 'center', fontSize: 14 }}>{item.quantity}</span>
-                          <button onClick={() => addItem(item)}
-                            style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--color-accent)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Plus size={13} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-            </div>
-            {cartItems.length > 0 && (
-              <div style={{ padding: '16px 18px', borderTop: '1px solid var(--color-border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, fontWeight: 800, fontSize: 17 }}>
-                  <span>Total</span><span style={{ color: 'var(--color-accent-dark)' }}>₹{total.toFixed(0)}</span>
-                </div>
-                <button className="btn-primary" style={{ width: '100%' }}
-                  onClick={() => { onClose(); navigate('/checkout'); }}>
-                  Checkout →
-                </button>
-              </div>
-            )}
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-}
-
 /* ═══════════════════ MENU PAGE ═══════════════════ */
 export default function Menu() {
   const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const [cartOpen, setCartOpen] = useState(false);
   const [lastAdded, setLastAdded] = useState(null);
   const [snackTimer, setSnackTimer] = useState(null);
   const [selectedItemData, setSelectedItemData] = useState(null);
@@ -535,12 +585,14 @@ export default function Menu() {
   const { items: cartItems, addItem, updateQuantity, total, count } = useCartStore();
 
   const [siteSettings, setSiteSettings] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [reviewDismissed, setReviewDismissed] = useState(
     () => localStorage.getItem('review_dismissed') === 'true'
   );
 
   useEffect(() => {
     api.get('/settings').then(({ data }) => setSiteSettings(data.settings)).catch(() => {});
+    api.get('/reviews').then(({ data }) => setReviews(data.reviews || [])).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -556,6 +608,9 @@ export default function Menu() {
   );
 
   const handleAdd = (item) => {
+    const priceInfo = calculateFestivalPrice(item, siteSettings);
+    const effectivePrice = item.price !== undefined && item.price !== priceInfo.originalPrice ? item.price : priceInfo.salePrice;
+
     // If item has customizations available and customer clicked add directly on card, open detail card modal:
     const custArray = parseCustomizations(item.customizations);
     if (custArray.length > 0 && !item.selectedAddons) {
@@ -572,7 +627,7 @@ export default function Menu() {
     addItem({
       menuItemId: item.id,
       name: displayName,
-      price: item.price,
+      price: effectivePrice,
       image: item.image,
     });
 
@@ -619,10 +674,10 @@ export default function Menu() {
                 <span>Orders</span>
               </motion.button>
             )}
-            {/* Cart icon — only shown when items in cart, opens drawer */}
+            {/* Cart icon — routes directly to /cart */}
             {count > 0 && (
               <motion.button initial={{ scale: 0 }} animate={{ scale: 1 }} whileTap={{ scale: 0.9 }}
-                onClick={() => setCartOpen(true)}
+                onClick={() => navigate('/cart')}
                 style={{ position: 'relative', background: 'var(--color-surface)', border: '1.5px solid var(--color-accent-border)', borderRadius: 12, padding: '8px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Outfit', fontWeight: 700, fontSize: 14, color: 'var(--color-accent-dark)' }}>
                 <ShoppingCart size={16} />
                 <span>{count}</span>
@@ -730,6 +785,8 @@ export default function Menu() {
                   <MenuCard key={item.id} item={item}
                     cartQty={getQty(item.id)} onAdd={handleAdd}
                     onUpdate={handleUpdate}
+                    siteSettings={siteSettings}
+                    reviews={reviews}
                     cornerStyle={siteSettings?.menuItemCornerStyle || siteSettings?.cardCornerStyle}
                     onClickCard={(it) => setSelectedItemData({ item: it, catName: cat.name, categoryItems: cat.items })} />
                 ))}
@@ -809,17 +866,12 @@ export default function Menu() {
 
       </div>
 
-      {/* ── Cart drawer ── */}
-      <CartDrawer
-        open={cartOpen} onClose={() => setCartOpen(false)}
-        cartItems={cartItems} updateQuantity={updateQuantity}
-        addItem={addItem} total={total} navigate={navigate}
-      />
-
       {/* ── Floating Item Detail Modal ── */}
       <ItemDetailModal
         itemData={selectedItemData}
         onClose={() => setSelectedItemData(null)}
+        siteSettings={siteSettings}
+        reviews={reviews}
         onAdd={(custItem) => {
           setSelectedItemData(null);
           handleAdd(custItem);
@@ -837,7 +889,7 @@ export default function Menu() {
       <CartSnackbar
         count={count} total={total}
         lastAdded={lastAdded}
-        onCheckout={() => navigate('/checkout')}
+        onCheckout={() => navigate('/cart')}
       />
     </div>
   );

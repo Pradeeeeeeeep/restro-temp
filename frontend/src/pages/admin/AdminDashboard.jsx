@@ -10,16 +10,59 @@ const STATUS_BG    = { placed: '#fef3e2', accepted: '#eff6ff', preparing: '#f5f3
 const STATUS_ICON  = { placed: Coffee, accepted: CheckCircle, preparing: ChefHat, ready: Bell, completed: Check };
 const METHOD_LABEL = { cash: 'Cash', cafe: 'Café', online: 'Online' };
 
+export function getAdminAuthInfo() {
+  const role = localStorage.getItem('admin_role');
+  const permsRaw = localStorage.getItem('admin_permissions');
+  const username = localStorage.getItem('admin_username') || '';
+
+  const isSuper =
+    !role ||
+    role === 'super_admin' ||
+    !permsRaw ||
+    permsRaw === 'all' ||
+    permsRaw === 'undefined' ||
+    permsRaw === 'null' ||
+    permsRaw.includes('all');
+
+  const permsList =
+    permsRaw && permsRaw !== 'undefined' && permsRaw !== 'null'
+      ? permsRaw.split(',').map((p) => p.trim())
+      : [];
+
+  const hasPermission = (key) => isSuper || permsList.includes(key);
+
+  return { role: role || 'super_admin', permsRaw, permsList, username, isSuper, hasPermission };
+}
+
 /* ─── Shared Admin Nav ─── */
 export function AdminNav({ active }) {
   const navigate = useNavigate();
-  const logout = () => { localStorage.removeItem('admin_token'); navigate('/admin/login'); toast.success('Logged out'); };
-  const links = [
-    { path: '/admin',          label: 'Dashboard', icon: TrendingUp },
-    { path: '/admin/orders',   label: 'Orders',    icon: ShoppingBag },
-    { path: '/admin/menu',     label: 'Menu',      icon: UtensilsCrossed },
-    { path: '/admin/settings', label: 'Settings',  icon: Settings },
+  const logout = () => {
+    localStorage.removeItem('admin_token');
+    localStorage.removeItem('admin_role');
+    localStorage.removeItem('admin_permissions');
+    localStorage.removeItem('admin_username');
+    navigate('/admin/login');
+    toast.success('Logged out');
+  };
+
+  const { isSuper, hasPermission, username } = getAdminAuthInfo();
+
+  const allLinks = [
+    { path: '/admin',          label: 'Dashboard', icon: TrendingUp, permission: null },
+    { path: '/admin/orders',   label: 'Orders',    icon: ShoppingBag, permission: 'orders' },
+    { path: '/admin/menu',     label: 'Menu',      icon: UtensilsCrossed, permission: 'menu' },
+    { path: '/admin/settings', label: 'Settings',  icon: Settings, permission: 'settings' },
   ];
+
+  const hasSettingsPerm = isSuper || hasPermission('branding') || hasPermission('sales') || hasPermission('coupons') || hasPermission('reviews') || hasPermission('admins');
+
+  const navLinks = allLinks.filter(link => {
+    if (!link.permission) return true;
+    if (link.permission === 'settings') return hasSettingsPerm;
+    return hasPermission(link.permission);
+  });
+
   return (
     <div style={{ background: 'var(--color-card)', borderBottom: '1px solid var(--color-border)', padding: '10px 20px', position: 'sticky', top: 0, zIndex: 50 }}>
       <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -27,11 +70,17 @@ export function AdminNav({ active }) {
           <div style={{ width: 34, height: 34, borderRadius: 10, background: 'linear-gradient(135deg, #e8901f, #c2700f)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Coffee size={18} color="#fff" />
           </div>
-          <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--color-text)' }}>Brew & Bites</span>
-          <span style={{ fontSize: 10, color: 'var(--color-accent)', background: 'var(--color-accent-bg)', border: '1px solid var(--color-accent-border)', borderRadius: 99, padding: '2px 8px', fontWeight: 700 }}>ADMIN</span>
+          <div>
+            <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--color-text)' }}>Brew &amp; Bites</span>
+            {username && (
+              <span style={{ fontSize: 11, color: 'var(--color-muted)', marginLeft: 8 }}>
+                @{username} {isSuper ? '(👑 Super Admin)' : '(⚙️ Staff)'}
+              </span>
+            )}
+          </div>
         </div>
         <nav style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {links.map(({ path, label, icon: Icon }) => (
+          {navLinks.map(({ path, label, icon: Icon }) => (
             <Link key={path} to={path} style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 10,
               textDecoration: 'none', fontSize: 14, fontWeight: 600, transition: 'all 0.15s',

@@ -1,23 +1,29 @@
 # ☕ Brew & Bites — Modern Full-Stack Café & Restaurant Ordering App
 
-A modern full-stack café and fast-food web application built with **React**, **Vite**, **Node.js**, **Express**, **Prisma ORM**, and **PostgreSQL**.
+A modern full-stack café and fast-food web application built with **React 18**, **Vite**, **Node.js**, **Express**, **Prisma ORM**, and **PostgreSQL**.
 
 ---
 
 ## 🌟 Key Features
 
 ### 📱 Customer Ordering Experience
-- **Quick Guest Login**: Phone number & name authentication.
-- **Categorized Menu & Quick Badges**: Smooth category navigation pills & search bar.
-- **Item Customizations & Add-ons**: Checkbox customization options (e.g. Extra Cheese, Make it Spicy, Double Patty).
-- **Fast Food Saver Combos**: Dedicated Combo Deals section with instant add-to-cart spring micro-animations.
+- **Quick Guest Login**: Phone number & customer name authentication.
+- **Categorized Menu & Review Badges**:
+  - Smooth category navigation pills & live search bar.
+  - **Dynamic Rating Star Badges**: Displays rating badges (`★ 4.8 (3)`) on item cards only when an item has **2 or more reviews**.
+- **Item Customizations & Add-ons**: Checkbox options for custom toppings & extras (e.g. Extra Cheese, Make it Spicy, Double Patty).
+- **Fast Food Saver Combos**: Dedicated Combo Deals section with instant add-to-cart micro-animations.
 - **Express Pickup Guarantee Timer**: Live countdown timer (`⚡ Ready for Pickup in 15 mins`).
-- **Promo Coupon Codes**: Apply discount promo codes at checkout with minimum purchase limits.
+- **Promo Coupon Codes**: Apply promo codes at checkout with minimum order purchase limits and max discount caps.
+- **Festival & Special Sale Price Overrides**:
+  - Storewide percentage (%) or flat rupee (₹) discounts.
+  - **Custom Item Sale Prices**: Override specific item sale prices (e.g. ₹99 special price for Gourmet Burgers).
+  - Item Eligibility (Include / Exclude specific menu items).
 - **Order Fulfillment Methods**:
   - 💵 **Cash on Pickup**
   - 🏠 **Order in Café / Dine-in**
   - 💳 **Online Payment**
-- **Live Order Tracking**: Instant status updates (`Placed` → `Accepted` → `Preparing` → `Ready` → `Completed`).
+- **Live Order Tracking**: Real-time status tracker (`Placed` → `Accepted` → `Preparing` → `Ready` → `Completed`).
 
 ---
 
@@ -25,13 +31,13 @@ A modern full-stack café and fast-food web application built with **React**, **
 - **Prebuilt Designer Themes**:
   1. 🍔 **Fast Food Express** *(Red, Golden Yellow, White)*
   2. 🛍️ **Shopify Crave** *(Vibrant Foodie Coral & Sunshine Yellow)*
-  3. ⚡ **Neo Brutalism** *(High-contrast pop art with solid black offset shadows)*
+  3. ⚡ **Neo Brutalism** *(High-contrast pop art with solid offset shadows)*
   4. ☕ **Warm Café** *(Cozy Amber & Cream)*
   5. 🌙 **Midnight** *(Dark Mode Elegance)*
   6. 💼 **Clean Pro** *(Minimalist Corporate)*
   7. 🌿 **Forest** *(Fresh Natural Green)*
   8. 🌸 **Sweet Pink** *(Delightful Pastel)*
-- **Custom Color Palette Override**: Custom hex color picker for Accent, Background, Card & Text.
+- **Custom Color Palette Override**: Hex color picker for Accent, Background, Card & Text.
 - **Menu Card Corner Radius**: Custom corner curvature styles for menu cards.
 
 ---
@@ -39,27 +45,41 @@ A modern full-stack café and fast-food web application built with **React**, **
 ### 🌐 Remote Master Theme Control REST API
 Allows an external master site / super admin panel to remotely control store themes & banners in real-time.
 
-- **`GET /api/remote/theme`**: Public endpoint returning active theme & allowed presets.
+- **`GET /api/remote/theme`**: Returns active theme & allowed presets.
 - **`POST /api/remote/theme`**: Secure remote theme update endpoint.
   - Header: `X-Remote-Secret: super-secret-remote-key`
   - Body: `{ "theme": "fast-food" }`
 
 ---
 
-### 🛠️ Admin Management Dashboard (`/admin`)
+### 🛠️ Admin Management & Staff Permissions (`/admin`)
 
 1. **Dashboard Overview**: Live stats (Revenue, Total Orders, Active Orders, Menu Item Counts).
-2. **Orders Management**: Filter orders by status, change order status in real time.
+2. **Order Management & Null-Safe Tracking**:
+   - Filter orders by status (`Placed`, `Accepted`, `Preparing`, `Ready`, `Completed`, `Cancelled`).
+   - One-click order status workflow with printed receipt generator & direct WhatsApp invoice sender.
 3. **Menu & Combo Management**:
-   - Add/edit/delete menu items & categories.
+   - Create, edit, and delete menu items & categories with image upload support.
    - Dedicated **Fast Food Combos Section** with master toggle & per-combo active/inactive switches.
 4. **Coupon Codes & Discounts**:
-   - Create & manage promo codes with flat ₹ or percentage % discounts, min purchase limits, and max discount caps.
-5. **Festival & Sale Banners**:
-   - Preset celebration themes (Diwali, Valentine's, Summer Splash, New Year).
-   - Live banner card & full-screen celebration popup modal.
-6. **Categorized Store Settings**:
-   - Organized category navigation pills (`Branding`, `Theme & Style`, `Coupons`, `Festival Banners`, `Reviews`).
+   - Manage promo codes with flat ₹ or percentage % discounts, min purchase limits, and max discount caps.
+5. **Festival Sales Engine & Custom Item Prices**:
+   - Festival sale banner triggers (Diwali, Valentine's, Summer Splash, New Year).
+   - Configure flat ₹ or percentage % store discounts.
+   - Set custom individual item sale price overrides.
+   - Include or exclude specific items from sales.
+6. **Customer Feedback & Reviews**:
+   - Manage custom customer reviews shown on store banner.
+   - Dynamic 2-review threshold for displaying rating badges on menu items.
+7. **Staff Roles & Granular Permissions**:
+   - **Role Types**: `Super Admin` vs `Custom Staff Role`.
+   - **Quick Presets**: `Cashier / Orders`, `Menu Manager`, `Deals & Promo`, `Store Manager`.
+   - **Granular Checkboxes**: `branding`, `sales`, `menu`, `orders`, `reviews`, `coupons`, `admins`.
+   - Access control enforced across Admin Navbar, Dashboard sections, and API endpoints.
+8. **Super Admin Password Security**:
+   - Dedicated **🔑 Change Super Admin Password** box for the active Super Admin.
+   - Password changes persist to PostgreSQL database with database-first login verification.
+   - Only Super Admins can alter staff passwords or access levels.
 
 ---
 
@@ -111,7 +131,7 @@ node scripts/seedCombos.js
 # Start backend server
 npm run dev
 ```
-Backend runs on **http://localhost:5001** (or `5000`).
+Backend runs on **http://localhost:5001**.
 
 ---
 
@@ -136,7 +156,7 @@ Frontend runs on **http://localhost:5173**.
 - **Username**: `admin`
 - **Password**: `admin123`
 
-*(Configurable via `ADMIN_USERNAME` and `ADMIN_PASSWORD` in `backend/.env`)*
+*(Configurable via `ADMIN_USERNAME` and `ADMIN_PASSWORD` in `backend/.env` or updated via Admin Settings)*
 
 ---
 
@@ -145,12 +165,12 @@ Frontend runs on **http://localhost:5173**.
 ```
 Restro/
 ├── backend/
-│   ├── controllers/      # Route controllers (admin, customer, menu, orders, coupons, combos, remote)
+│   ├── controllers/      # Route controllers (admin, customer, menu, orders, coupons, combos, remote, review)
 │   ├── data/             # Persistent JSON configurations
 │   ├── middleware/       # JWT auth & error handler middlewares
-│   ├── prisma/           # Prisma schema & migrations
+│   ├── prisma/           # Prisma schema & database models
 │   ├── routes/           # Express API endpoints
-│   ├── scripts/          # Database seeding scripts (seedCombos.js, seedCoupons.js)
+│   ├── scripts/          # Database seeding scripts
 │   └── server.js         # Entry point Express server
 └── frontend/
     ├── src/

@@ -18,7 +18,10 @@ export default function AdminLogin() {
     try {
       const { data } = await api.post('/admin/login', { username, password });
       localStorage.setItem('admin_token', data.token);
-      toast.success('Welcome back, Admin! 👋');
+      localStorage.setItem('admin_role', data.role || 'super_admin');
+      localStorage.setItem('admin_permissions', data.permissions || 'all');
+      localStorage.setItem('admin_username', data.username || '');
+      toast.success(`Welcome back, ${data.name || data.username || 'Admin'}! 👋`);
       navigate('/admin');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Login failed');

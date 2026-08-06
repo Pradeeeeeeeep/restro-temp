@@ -18,31 +18,71 @@ const login = async (req, res, next) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
 
-    // Check env master admin credentials
+    const trimmedUsername = username.trim();
+    const trimmedPassword = password.trim();
+
+    // 1. Check DB AdminUser table FIRST
+    const dbAdmin = await prisma.adminUser.findUnique({ where: { username: trimmedUsername } });
+
+    if (dbAdmin) {
+      if (dbAdmin.password === trimmedPassword) {
+        const perms = dbAdmin.permissions || 'all';
+        const token = jwt.sign(
+          { id: dbAdmin.id, role: dbAdmin.role || 'super_admin', username: dbAdmin.username, permissions: perms },
+          process.env.JWT_SECRET,
+          { expiresIn: '7d' }
+        );
+        return res.json({
+          token,
+          id: dbAdmin.id,
+          username: dbAdmin.username,
+          name: dbAdmin.name,
+          role: dbAdmin.role || 'super_admin',
+          permissions: perms
+        });
+      } else {
+        // DB admin exists but password does NOT match!
+        return res.status(401).json({ error: 'Invalid username or password' });
+      }
+    }
+
+    // 2. If NO DB admin record exists yet, check .env master admin credentials
     if (
-      username === process.env.ADMIN_USERNAME &&
-      password === process.env.ADMIN_PASSWORD
+      process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD &&
+      trimmedUsername === process.env.ADMIN_USERNAME.trim() &&
+      trimmedPassword === process.env.ADMIN_PASSWORD.trim()
     ) {
+      let createdSuper;
+      try {
+        createdSuper = await prisma.adminUser.create({
+          data: {
+            username: trimmedUsername,
+            password: trimmedPassword,
+            name: 'Super Admin',
+            role: 'super_admin',
+            permissions: 'all',
+          },
+        });
+      } catch {
+        /* silent fallback */
+      }
+
       const token = jwt.sign(
-        { role: 'admin', username },
+        { id: createdSuper?.id, role: 'super_admin', username: trimmedUsername, permissions: 'all', isMasterEnv: true },
         process.env.JWT_SECRET,
         { expiresIn: '7d' }
       );
-      return res.json({ token, username, isMasterEnv: true });
+      return res.json({
+        token,
+        id: createdSuper?.id,
+        username: trimmedUsername,
+        name: createdSuper?.name || 'Super Admin',
+        role: 'super_admin',
+        permissions: 'all'
+      });
     }
 
-    // Check DB AdminUser table
-    const dbAdmin = await prisma.adminUser.findUnique({ where: { username } });
-    if (dbAdmin && dbAdmin.password === password) {
-      const token = jwt.sign(
-        { role: 'admin', username: dbAdmin.username, id: dbAdmin.id },
-        process.env.JWT_SECRET,
-        { expiresIn: '7d' }
-      );
-      return res.json({ token, username: dbAdmin.username, name: dbAdmin.name });
-    }
-
-    return res.status(401).json({ error: 'Invalid credentials' });
+    return res.status(401).json({ error: 'Invalid username or password' });
   } catch (err) {
     next(err);
   }
@@ -52,7 +92,7 @@ const login = async (req, res, next) => {
 const getAdmins = async (req, res) => {
   try {
     const admins = await prisma.adminUser.findMany({
-      select: { id: true, username: true, name: true, createdAt: true },
+      select: { id: true, username: true, name: true, role: true, permissions: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     });
     res.json({ admins });
@@ -64,20 +104,29 @@ const getAdmins = async (req, res) => {
 // POST /api/admin/users — Create new admin
 const createAdmin = async (req, res) => {
   try {
-    const { username, password, name } = req.body;
+    const { username, password, name, role, permissions } = req.body;
     if (!username || !username.trim()) return res.status(400).json({ error: 'Username is required' });
     if (!password || !password.trim()) return res.status(400).json({ error: 'Password is required' });
 
     const existing = await prisma.adminUser.findUnique({ where: { username: username.trim() } });
     if (existing) return res.status(400).json({ error: 'Username already exists' });
 
+    let permsStr = 'all';
+    if (Array.isArray(permissions)) {
+      permsStr = permissions.join(',');
+    } else if (typeof permissions === 'string' && permissions.trim()) {
+      permsStr = permissions.trim();
+    }
+
     const newAdmin = await prisma.adminUser.create({
       data: {
         username: username.trim(),
         password: password.trim(),
         name: name ? name.trim() : null,
+        role: role ? role.trim() : 'super_admin',
+        permissions: permsStr,
       },
-      select: { id: true, username: true, name: true, createdAt: true },
+      select: { id: true, username: true, name: true, role: true, permissions: true, createdAt: true },
     });
 
     res.status(201).json({ success: true, admin: newAdmin });
@@ -94,6 +143,118 @@ const deleteAdmin = async (req, res) => {
     res.json({ success: true, message: 'Admin user deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete admin user' });
+  }
+};
+
+// Helper to check if requester is Super Admin
+const checkIsSuper = (requester) => {
+  if (!requester) return true;
+  if (requester.isMasterEnv) return true;
+  if (!requester.role || requester.role === 'super_admin' || requester.role === 'admin') return true;
+  if (requester.permissions === 'all' || (typeof requester.permissions === 'string' && requester.permissions.includes('all'))) return true;
+  return false;
+};
+
+// PUT /api/admin/users/self/password — Super Admin change own password
+const updateSelfPassword = async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password || !password.trim()) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+
+    const requester = req.admin;
+    if (!checkIsSuper(requester)) {
+      return res.status(403).json({ error: 'Only Super Admin can change passwords.' });
+    }
+
+    const newPwd = password.trim();
+    const targetUsername = requester?.username || process.env.ADMIN_USERNAME || 'admin';
+
+    // Upsert DB record so password is updated in DB for this username
+    const updatedUser = await prisma.adminUser.upsert({
+      where: { username: targetUsername },
+      update: { password: newPwd },
+      create: {
+        username: targetUsername,
+        password: newPwd,
+        name: 'Super Admin',
+        role: 'super_admin',
+        permissions: 'all',
+      },
+    });
+
+    return res.json({ success: true, message: 'Your Super Admin password has been updated successfully', admin: updatedUser });
+  } catch (err) {
+    console.error('Error updating self password:', err);
+    res.status(500).json({ error: err.message || 'Failed to update password' });
+  }
+};
+
+// PUT /api/admin/users/:id/password — Update admin user password
+const updateAdminPassword = async (req, res) => {
+  try {
+    const requester = req.admin;
+    if (!checkIsSuper(requester)) {
+      return res.status(403).json({ error: 'Only Super Admin can change passwords.' });
+    }
+
+    const id = parseInt(req.params.id);
+    const { password } = req.body;
+    if (!password || !password.trim()) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+
+    const updated = await prisma.adminUser.update({
+      where: { id },
+      data: { password: password.trim() },
+      select: { id: true, username: true, name: true, role: true, permissions: true, createdAt: true },
+    });
+
+    res.json({ success: true, message: 'Password updated successfully', admin: updated });
+  } catch (err) {
+    console.error('Error updating admin password:', err);
+    res.status(500).json({ error: err.message || 'Failed to update admin password' });
+  }
+};
+
+// PUT /api/admin/users/:id — Update admin account role, permissions, name, or password
+const updateAdmin = async (req, res) => {
+  try {
+    const requester = req.admin;
+    if (!checkIsSuper(requester)) {
+      return res.status(403).json({ error: 'Only Super Admin can modify admin access or reset passwords.' });
+    }
+
+    const id = parseInt(req.params.id);
+    const { name, role, permissions, password } = req.body;
+
+    const dataToUpdate = {};
+    if (name !== undefined) dataToUpdate.name = name ? name.trim() : null;
+    if (role !== undefined) dataToUpdate.role = role.trim();
+
+    if (permissions !== undefined) {
+      if (Array.isArray(permissions)) {
+        dataToUpdate.permissions = permissions.join(',');
+      } else if (typeof permissions === 'string') {
+        dataToUpdate.permissions = permissions.trim();
+      }
+    }
+
+    if (password && password.trim()) {
+      dataToUpdate.password = password.trim();
+    }
+
+    const updated = await prisma.adminUser.update({
+      where: { id },
+      data: dataToUpdate,
+      select: { id: true, username: true, name: true, role: true, permissions: true, createdAt: true },
+    });
+
+    res.json({ success: true, message: 'Admin account updated successfully', admin: updated });
+  } catch (err) {
+    console.error('Error updating admin user:', err);
+    res.status(500).json({ error: err.message || 'Failed to update admin user' });
   }
 };
 
@@ -497,4 +658,7 @@ module.exports = {
   getAdmins,
   createAdmin,
   deleteAdmin,
+  updateAdminPassword,
+  updateAdmin,
+  updateSelfPassword,
 };

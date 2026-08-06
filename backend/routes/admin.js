@@ -101,10 +101,16 @@ const {
   getAdmins,
   createAdmin,
   deleteAdmin,
+  updateAdminPassword,
+  updateAdmin,
+  updateSelfPassword,
 } = require('../controllers/adminController');
 
 router.get('/users', getAdmins);
 router.post('/users', createAdmin);
 router.delete('/users/:id', deleteAdmin);
+router.put('/users/self/password', updateSelfPassword);
+router.put('/users/:id/password', updateAdminPassword);
+router.put('/users/:id', updateAdmin);
 
 module.exports = router;

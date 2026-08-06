@@ -1,20 +1,28 @@
 {
   "cafeName": "Pika Bites",
+  "cafeTagline": "Zinda ke har pal ke saath aapke finger tip ke pass",
   "cafeLogoUrl": "",
-  "googleReviewLink": "g.page/dd",
+  "googleReviewLink": "https://www.google.com/maps/place/Tea+Gang+%7C+Best+Cafe+in+Kolkata+%7C+Best+Restaurant+in+Kolkata+%7C+Best+Food+in+Kolkata/@22.5552536,88.3338086,14614m/data=!3m1!1e3!4m10!1m2!2m1!1scafe!3m6!1s0x3a0277b84c151253:0x94e218f982246848!8m2!3d22.5654697!4d88.3712917!15sCgRjYWZlWgYiBGNhZmWSAQRjYWZl4AEA!16s%2Fg%2F11vrkf1r_m?entry=ttu&g_ep=EgoyMDI2MDgwMy4wIKXMDSoASAFQAw%3D%3D",
   "showReviewBanner": true,
   "showFestivalBanner": false,
   "festivalSaleName": "Holi",
+  "festivalDiscountType": "fixed",
+  "festivalDiscountValue": 30,
+  "festivalDiscountPercent": 30,
+  "excludedFestivalItemIds": [],
+  "customFestivalPrices": {
+    "2": 60
+  },
   "theme": "shopify-crave",
   "customColors": {},
-  "cardCornerStyle": "rounded-md",
+  "cardCornerStyle": "sharp",
   "menuItemCornerStyle": "rounded-md",
   "combosEnabled": true,
   "combosTitle": "Biggest Saver",
   "festivalSaleDescription": "Special deals & seasonal offers available now",
   "socialLinks": {
     "instagram": "",
-    "facebook": "afbf",
+    "facebook": "",
     "whatsapp": "",
     "twitter": "",
     "youtube": ""

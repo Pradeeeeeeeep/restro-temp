@@ -202,7 +202,9 @@ export default function Home() {
           <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 4 }}>
             <span className="gradient-text">{siteSettings?.cafeName || 'Brew & Bites'}</span>
           </h1>
-          <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>Your neighbourhood café</p>
+          <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>
+            {siteSettings?.cafeTagline || 'Your neighbourhood café'}
+          </p>
         </motion.div>
 
         {/* ── FESTIVAL / EVENT SALE BANNER CARD ── */}
@@ -475,51 +477,7 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {/* ── Custom Customer Reviews Showcase ── */}
-        {reviews.length > 0 && (
-          <div style={{ marginTop: 24, marginBottom: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <h2 style={{ fontWeight: 800, fontSize: 16, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Star size={18} fill="#e8901f" color="#e8901f" /> What Our Customers Say
-              </h2>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)' }}>Verified Feedback</span>
-            </div>
-            <div className="no-scrollbar" style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6 }}>
-              {reviews.map((r) => (
-                <div key={r.id} style={{
-                  minWidth: 260, maxWidth: 300, background: 'var(--color-card)',
-                  border: '1px solid var(--color-border)', borderRadius: 16,
-                  padding: '14px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                  boxShadow: '0 2px 10px var(--card-shadow)', flexShrink: 0
-                }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6, marginBottom: 8 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        {Array.from({ length: r.rating || 5 }).map((_, i) => (
-                          <Star key={i} size={14} fill="#e8901f" color="#e8901f" />
-                        ))}
-                      </div>
-                      {r.itemTitle && (
-                        <span style={{ fontSize: 10, fontWeight: 800, background: 'var(--color-accent-bg)', color: 'var(--color-accent-dark)', border: '1px solid var(--color-accent-border)', padding: '2px 8px', borderRadius: 99, whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden', maxWidth: 140 }}>
-                          {r.itemTitle}
-                        </span>
-                      )}
-                    </div>
-                    <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.45, fontStyle: 'italic' }}>
-                      "{r.comment}"
-                    </p>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 99, background: 'var(--color-accent-bg)', color: 'var(--color-accent-dark)', fontWeight: 800, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {r.author.charAt(0).toUpperCase()}
-                    </div>
-                    <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--color-text)' }}>{r.author}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
 
         {/* ── Follow Us on Socials Footer ── */}
         {siteSettings?.socialLinks && Object.values(siteSettings.socialLinks).some((link) => Boolean(link && link.trim())) && (

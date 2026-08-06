@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronRight, RefreshCw, Printer, MessageCircle, XCircle, Coffee, CheckCircle, ChefHat, Bell, Check, X, ClipboardList, FileText, Banknote, House, CreditCard } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
-import { AdminNav } from './AdminDashboard';
+import { AdminNav, getAdminAuthInfo } from './AdminDashboard';
 
 const STATUSES = ['placed', 'accepted', 'preparing', 'ready', 'completed'];
 const STATUS_COLOR  = { placed:'#c2700f', accepted:'#1d4ed8', preparing:'#7c3aed', ready:'#15803d', completed:'#6b7280', cancelled:'#dc2626' };
@@ -20,11 +20,11 @@ function printInvoice(order) {
   const rows = order.items.map((i) => `
     <tr>
       <td style="padding:7px 0;border-bottom:1px solid #f0ebe4">
-        <div style="font-weight:600">${i.menuItem.name}</div>
+        <div style="font-weight:600">${i.menuItem?.name || i.name || 'Menu Item'}</div>
         ${i.customizations ? `<div style="font-size:11px;color:#c2700f;margin-top:2px">✨ ${i.customizations}</div>` : ''}
       </td>
       <td style="text-align:center;padding:7px 8px;border-bottom:1px solid #f0ebe4">×${i.quantity}</td>
-      <td style="text-align:right;padding:7px 0;border-bottom:1px solid #f0ebe4;font-weight:600">₹${(i.price * i.quantity).toFixed(0)}</td>
+      <td style="text-align:right;padding:7px 0;border-bottom:1px solid #f0ebe4;font-weight:600">₹${((i.price || 0) * (i.quantity || 1)).toFixed(0)}</td>
     </tr>`).join('');
 
   const html = `<!DOCTYPE html>
@@ -95,7 +95,8 @@ function sendWhatsApp(order) {
   const date = new Date(order.createdAt).toLocaleString('en-IN');
   const lines = order.items.map((i) => {
     const cust = i.customizations ? ` (${i.customizations})` : '';
-    return `  • ${i.menuItem.name}${cust} × ${i.quantity} = ₹${(i.price * i.quantity).toFixed(0)}`;
+    const itemName = i.menuItem?.name || i.name || 'Menu Item';
+    return `  • ${itemName}${cust} × ${i.quantity} = ₹${((i.price || 0) * (i.quantity || 1)).toFixed(0)}`;
   }).join('\n');
   const note = order.note ? `\nNote: ${order.note}` : '';
   const text = `*Cafe Order Invoice*\n\n` +
@@ -229,11 +230,11 @@ export default function AdminOrders() {
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 3 }}>
-                          <p style={{ fontWeight: 700, fontSize: 14 }}>#{order.id} — {order.customer.name}</p>
+                          <p style={{ fontWeight: 700, fontSize: 14 }}>#{order.id} — {order.customer?.name || 'Customer'}</p>
                           <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99, background: bg, color, fontWeight: 700, border: `1px solid ${border}` }}>{order.status}</span>
                         </div>
                         <p style={{ color: 'var(--color-muted)', fontSize: 12 }}>
-                          {order.customer.phone} · {METHOD_LABEL[order.paymentMethod]} · {new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                          {order.customer?.phone || ''} · {METHOD_LABEL[order.paymentMethod] || order.paymentMethod} · {new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0, marginRight: 4 }}>
@@ -255,8 +256,8 @@ export default function AdminOrders() {
                               {order.items.map((item) => (
                                 <div key={item.id} style={{ padding: '8px 10px', background: 'var(--color-surface)', borderRadius: 10, border: '1px solid var(--color-border)' }}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                                    <span style={{ fontWeight: 700, color: 'var(--color-text)' }}>{item.menuItem.name} × {item.quantity}</span>
-                                    <span style={{ fontWeight: 800, color: 'var(--color-accent-dark)' }}>₹{(item.price * item.quantity).toFixed(0)}</span>
+                                    <span style={{ fontWeight: 700, color: 'var(--color-text)' }}>{item.menuItem?.name || item.name || 'Menu Item'} × {item.quantity}</span>
+                                    <span style={{ fontWeight: 800, color: 'var(--color-accent-dark)' }}>₹{((item.price || 0) * (item.quantity || 1)).toFixed(0)}</span>
                                   </div>
                                   {item.customizations && (
                                     <p style={{ fontSize: 12, color: 'var(--color-accent-dark)', fontWeight: 600, marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
