@@ -162,10 +162,13 @@ import api from '../api/axios';
 /* ─── 3. Combo Cards Section (Fetches active DB combos) ─── */
 export function FastFoodComboCards() {
   const addItem = useCartStore((s) => s.addItem);
+  const cartItems = useCartStore((s) => s.items);
   const [animatingId, setAnimatingId] = useState(null);
   const [combos, setCombos] = useState([]);
   const [enabled, setEnabled] = useState(isCombosSectionEnabled());
   const [selectedComboModal, setSelectedComboModal] = useState(null);
+
+  const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80';
 
   const fetchCombos = async () => {
     try {
@@ -198,13 +201,18 @@ export function FastFoodComboCards() {
       menuItemId: `combo-${combo.id}`,
       name: combo.name,
       price: combo.comboPrice,
-      image: combo.image,
+      image: combo.image || DEFAULT_IMAGE,
     });
     setAnimatingId(combo.id);
     toast.success(`Added ${combo.name} to cart! 🍔`, {
       style: { background: '#dc2626', color: '#fff', fontWeight: 700 }
     });
     setTimeout(() => setAnimatingId(null), 700);
+  };
+
+  const getCartQty = (comboId) => {
+    const found = cartItems.find((i) => i.menuItemId === `combo-${comboId}`);
+    return found ? found.quantity : 0;
   };
 
   return (
@@ -224,6 +232,9 @@ export function FastFoodComboCards() {
       <div className="no-scrollbar" style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 6 }}>
         {activeCombos.map((combo) => {
           const isAnimating = animatingId === combo.id;
+          const cartQty = getCartQty(combo.id);
+          const savings = combo.savings || (combo.originalPrice && combo.originalPrice > combo.comboPrice ? combo.originalPrice - combo.comboPrice : null);
+          const comboDesc = combo.desc || combo.description || 'Super saver combo meal deal.';
 
           return (
             <motion.div
@@ -242,8 +253,13 @@ export function FastFoodComboCards() {
               }}
             >
               {/* Image + Badge */}
-              <div style={{ height: 130, position: 'relative', overflow: 'hidden' }}>
-                <img src={combo.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'} alt={combo.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ height: 130, position: 'relative', overflow: 'hidden', background: 'var(--color-surface)' }}>
+                <img
+                  src={combo.image?.trim() || DEFAULT_IMAGE}
+                  alt={combo.name}
+                  onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
                 {combo.badge && (
                   <div style={{
                     position: 'absolute', top: 10, left: 10,
@@ -254,6 +270,16 @@ export function FastFoodComboCards() {
                     {combo.badge}
                   </div>
                 )}
+                {cartQty > 0 && (
+                  <div style={{
+                    position: 'absolute', top: 10, right: 10,
+                    background: '#16a34a', color: '#ffffff',
+                    fontWeight: 900, fontSize: 10, padding: '3px 8px', borderRadius: 99,
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+                  }}>
+                    {cartQty} in cart
+                  </div>
+                )}
               </div>
 
               {/* Content */}
@@ -262,8 +288,12 @@ export function FastFoodComboCards() {
                   <h4 style={{ fontWeight: 800, fontSize: 14, marginBottom: 4, lineHeight: 1.3, color: 'var(--color-text)' }}>
                     {combo.name}
                   </h4>
-                  <p style={{ fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.35 }}>
-                    {combo.desc || combo.description}
+                  <p style={{
+                    fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.35,
+                    display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden', textOverflow: 'ellipsis'
+                  }}>
+                    {comboDesc}
                   </p>
                 </div>
 
@@ -275,8 +305,8 @@ export function FastFoodComboCards() {
                         <span style={{ fontSize: 12, color: 'var(--color-muted)', textDecoration: 'line-through' }}>₹{combo.originalPrice}</span>
                       )}
                     </div>
-                    {combo.savings && (
-                      <p style={{ fontSize: 10, fontWeight: 800, color: '#16a34a', marginTop: 1 }}>Save ₹{combo.savings}!</p>
+                    {savings && (
+                      <p style={{ fontSize: 10, fontWeight: 800, color: '#16a34a', marginTop: 1 }}>Save ₹{savings}!</p>
                     )}
                   </div>
 
@@ -299,7 +329,7 @@ export function FastFoodComboCards() {
                       transition: 'background 0.2s',
                     }}
                   >
-                    {isAnimating ? <><Check size={14} /> Added!</> : <><Plus size={14} /> Add Combo</>}
+                    {isAnimating ? <><Check size={14} /> Added!</> : cartQty > 0 ? <><Check size={14} /> Add ({cartQty})</> : <><Plus size={14} /> Add Combo</>}
                   </motion.button>
                 </div>
               </div>
@@ -310,120 +340,127 @@ export function FastFoodComboCards() {
 
       {/* ── COMBO DETAIL MODAL ── */}
       <AnimatePresence>
-        {selectedComboModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSelectedComboModal(null)}
-            style={{
-              position: 'fixed', inset: 0,
-              background: 'rgba(26,15,5,0.45)', backdropFilter: 'blur(6px)',
-              zIndex: 110, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: 16
-            }}
-          >
+        {selectedComboModal && (() => {
+          const modalSavings = selectedComboModal.savings || (selectedComboModal.originalPrice && selectedComboModal.originalPrice > selectedComboModal.comboPrice ? selectedComboModal.originalPrice - selectedComboModal.comboPrice : null);
+          const modalDesc = selectedComboModal.desc || selectedComboModal.description || 'Includes main burger/pizza, fresh side, and chilled beverage.';
+          const modalQty = getCartQty(selectedComboModal.id);
+
+          return (
             <motion.div
-              onClick={(e) => e.stopPropagation()}
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedComboModal(null)}
               style={{
-                width: '100%', maxWidth: 440,
-                background: 'var(--color-card)',
-                border: '2px solid var(--color-border)',
-                borderRadius: 24, overflow: 'hidden',
-                boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
-                display: 'flex', flexDirection: 'column'
+                position: 'fixed', inset: 0,
+                background: 'rgba(26,15,5,0.45)', backdropFilter: 'blur(6px)',
+                zIndex: 110, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: 16
               }}
             >
-              {/* Header Image */}
-              <div style={{ position: 'relative', height: 200, background: 'var(--color-surface)', overflow: 'hidden' }}>
-                <img
-                  src={selectedComboModal.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'}
-                  alt={selectedComboModal.name}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                <button
-                  onClick={() => setSelectedComboModal(null)}
-                  style={{
-                    position: 'absolute', top: 12, right: 12, width: 34, height: 34, borderRadius: 99,
-                    background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', border: 'none',
-                    color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}
-                >
-                  <X size={18} />
-                </button>
+              <motion.div
+                onClick={(e) => e.stopPropagation()}
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                style={{
+                  width: '100%', maxWidth: 440,
+                  background: 'var(--color-card)',
+                  border: '2px solid var(--color-border)',
+                  borderRadius: 24, overflow: 'hidden',
+                  boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
+                  display: 'flex', flexDirection: 'column'
+                }}
+              >
+                {/* Header Image */}
+                <div style={{ position: 'relative', height: 200, background: 'var(--color-surface)', overflow: 'hidden' }}>
+                  <img
+                    src={selectedComboModal.image?.trim() || DEFAULT_IMAGE}
+                    alt={selectedComboModal.name}
+                    onError={(e) => { e.target.src = DEFAULT_IMAGE; }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  <button
+                    onClick={() => setSelectedComboModal(null)}
+                    style={{
+                      position: 'absolute', top: 12, right: 12, width: 34, height: 34, borderRadius: 99,
+                      background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', border: 'none',
+                      color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}
+                  >
+                    <X size={18} />
+                  </button>
 
-                {selectedComboModal.badge && (
-                  <div style={{
-                    position: 'absolute', bottom: 12, left: 12,
-                    background: '#dc2626', color: '#ffffff',
-                    fontWeight: 900, fontSize: 11, padding: '5px 12px', borderRadius: 99,
-                    letterSpacing: '0.4px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-                  }}>
-                    {selectedComboModal.badge}
-                  </div>
-                )}
-              </div>
-
-              {/* Details Content */}
-              <div style={{ padding: '20px 22px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#dc2626', background: '#fef2f2', border: '1px solid #fca5a5', padding: '3px 10px', borderRadius: 99 }}>
-                    FAST FOOD COMBO MEAL 🍔
-                  </span>
-                  {selectedComboModal.savings && (
-                    <span style={{ fontSize: 12, fontWeight: 900, color: '#16a34a', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '3px 10px', borderRadius: 99 }}>
-                      Save ₹{selectedComboModal.savings}!
-                    </span>
+                  {selectedComboModal.badge && (
+                    <div style={{
+                      position: 'absolute', bottom: 12, left: 12,
+                      background: '#dc2626', color: '#ffffff',
+                      fontWeight: 900, fontSize: 11, padding: '5px 12px', borderRadius: 99,
+                      letterSpacing: '0.4px', boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+                    }}>
+                      {selectedComboModal.badge}
+                    </div>
                   )}
                 </div>
 
-                <div>
-                  <h3 style={{ fontWeight: 900, fontSize: 20, marginBottom: 6, color: 'var(--color-text)' }}>
-                    {selectedComboModal.name}
-                  </h3>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                    <span style={{ fontWeight: 900, fontSize: 24, color: '#dc2626' }}>₹{selectedComboModal.comboPrice}</span>
-                    {selectedComboModal.originalPrice && (
-                      <span style={{ fontSize: 14, color: 'var(--color-muted)', textDecoration: 'line-through' }}>₹{selectedComboModal.originalPrice}</span>
+                {/* Details Content */}
+                <div style={{ padding: '20px 22px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.6px', color: '#dc2626', background: '#fef2f2', border: '1px solid #fca5a5', padding: '3px 10px', borderRadius: 99 }}>
+                      FAST FOOD COMBO MEAL 🍔
+                    </span>
+                    {modalSavings && (
+                      <span style={{ fontSize: 12, fontWeight: 900, color: '#16a34a', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '3px 10px', borderRadius: 99 }}>
+                        Save ₹{modalSavings}!
+                      </span>
                     )}
                   </div>
-                </div>
 
-                {/* Full Description & Included Items Box */}
-                <div style={{ background: 'var(--color-surface)', borderRadius: 16, padding: '14px 16px', border: '1px solid var(--color-border)' }}>
-                  <p style={{ fontWeight: 800, fontSize: 11, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Flame size={14} color="#dc2626" fill="#dc2626" />
-                    <span>Included in this Combo Deal</span>
-                  </p>
-                  <p style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--color-text-secondary)', fontWeight: 600 }}>
-                    {selectedComboModal.desc || selectedComboModal.description || 'Includes main burger/pizza, fresh side, and chilled beverage.'}
-                  </p>
-                </div>
+                  <div>
+                    <h3 style={{ fontWeight: 900, fontSize: 20, marginBottom: 6, color: 'var(--color-text)' }}>
+                      {selectedComboModal.name}
+                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                      <span style={{ fontWeight: 900, fontSize: 24, color: '#dc2626' }}>₹{selectedComboModal.comboPrice}</span>
+                      {selectedComboModal.originalPrice && (
+                        <span style={{ fontSize: 14, color: 'var(--color-muted)', textDecoration: 'line-through' }}>₹{selectedComboModal.originalPrice}</span>
+                      )}
+                    </div>
+                  </div>
 
-                {/* Add to Cart Button */}
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => {
-                    handleAddCombo(selectedComboModal);
-                    setSelectedComboModal(null);
-                  }}
-                  style={{
-                    marginTop: 6, width: '100%', padding: '14px 20px', borderRadius: 14, border: 'none', cursor: 'pointer',
-                    background: 'linear-gradient(135deg, #dc2626, #b91c1c)', color: '#fff',
-                    fontFamily: 'Outfit', fontWeight: 800, fontSize: 16,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    boxShadow: '0 4px 16px rgba(220,38,38,0.35)', transition: 'all 0.2s'
-                  }}
-                >
-                  <Plus size={18} /> Add Combo to Cart — ₹{selectedComboModal.comboPrice}
-                </motion.button>
-              </div>
+                  {/* Full Description & Included Items Box */}
+                  <div style={{ background: 'var(--color-surface)', borderRadius: 16, padding: '14px 16px', border: '1px solid var(--color-border)' }}>
+                    <p style={{ fontWeight: 800, fontSize: 11, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <Flame size={14} color="#dc2626" fill="#dc2626" />
+                      <span>Included in this Combo Deal</span>
+                    </p>
+                    <p style={{ fontSize: 14, lineHeight: 1.5, color: 'var(--color-text-secondary)', fontWeight: 600 }}>
+                      {modalDesc}
+                    </p>
+                  </div>
+
+                  {/* Add to Cart Button */}
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => {
+                      handleAddCombo(selectedComboModal);
+                      setSelectedComboModal(null);
+                    }}
+                    style={{
+                      marginTop: 6, width: '100%', padding: '14px 20px', borderRadius: 14, border: 'none', cursor: 'pointer',
+                      background: 'linear-gradient(135deg, #dc2626, #b91c1c)', color: '#fff',
+                      fontFamily: 'Outfit', fontWeight: 800, fontSize: 16,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                      boxShadow: '0 4px 16px rgba(220,38,38,0.35)', transition: 'all 0.2s'
+                    }}
+                  >
+                    <Plus size={18} /> {modalQty > 0 ? `Add Another Combo — ₹${selectedComboModal.comboPrice}` : `Add Combo to Cart — ₹${selectedComboModal.comboPrice}`}
+                  </motion.button>
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
+          );
+        })()}
       </AnimatePresence>
     </div>
   );

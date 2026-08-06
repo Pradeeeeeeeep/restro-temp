@@ -485,28 +485,36 @@ const parseCustomizations = (cust) => {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {combosList.map((combo) => (
-                  <div key={combo.id} style={{ background: 'var(--color-card)', border: '1.5px solid var(--color-border)', borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, opacity: combo.available !== false ? 1 : 0.55 }}>
-                    <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', background: 'var(--color-surface)', flexShrink: 0 }}>
-                      <img src={combo.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'} alt={combo.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
+                {combosList.map((combo) => {
+                  const DEFAULT_IMG = 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80';
+                  const savings = combo.savings || (combo.originalPrice && combo.originalPrice > combo.comboPrice ? combo.originalPrice - combo.comboPrice : null);
+                  return (
+                    <div key={combo.id} style={{ background: 'var(--color-card)', border: '1.5px solid var(--color-border)', borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, opacity: combo.available !== false ? 1 : 0.55 }}>
+                      <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', background: 'var(--color-surface)', flexShrink: 0 }}>
+                        <img
+                          src={combo.image?.trim() || DEFAULT_IMG}
+                          alt={combo.name}
+                          onError={(e) => { e.target.src = DEFAULT_IMG; }}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      </div>
 
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                        <p style={{ fontWeight: 800, fontSize: 15 }}>{combo.name}</p>
-                        {combo.badge && (
-                          <span style={{ fontSize: 10, fontWeight: 900, background: '#dc2626', color: '#fff', padding: '2px 8px', borderRadius: 99 }}>
-                            {combo.badge}
-                          </span>
-                        )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <p style={{ fontWeight: 800, fontSize: 15 }}>{combo.name}</p>
+                          {combo.badge && (
+                            <span style={{ fontSize: 10, fontWeight: 900, background: '#dc2626', color: '#fff', padding: '2px 8px', borderRadius: 99 }}>
+                              {combo.badge}
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>{combo.desc || combo.description || 'No description provided'}</p>
+                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                          <span style={{ fontWeight: 900, fontSize: 15, color: '#dc2626' }}>₹{combo.comboPrice}</span>
+                          {combo.originalPrice && <span style={{ fontSize: 12, color: 'var(--color-muted)', textDecoration: 'line-through' }}>₹{combo.originalPrice}</span>}
+                          {savings && <span style={{ fontSize: 11, fontWeight: 800, color: '#16a34a' }}>Save ₹{savings}!</span>}
+                        </div>
                       </div>
-                      <p style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>{combo.desc || combo.description}</p>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
-                        <span style={{ fontWeight: 900, fontSize: 15, color: '#dc2626' }}>₹{combo.comboPrice}</span>
-                        {combo.originalPrice && <span style={{ fontSize: 12, color: 'var(--color-muted)', textDecoration: 'line-through' }}>₹{combo.originalPrice}</span>}
-                        {combo.savings && <span style={{ fontSize: 11, fontWeight: 800, color: '#16a34a' }}>Save ₹{combo.savings}!</span>}
-                      </div>
-                    </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
                       <button onClick={() => toggleSingleComboActive(combo.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: combo.available !== false ? '#15803d' : 'var(--color-muted)', padding: 0 }} title={combo.available !== false ? 'Deactivate' : 'Activate'}>
@@ -520,7 +528,8 @@ const parseCustomizations = (cust) => {
                       </button>
                     </div>
                   </div>
-                ))}
+                );
+              })}
               </div>
             )}
           </motion.div>
