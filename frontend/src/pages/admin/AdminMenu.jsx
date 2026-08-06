@@ -74,7 +74,7 @@ export default function AdminMenu() {
       ]);
       setItems(ir.data.items);
       setCategories(cr.data.categories);
-      if (combRes.data.combos && combRes.data.combos.length > 0) {
+      if (combRes.data?.combos) {
         setCombosList(combRes.data.combos.map(c => ({ ...c, desc: c.description || c.desc })));
       }
     } catch { toast.error('Failed to load data'); }

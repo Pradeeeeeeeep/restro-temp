@@ -161,7 +161,7 @@ import api from '../api/axios';
 
 /* ─── 3. Combo Cards Section (Fetches active DB combos) ─── */
 export function FastFoodComboCards() {
-  const addToCart = useCartStore((s) => s.addToCart);
+  const addItem = useCartStore((s) => s.addItem);
   const [animatingId, setAnimatingId] = useState(null);
   const [combos, setCombos] = useState([]);
   const [enabled, setEnabled] = useState(isCombosSectionEnabled());
@@ -169,10 +169,8 @@ export function FastFoodComboCards() {
   const fetchCombos = async () => {
     try {
       const { data } = await api.get('/combos');
-      if (data.combos && data.combos.length > 0) {
+      if (data.combos) {
         setCombos(data.combos);
-      } else {
-        setCombos(DEFAULT_FAST_FOOD_COMBOS);
       }
     } catch {
       setCombos(DEFAULT_FAST_FOOD_COMBOS);
@@ -195,8 +193,12 @@ export function FastFoodComboCards() {
   if (!enabled || activeCombos.length === 0) return null;
 
   const handleAddCombo = (combo) => {
-    const itemPayload = { id: combo.id, name: combo.name, price: combo.comboPrice, category: 'Fast Food Combos' };
-    addToCart(itemPayload, []);
+    addItem({
+      menuItemId: `combo-${combo.id}`,
+      name: combo.name,
+      price: combo.comboPrice,
+      image: combo.image,
+    });
     setAnimatingId(combo.id);
     toast.success(`Added ${combo.name} to cart! 🍔`, {
       style: { background: '#dc2626', color: '#fff', fontWeight: 700 }
