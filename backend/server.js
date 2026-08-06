@@ -10,6 +10,7 @@ const adminRoutes = require('./routes/admin');
 const couponRoutes = require('./routes/coupons');
 const remoteRoutes = require('./routes/remote');
 const comboRoutes = require('./routes/combos');
+const reviewRoutes = require('./routes/reviews');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
