@@ -166,6 +166,7 @@ export function FastFoodComboCards() {
   const [animatingId, setAnimatingId] = useState(null);
   const [combos, setCombos] = useState([]);
   const [enabled, setEnabled] = useState(isCombosSectionEnabled());
+  const [combosTitle, setCombosTitle] = useState('Combos');
   const [selectedComboModal, setSelectedComboModal] = useState(null);
 
   const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80';
@@ -184,6 +185,9 @@ export function FastFoodComboCards() {
         localStorage.setItem('admin_combos_enabled', settingsRes.data.settings.combosEnabled !== false ? 'true' : 'false');
       } else {
         setEnabled(isCombosSectionEnabled());
+      }
+      if (settingsRes.data?.settings?.combosTitle) {
+        setCombosTitle(settingsRes.data.settings.combosTitle);
       }
     } catch {
       setCombos(DEFAULT_FAST_FOOD_COMBOS);
@@ -228,7 +232,7 @@ export function FastFoodComboCards() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div>
           <h3 style={{ fontWeight: 900, fontSize: 19, display: 'flex', alignItems: 'center', gap: 8, color: 'var(--color-text)' }}>
-            <Flame size={20} color="#dc2626" fill="#dc2626" /> Fast Food Combo Meals
+            <Flame size={20} color="#dc2626" fill="#dc2626" /> {combosTitle}
           </h3>
           <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Super saver burger, pizza &amp; bucket combos</p>
         </div>

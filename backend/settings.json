@@ -8,5 +8,6 @@
   "theme": "shopify-crave",
   "customColors": {},
   "cardCornerStyle": "rounded-md",
-  "menuItemCornerStyle": "rounded-md"
+  "menuItemCornerStyle": "rounded-md",
+  "combosEnabled": true
 }

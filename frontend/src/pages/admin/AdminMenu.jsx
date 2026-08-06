@@ -56,6 +56,10 @@ export default function AdminMenu() {
 
   /* ── combos state ── */
   const [combosEnabled, setCombosEnabled] = useState(isCombosSectionEnabled());
+  const [combosTitle, setCombosTitle] = useState('Combos');
+  const [editingCombosTitle, setEditingCombosTitle] = useState(false);
+  const [tempCombosTitle, setTempCombosTitle] = useState('Combos');
+  const [savingTitle, setSavingTitle] = useState(false);
   const [combosList, setCombosList] = useState(getStoredCombos());
   const [showComboModal, setShowComboModal] = useState(false);
   const [editingCombo, setEditingCombo] = useState(null);
@@ -81,6 +85,10 @@ export default function AdminMenu() {
       if (settRes.data?.settings?.combosEnabled !== undefined) {
         setCombosEnabled(settRes.data.settings.combosEnabled !== false);
         localStorage.setItem('admin_combos_enabled', settRes.data.settings.combosEnabled !== false ? 'true' : 'false');
+      }
+      if (settRes.data?.settings?.combosTitle) {
+        setCombosTitle(settRes.data.settings.combosTitle);
+        setTempCombosTitle(settRes.data.settings.combosTitle);
       }
     } catch { toast.error('Failed to load data'); }
     finally { setLoading(false); }
@@ -228,6 +236,22 @@ const parseCustomizations = (cust) => {
   };
 
   /* ── combos helpers ── */
+  const saveCombosTitle = async () => {
+    if (!tempCombosTitle.trim()) return toast.error('Title cannot be empty');
+    setSavingTitle(true);
+    try {
+      await api.put('/admin/settings', { combosTitle: tempCombosTitle.trim() });
+      setCombosTitle(tempCombosTitle.trim());
+      setEditingCombosTitle(false);
+      toast.success('Combos title updated!');
+      window.dispatchEvent(new Event('combos-updated'));
+    } catch {
+      toast.error('Failed to update title');
+    } finally {
+      setSavingTitle(false);
+    }
+  };
+
   const toggleCombosSectionMaster = async () => {
     const nextState = !combosEnabled;
     setCombosEnabled(nextState);
@@ -353,7 +377,7 @@ const parseCustomizations = (cust) => {
         <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'var(--color-surface)', borderRadius: 14, padding: 4, width: 'fit-content', border: '1px solid var(--color-border)' }}>
           {[
             { id: 'items', label: 'Menu Items', icon: UtensilsCrossed },
-            { id: 'combos', label: 'Fast Food Combos', icon: Flame },
+            { id: 'combos', label: 'Combos', icon: Flame },
             { id: 'categories', label: 'Categories', icon: Tag },
           ].map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => setTab(id)}
@@ -465,23 +489,54 @@ const parseCustomizations = (cust) => {
           <motion.div key="combos" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
             {/* Master Toggle Header Card */}
             <div style={{ background: 'var(--color-card)', border: '1.5px solid var(--color-border)', borderRadius: 16, padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 240 }}>
                 <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #dc2626, #b91c1c)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Flame size={22} fill="#fff" />
                 </div>
-                <div>
-                  <p style={{ fontWeight: 800, fontSize: 16, color: 'var(--color-text)' }}>Fast Food Combo Meals Section</p>
-                  <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Show or hide combo cards on customer pages</p>
+                <div style={{ flex: 1 }}>
+                  {editingCombosTitle ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <input
+                        className="input-field"
+                        style={{ padding: '6px 12px', fontSize: 15, fontWeight: 700, minWidth: 200 }}
+                        value={tempCombosTitle}
+                        onChange={(e) => setTempCombosTitle(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') saveCombosTitle(); if (e.key === 'Escape') setEditingCombosTitle(false); }}
+                        autoFocus
+                      />
+                      <button onClick={saveCombosTitle} disabled={savingTitle} className="btn-primary" style={{ padding: '6px 14px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Check size={15} /> Save
+                      </button>
+                      <button onClick={() => { setEditingCombosTitle(false); setTempCombosTitle(combosTitle); }} className="btn-secondary" style={{ padding: '6px 12px', fontSize: 13 }}>
+                        <X size={15} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <p style={{ fontWeight: 800, fontSize: 17, color: 'var(--color-text)' }}>{combosTitle}</p>
+                      <button
+                        onClick={() => { setEditingCombosTitle(true); setTempCombosTitle(combosTitle); }}
+                        style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, padding: '4px 9px', cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700 }}
+                        title="Edit section title"
+                      >
+                        <Edit3 size={14} /> Edit Title
+                      </button>
+                    </div>
+                  )}
+                  <p style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>Show or hide combo cards on customer pages</p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={toggleCombosSectionMaster}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7, color: combosEnabled ? '#15803d' : 'var(--color-muted)' }}
-              >
-                <span style={{ fontWeight: 800, fontSize: 13 }}>{combosEnabled ? 'ENABLED' : 'DISABLED'}</span>
-                {combosEnabled ? <ToggleRight size={36} /> : <ToggleLeft size={36} />}
-              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <button
+                  type="button"
+                  onClick={toggleCombosSectionMaster}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7, color: combosEnabled ? '#15803d' : 'var(--color-muted)' }}
+                >
+                  <span style={{ fontWeight: 800, fontSize: 13 }}>{combosEnabled ? 'ENABLED' : 'DISABLED'}</span>
+                  {combosEnabled ? <ToggleRight size={36} /> : <ToggleLeft size={36} />}
+                </button>
+              </div>
             </div>
 
             {/* Combos list */}
