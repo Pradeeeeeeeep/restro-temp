@@ -37,6 +37,16 @@ export function getAdminAuthInfo() {
 /* ─── Shared Admin Nav ─── */
 export function AdminNav({ active }) {
   const navigate = useNavigate();
+  const [storeName, setStoreName] = useState('Brew & Bites');
+
+  useEffect(() => {
+    api.get('/admin/settings')
+      .then(({ data }) => {
+        if (data.settings?.cafeName) setStoreName(data.settings.cafeName);
+      })
+      .catch(() => {});
+  }, []);
+
   const logout = () => {
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_role');
@@ -71,7 +81,7 @@ export function AdminNav({ active }) {
             <Coffee size={18} color="#fff" />
           </div>
           <div>
-            <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--color-text)' }}>Brew &amp; Bites</span>
+            <span style={{ fontWeight: 800, fontSize: 16, color: 'var(--color-text)' }}>{storeName}</span>
             {username && (
               <span style={{ fontSize: 11, color: 'var(--color-muted)', marginLeft: 8 }}>
                 @{username} {isSuper ? '(👑 Super Admin)' : '(⚙️ Staff)'}

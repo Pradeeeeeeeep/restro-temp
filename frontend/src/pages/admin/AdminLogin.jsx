@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Coffee, Lock, User } from 'lucide-react';
@@ -9,7 +9,16 @@ export default function AdminLogin() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [storeName, setStoreName] = useState('Brew & Bites');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    api.get('/customer/settings')
+      .then(({ data }) => {
+        if (data.settings?.cafeName) setStoreName(data.settings.cafeName);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -47,7 +56,7 @@ export default function AdminLogin() {
               <Coffee size={30} color="#fff" />
             </div>
             <h1 style={{ fontWeight: 800, fontSize: 22, marginBottom: 4 }}>Admin Panel</h1>
-            <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>Brew & Bites Management</p>
+            <p style={{ color: 'var(--color-muted)', fontSize: 14 }}>{storeName} Management</p>
           </div>
 
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

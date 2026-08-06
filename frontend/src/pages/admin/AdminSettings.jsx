@@ -684,6 +684,18 @@ const AVAILABLE_PERMISSIONS = [
                       style={{ maxWidth: 340 }} />
                     <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 5 }}>Shown directly below the café name on the home page</p>
                   </div>
+                  <div style={{ marginTop: 10, paddingTop: 14, borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      onClick={save}
+                      disabled={saving}
+                      className="btn-primary"
+                      style={{ padding: '8px 20px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}
+                    >
+                      <Save size={14} />
+                      {saving ? 'Saving...' : 'Save Store Name & Branding'}
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             )}
