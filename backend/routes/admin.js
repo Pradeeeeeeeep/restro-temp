@@ -47,6 +47,7 @@ const upload = multer({
 
 // Public
 router.post('/login', login);
+router.get('/settings', getSettings);
 
 // Protected routes
 router.use(authMiddleware);
@@ -66,7 +67,6 @@ router.post('/categories', createCategory);
 router.put('/categories/:id', updateCategory);
 router.delete('/categories/:id', deleteCategory);
 
-router.get('/settings', getSettings);
 router.put('/settings', updateSettings);
 router.post('/settings/logo', upload.single('logo'), uploadLogo);
 

@@ -13,7 +13,7 @@ export default function AdminLogin() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/customer/settings')
+    api.get('/admin/settings')
       .then(({ data }) => {
         if (data.settings?.cafeName) setStoreName(data.settings.cafeName);
       })
