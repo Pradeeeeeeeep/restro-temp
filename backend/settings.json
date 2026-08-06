@@ -3,11 +3,12 @@
   "cafeLogoUrl": "",
   "googleReviewLink": "g.page/dd",
   "showReviewBanner": true,
-  "showFestivalBanner": true,
+  "showFestivalBanner": false,
   "festivalSaleName": "Holi",
   "theme": "shopify-crave",
   "customColors": {},
   "cardCornerStyle": "rounded-md",
   "menuItemCornerStyle": "rounded-md",
-  "combosEnabled": true
+  "combosEnabled": true,
+  "combosTitle": "Biggest Saver"
 }

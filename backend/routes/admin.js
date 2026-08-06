@@ -87,4 +87,24 @@ router.post('/combos', createCombo);
 router.put('/combos/:id', updateCombo);
 router.delete('/combos/:id', deleteCombo);
 
+const {
+  getAdminReviews,
+  createReview,
+  deleteReview,
+} = require('../controllers/reviewController');
+
+router.get('/reviews', getAdminReviews);
+router.post('/reviews', createReview);
+router.delete('/reviews/:id', deleteReview);
+
+const {
+  getAdmins,
+  createAdmin,
+  deleteAdmin,
+} = require('../controllers/adminController');
+
+router.get('/users', getAdmins);
+router.post('/users', createAdmin);
+router.delete('/users/:id', deleteAdmin);
+
 module.exports = router;

@@ -38,6 +38,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/remote', remoteRoutes);
 app.use('/api/combos', comboRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Public settings (no auth — used by customer-facing pages)
 const { getSettings } = require('./controllers/adminController');

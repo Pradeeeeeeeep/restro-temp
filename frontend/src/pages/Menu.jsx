@@ -684,7 +684,7 @@ export default function Menu() {
                     {siteSettings.festivalSaleName} is going on!
                   </p>
                   <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontWeight: 500 }}>
-                    Special deals &amp; seasonal offers available now
+                    {siteSettings?.festivalSaleDescription || 'Special deals & seasonal offers available now'}
                   </p>
                 </div>
               </div>
@@ -771,6 +771,41 @@ export default function Menu() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* ── Follow Us on Socials Footer ── */}
+        {siteSettings?.socialLinks && Object.values(siteSettings.socialLinks).some((link) => Boolean(link && link.trim())) && (
+          <div style={{ marginTop: 24, padding: '18px 20px', background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, textAlign: 'center' }}>
+            <p style={{ fontWeight: 800, fontSize: 14, color: 'var(--color-text)', marginBottom: 4 }}>Follow Us on Socials</p>
+            <p style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 14 }}>Stay connected with {siteSettings?.cafeName || 'Brew & Bites'} for exclusive deals &amp; updates!</p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+              {siteSettings.socialLinks.instagram && (
+                <a href={siteSettings.socialLinks.instagram} target="_blank" rel="noopener noreferrer" style={{ padding: '8px 14px', borderRadius: 99, background: 'linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)', color: '#fff', fontSize: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  Instagram
+                </a>
+              )}
+              {siteSettings.socialLinks.facebook && (
+                <a href={siteSettings.socialLinks.facebook} target="_blank" rel="noopener noreferrer" style={{ padding: '8px 14px', borderRadius: 99, background: '#1877f2', color: '#fff', fontSize: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  Facebook
+                </a>
+              )}
+              {siteSettings.socialLinks.whatsapp && (
+                <a href={siteSettings.socialLinks.whatsapp.startsWith('http') ? siteSettings.socialLinks.whatsapp : `https://wa.me/${siteSettings.socialLinks.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ padding: '8px 14px', borderRadius: 99, background: '#25d366', color: '#fff', fontSize: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  WhatsApp
+                </a>
+              )}
+              {siteSettings.socialLinks.twitter && (
+                <a href={siteSettings.socialLinks.twitter} target="_blank" rel="noopener noreferrer" style={{ padding: '8px 14px', borderRadius: 99, background: '#000000', color: '#fff', fontSize: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  Twitter / X
+                </a>
+              )}
+              {siteSettings.socialLinks.youtube && (
+                <a href={siteSettings.socialLinks.youtube} target="_blank" rel="noopener noreferrer" style={{ padding: '8px 14px', borderRadius: 99, background: '#ff0000', color: '#fff', fontSize: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  YouTube
+                </a>
+              )}
+            </div>
+          </div>
+        )}
 
       </div>
 

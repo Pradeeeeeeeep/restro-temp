@@ -96,19 +96,21 @@ export default function Home() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [siteSettings, setSiteSettings] = useState(null);
-  const [reviewDismissed, setReviewDismissed] = useState(() =>
+  const [reviewDismissed, setReviewDismissed] = useState(
     localStorage.getItem('review_dismissed') === 'true'
   );
   const [showFestivalModal, setShowFestivalModal] = useState(true);
+  const [reviews, setReviews] = useState([]);
   const reviewSettings = siteSettings;
 
   const navigate = useNavigate();
   const { customer, setCustomer, clearCustomer } = useCustomerStore();
   const clearCart = useCartStore((s) => s.clearCart);
 
-  // Fetch public settings (cafeName, cafeLogoUrl, review banner, theme)
+  // Fetch public settings (cafeName, cafeLogoUrl, review banner, theme) and reviews
   useEffect(() => {
     api.get('/settings').then(({ data }) => setSiteSettings(data.settings)).catch(() => {});
+    api.get('/reviews').then(({ data }) => setReviews(data.reviews || [])).catch(() => {});
   }, []);
 
   /* fetch orders whenever we have a customer */
@@ -472,6 +474,80 @@ export default function Home() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* ── Custom Customer Reviews Showcase ── */}
+        {reviews.length > 0 && (
+          <div style={{ marginTop: 24, marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <h2 style={{ fontWeight: 800, fontSize: 16, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Star size={18} fill="#e8901f" color="#e8901f" /> What Our Customers Say
+              </h2>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-muted)' }}>Verified Feedback</span>
+            </div>
+            <div className="no-scrollbar" style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 6 }}>
+              {reviews.map((r) => (
+                <div key={r.id} style={{
+                  minWidth: 260, maxWidth: 300, background: 'var(--color-card)',
+                  border: '1px solid var(--color-border)', borderRadius: 16,
+                  padding: '14px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                  boxShadow: '0 2px 10px var(--card-shadow)', flexShrink: 0
+                }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 8 }}>
+                      {Array.from({ length: r.rating || 5 }).map((_, i) => (
+                        <Star key={i} size={14} fill="#e8901f" color="#e8901f" />
+                      ))}
+                    </div>
+                    <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.45, fontStyle: 'italic' }}>
+                      "{r.comment}"
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 99, background: 'var(--color-accent-bg)', color: 'var(--color-accent-dark)', fontWeight: 800, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {r.author.charAt(0).toUpperCase()}
+                    </div>
+                    <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--color-text)' }}>{r.author}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Follow Us on Socials Footer ── */}
+        {siteSettings?.socialLinks && Object.values(siteSettings.socialLinks).some((link) => Boolean(link && link.trim())) && (
+          <div style={{ marginTop: 24, padding: '18px 20px', background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, textAlign: 'center' }}>
+            <p style={{ fontWeight: 800, fontSize: 14, color: 'var(--color-text)', marginBottom: 4 }}>Follow Us on Socials</p>
+            <p style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 14 }}>Stay connected with {siteSettings?.cafeName || 'Brew & Bites'} for exclusive deals &amp; updates!</p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 10, flexWrap: 'wrap' }}>
+              {siteSettings.socialLinks.instagram && (
+                <a href={siteSettings.socialLinks.instagram} target="_blank" rel="noopener noreferrer" style={{ padding: '8px 14px', borderRadius: 99, background: 'linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045)', color: '#fff', fontSize: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  Instagram
+                </a>
+              )}
+              {siteSettings.socialLinks.facebook && (
+                <a href={siteSettings.socialLinks.facebook} target="_blank" rel="noopener noreferrer" style={{ padding: '8px 14px', borderRadius: 99, background: '#1877f2', color: '#fff', fontSize: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  Facebook
+                </a>
+              )}
+              {siteSettings.socialLinks.whatsapp && (
+                <a href={siteSettings.socialLinks.whatsapp.startsWith('http') ? siteSettings.socialLinks.whatsapp : `https://wa.me/${siteSettings.socialLinks.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" style={{ padding: '8px 14px', borderRadius: 99, background: '#25d366', color: '#fff', fontSize: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  WhatsApp
+                </a>
+              )}
+              {siteSettings.socialLinks.twitter && (
+                <a href={siteSettings.socialLinks.twitter} target="_blank" rel="noopener noreferrer" style={{ padding: '8px 14px', borderRadius: 99, background: '#000000', color: '#fff', fontSize: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  Twitter / X
+                </a>
+              )}
+              {siteSettings.socialLinks.youtube && (
+                <a href={siteSettings.socialLinks.youtube} target="_blank" rel="noopener noreferrer" style={{ padding: '8px 14px', borderRadius: 99, background: '#ff0000', color: '#fff', fontSize: 12, fontWeight: 800, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  YouTube
+                </a>
+              )}
+            </div>
+          </div>
+        )}
 
       </div>
 

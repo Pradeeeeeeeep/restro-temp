@@ -16,6 +16,9 @@ const writeSettings = (data) => fs.writeFileSync(SETTINGS_PATH, JSON.stringify(d
 const login = async (req, res, next) => {
   try {
     const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+
+    // Check env master admin credentials
     if (
       username === process.env.ADMIN_USERNAME &&
       password === process.env.ADMIN_PASSWORD
@@ -25,11 +28,72 @@ const login = async (req, res, next) => {
         process.env.JWT_SECRET,
         { expiresIn: '7d' }
       );
-      return res.json({ token, username });
+      return res.json({ token, username, isMasterEnv: true });
     }
+
+    // Check DB AdminUser table
+    const dbAdmin = await prisma.adminUser.findUnique({ where: { username } });
+    if (dbAdmin && dbAdmin.password === password) {
+      const token = jwt.sign(
+        { role: 'admin', username: dbAdmin.username, id: dbAdmin.id },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+      return res.json({ token, username: dbAdmin.username, name: dbAdmin.name });
+    }
+
     return res.status(401).json({ error: 'Invalid credentials' });
   } catch (err) {
     next(err);
+  }
+};
+
+// GET /api/admin/users — List all DB admins
+const getAdmins = async (req, res) => {
+  try {
+    const admins = await prisma.adminUser.findMany({
+      select: { id: true, username: true, name: true, createdAt: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json({ admins });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch admin users' });
+  }
+};
+
+// POST /api/admin/users — Create new admin
+const createAdmin = async (req, res) => {
+  try {
+    const { username, password, name } = req.body;
+    if (!username || !username.trim()) return res.status(400).json({ error: 'Username is required' });
+    if (!password || !password.trim()) return res.status(400).json({ error: 'Password is required' });
+
+    const existing = await prisma.adminUser.findUnique({ where: { username: username.trim() } });
+    if (existing) return res.status(400).json({ error: 'Username already exists' });
+
+    const newAdmin = await prisma.adminUser.create({
+      data: {
+        username: username.trim(),
+        password: password.trim(),
+        name: name ? name.trim() : null,
+      },
+      select: { id: true, username: true, name: true, createdAt: true },
+    });
+
+    res.status(201).json({ success: true, admin: newAdmin });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create admin user' });
+  }
+};
+
+// DELETE /api/admin/users/:id — Delete admin user
+const deleteAdmin = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    await prisma.adminUser.delete({ where: { id } });
+    res.json({ success: true, message: 'Admin user deleted' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete admin user' });
   }
 };
 
@@ -430,4 +494,7 @@ module.exports = {
   createCoupon,
   updateCoupon,
   deleteCoupon,
+  getAdmins,
+  createAdmin,
+  deleteAdmin,
 };

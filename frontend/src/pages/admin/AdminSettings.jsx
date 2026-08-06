@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Star, Link, ToggleLeft, ToggleRight, Save, ExternalLink,
-  Palette, Check, RefreshCw, Pipette, Upload, Image, Edit3, Coffee, Sparkles, Tag, ArrowRight, ShoppingBag, X, Plus, Trash2, Gift, Percent, Sliders
+  Palette, Check, RefreshCw, Pipette, Upload, Image, Edit3, Coffee, Sparkles, Tag, ArrowRight, ShoppingBag, X, Plus, Trash2, Gift, Percent, Sliders, Share2, UserPlus, Users, Lock, Shield, MessageSquare
 } from 'lucide-react';
 import api from '../../api/axios';
 import toast from 'react-hot-toast';
@@ -108,6 +108,7 @@ const SETTINGS_TABS = [
   { id: 'coupons', label: 'Coupons & Offers', icon: Tag },
   { id: 'festival', label: 'Festival Banners', icon: Sparkles },
   { id: 'reviews', label: 'Reviews & Social', icon: Star },
+  { id: 'admins', label: 'Admin Accounts', icon: Shield },
 ];
 
 /* ════════════════════════════════════════
@@ -119,6 +120,8 @@ export default function AdminSettings() {
   const [settings, setSettings] = useState({
     googleReviewLink: '', showReviewBanner: false,
     theme: activeThemeId, customColors: activeCustomColors,
+    festivalSaleDescription: 'Special deals & seasonal offers available now',
+    socialLinks: { instagram: '', facebook: '', whatsapp: '', twitter: '', youtube: '' },
   });
   const [loading, setLoading]     = useState(true);
   const [saving, setSaving]       = useState(false);
@@ -137,18 +140,37 @@ export default function AdminSettings() {
   const [savingCoupon, setSavingCoupon] = useState(false);
   const [deletingCouponId, setDeletingCouponId] = useState(null);
 
+  // Custom Reviews state
+  const [reviewsList, setReviewsList] = useState([]);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ author: '', rating: 5, comment: '', avatar: '' });
+  const [savingReview, setSavingReview] = useState(false);
+  const [deletingReviewId, setDeletingReviewId] = useState(null);
+
+  // Admin Users state
+  const [adminsList, setAdminsList] = useState([]);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminForm, setAdminForm] = useState({ username: '', password: '', name: '' });
+  const [savingAdmin, setSavingAdmin] = useState(false);
+  const [deletingAdminId, setDeletingAdminId] = useState(null);
+
   useEffect(() => {
     api.get('/admin/settings')
       .then(({ data }) => setSettings({
         googleReviewLink: '', showReviewBanner: false, cafeName: 'Brew & Bites', cafeLogoUrl: '',
-        showFestivalBanner: false, festivalSaleName: 'Diwali Light-Up Sale', cardCornerStyle: 'rounded-full',
-        menuItemCornerStyle: 'rounded-md',
+        showFestivalBanner: false, festivalSaleName: 'Diwali Light-Up Sale',
+        festivalSaleDescription: 'Special deals & seasonal offers available now',
+        cardCornerStyle: 'rounded-full', menuItemCornerStyle: 'rounded-md',
+        socialLinks: { instagram: '', facebook: '', whatsapp: '', twitter: '', youtube: '' },
         ...data.settings,
+        socialLinks: { instagram: '', facebook: '', whatsapp: '', twitter: '', youtube: '', ...(data.settings?.socialLinks || {}) }
       }))
       .catch(() => toast.error('Failed to load settings'))
       .finally(() => setLoading(false));
 
     fetchCoupons();
+    fetchReviews();
+    fetchAdmins();
   }, []);
 
   const fetchCoupons = async () => {
@@ -156,6 +178,91 @@ export default function AdminSettings() {
       const { data } = await api.get('/admin/coupons');
       setCoupons(data.coupons || []);
     } catch {}
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const { data } = await api.get('/admin/reviews');
+      setReviewsList(data.reviews || []);
+    } catch {}
+  };
+
+  const fetchAdmins = async () => {
+    try {
+      const { data } = await api.get('/admin/users');
+      setAdminsList(data.admins || []);
+    } catch {}
+  };
+
+  const saveReview = async () => {
+    if (!reviewForm.author.trim()) return toast.error('Author name is required');
+    if (!reviewForm.comment.trim()) return toast.error('Review comment is required');
+    setSavingReview(true);
+    try {
+      await api.post('/admin/reviews', {
+        author: reviewForm.author.trim(),
+        rating: parseInt(reviewForm.rating) || 5,
+        comment: reviewForm.comment.trim(),
+        avatar: reviewForm.avatar?.trim() || null,
+      });
+      toast.success('Review added!');
+      setShowReviewModal(false);
+      setReviewForm({ author: '', rating: 5, comment: '', avatar: '' });
+      fetchReviews();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to add review');
+    } finally {
+      setSavingReview(false);
+    }
+  };
+
+  const deleteReview = async (id) => {
+    if (!window.confirm('Delete this review?')) return;
+    setDeletingReviewId(id);
+    try {
+      await api.delete(`/admin/reviews/${id}`);
+      toast.success('Review deleted');
+      fetchReviews();
+    } catch {
+      toast.error('Failed to delete review');
+    } finally {
+      setDeletingReviewId(null);
+    }
+  };
+
+  const saveAdminUser = async () => {
+    if (!adminForm.username.trim()) return toast.error('Username is required');
+    if (!adminForm.password.trim()) return toast.error('Password is required');
+    setSavingAdmin(true);
+    try {
+      await api.post('/admin/users', {
+        username: adminForm.username.trim(),
+        password: adminForm.password.trim(),
+        name: adminForm.name?.trim() || null,
+      });
+      toast.success('Admin user added!');
+      setShowAdminModal(false);
+      setAdminForm({ username: '', password: '', name: '' });
+      fetchAdmins();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to add admin user');
+    } finally {
+      setSavingAdmin(false);
+    }
+  };
+
+  const deleteAdminUser = async (id) => {
+    if (!window.confirm('Remove this admin account?')) return;
+    setDeletingAdminId(id);
+    try {
+      await api.delete(`/admin/users/${id}`);
+      toast.success('Admin account removed');
+      fetchAdmins();
+    } catch {
+      toast.error('Failed to remove admin');
+    } finally {
+      setDeletingAdminId(null);
+    }
   };
 
   const openAddCoupon = () => {
@@ -756,6 +863,18 @@ export default function AdminSettings() {
                     />
                   </div>
 
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
+                      Sale Banner Description
+                    </label>
+                    <input
+                      className="input-field"
+                      value={settings.festivalSaleDescription || ''}
+                      onChange={(e) => setSettings((s) => ({ ...s, festivalSaleDescription: e.target.value }))}
+                      placeholder="e.g. Special deals & seasonal offers available now"
+                    />
+                  </div>
+
                   {/* Card Corner Style */}
                   <div>
                     <label style={{ display: 'block', fontWeight: 700, fontSize: 14, marginBottom: 6 }}>
@@ -884,6 +1003,177 @@ export default function AdminSettings() {
                       Get from <strong>Google Business Profile</strong> → Get more reviews → Copy link
                     </p>
                   </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ════ 6. FOLLOW US ON SOCIALS ════ */}
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'reviews') && (
+              <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Share2 size={20} color="#fff" />
+                  </div>
+                  <div>
+                    <p style={{ fontWeight: 800, fontSize: 16 }}>Follow Us on Socials</p>
+                    <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Configure your café social media handles shown to customers</p>
+                  </div>
+                </div>
+                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+                      Instagram URL
+                    </label>
+                    <input className="input-field" type="url" placeholder="https://instagram.com/yourcafe"
+                      value={settings.socialLinks?.instagram || ''}
+                      onChange={(e) => setSettings((s) => ({ ...s, socialLinks: { ...(s.socialLinks || {}), instagram: e.target.value } }))}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+                      Facebook Page URL
+                    </label>
+                    <input className="input-field" type="url" placeholder="https://facebook.com/yourcafe"
+                      value={settings.socialLinks?.facebook || ''}
+                      onChange={(e) => setSettings((s) => ({ ...s, socialLinks: { ...(s.socialLinks || {}), facebook: e.target.value } }))}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+                      WhatsApp Link or Phone Number
+                    </label>
+                    <input className="input-field" type="text" placeholder="https://wa.me/919876543210 or 9876543210"
+                      value={settings.socialLinks?.whatsapp || ''}
+                      onChange={(e) => setSettings((s) => ({ ...s, socialLinks: { ...(s.socialLinks || {}), whatsapp: e.target.value } }))}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+                      Twitter / X URL
+                    </label>
+                    <input className="input-field" type="url" placeholder="https://x.com/yourcafe"
+                      value={settings.socialLinks?.twitter || ''}
+                      onChange={(e) => setSettings((s) => ({ ...s, socialLinks: { ...(s.socialLinks || {}), twitter: e.target.value } }))}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 6 }}>
+                      YouTube Channel URL
+                    </label>
+                    <input className="input-field" type="url" placeholder="https://youtube.com/@yourcafe"
+                      value={settings.socialLinks?.youtube || ''}
+                      onChange={(e) => setSettings((s) => ({ ...s, socialLinks: { ...(s.socialLinks || {}), youtube: e.target.value } }))}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ════ 7. CUSTOM REVIEWS MANAGEMENT ════ */}
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'reviews') && (
+              <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <MessageSquare size={20} color="#fff" />
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 800, fontSize: 16 }}>Custom Customer Reviews</p>
+                      <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Add or remove featured customer feedback shown on your site</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowReviewModal(true)} className="btn-primary" style={{ padding: '8px 14px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Plus size={14} /> Add Review
+                  </button>
+                </div>
+
+                <div style={{ padding: 20 }}>
+                  {reviewsList.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--color-muted)' }}>
+                      <Star size={36} style={{ margin: '0 auto 8px', display: 'block', opacity: 0.4 }} />
+                      <p style={{ fontWeight: 600 }}>No custom reviews added yet</p>
+                      <button onClick={() => setShowReviewModal(true)} className="btn-primary" style={{ marginTop: 12, padding: '8px 16px', fontSize: 13 }}>
+                        + Add first review
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {reviewsList.map((r) => (
+                        <div key={r.id} style={{ padding: '14px 16px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                              <span style={{ fontWeight: 800, fontSize: 14 }}>{r.author}</span>
+                              <div style={{ display: 'flex', gap: 2 }}>
+                                {Array.from({ length: r.rating || 5 }).map((_, i) => (
+                                  <Star key={i} size={13} fill="#e8901f" color="#e8901f" />
+                                ))}
+                              </div>
+                            </div>
+                            <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', lineHeight: 1.4 }}>"{r.comment}"</p>
+                          </div>
+
+                          <button onClick={() => deleteReview(r.id)} disabled={deletingReviewId === r.id} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: 6, cursor: 'pointer', color: '#dc2626', display: 'flex', flexShrink: 0 }}>
+                            {deletingReviewId === r.id ? <div className="spinner" style={{ width: 14, height: 14 }} /> : <Trash2 size={14} />}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* ════ 8. ADMIN USER MANAGEMENT ════ */}
+            {(activeCategoryTab === 'all' || activeCategoryTab === 'admins') && (
+              <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
+                style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 18, overflow: 'hidden' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Shield size={20} color="#fff" />
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 800, fontSize: 16 }}>Admin Access &amp; Accounts</p>
+                      <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Create and manage staff/admin login accounts</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowAdminModal(true)} className="btn-primary" style={{ padding: '8px 14px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <UserPlus size={14} /> Add Other Admin
+                  </button>
+                </div>
+
+                <div style={{ padding: 20 }}>
+                  {adminsList.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--color-muted)' }}>
+                      <Users size={36} style={{ margin: '0 auto 8px', display: 'block', opacity: 0.4 }} />
+                      <p style={{ fontWeight: 600 }}>No additional database admin accounts added</p>
+                      <p style={{ fontSize: 12, marginTop: 4 }}>Default environment admin is active.</p>
+                      <button onClick={() => setShowAdminModal(true)} className="btn-primary" style={{ marginTop: 12, padding: '8px 16px', fontSize: 13 }}>
+                        + Create New Admin Account
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {adminsList.map((ad) => (
+                        <div key={ad.id} style={{ padding: '12px 16px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                          <div>
+                            <p style={{ fontWeight: 800, fontSize: 14, color: 'var(--color-text)' }}>
+                              {ad.name ? `${ad.name} (@${ad.username})` : `@${ad.username}`}
+                            </p>
+                            <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 2 }}>
+                              Added: {new Date(ad.createdAt).toLocaleDateString('en-IN')}
+                            </p>
+                          </div>
+
+                          <button onClick={() => deleteAdminUser(ad.id)} disabled={deletingAdminId === ad.id} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: 6, cursor: 'pointer', color: '#dc2626', display: 'flex', flexShrink: 0 }}>
+                            {deletingAdminId === ad.id ? <div className="spinner" style={{ width: 14, height: 14 }} /> : <Trash2 size={14} />}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -1019,6 +1309,124 @@ export default function AdminSettings() {
                   </button>
                   <button type="button" onClick={saveCoupon} disabled={savingCoupon} className="btn-primary" style={{ flex: 1, padding: 12 }}>
                     {savingCoupon ? 'Saving…' : (editingCoupon ? 'Update Coupon' : 'Create Coupon')}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Custom Review Modal */}
+      <AnimatePresence>
+        {showReviewModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setShowReviewModal(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', zIndex: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              style={{ width: '100%', maxWidth: 440, background: 'var(--color-card)', border: '1.5px solid var(--color-border)', borderRadius: 20, padding: 22, boxShadow: '0 20px 50px rgba(0,0,0,0.25)' }}>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                <h3 style={{ fontWeight: 800, fontSize: 17 }}>Add Customer Review</h3>
+                <button onClick={() => setShowReviewModal(false)} style={{ background: 'var(--color-surface)', border: 'none', borderRadius: 99, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                    Customer Name *
+                  </label>
+                  <input className="input-field" type="text" placeholder="e.g. Rahul Sharma"
+                    value={reviewForm.author} onChange={(e) => setReviewForm({ ...reviewForm, author: e.target.value })} />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                    Rating (1 - 5 Stars) *
+                  </label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button key={star} type="button" onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
+                        <Star size={24} fill={star <= reviewForm.rating ? '#e8901f' : 'none'} color={star <= reviewForm.rating ? '#e8901f' : 'var(--color-muted)'} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                    Review Comment *
+                  </label>
+                  <textarea className="input-field" rows={3} placeholder="Write customer feedback..."
+                    value={reviewForm.comment} onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })} />
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                  <button type="button" onClick={() => setShowReviewModal(false)} className="btn-secondary" style={{ flex: 1, padding: 12 }}>
+                    Cancel
+                  </button>
+                  <button type="button" onClick={saveReview} disabled={savingReview} className="btn-primary" style={{ flex: 1, padding: 12 }}>
+                    {savingReview ? 'Saving…' : 'Add Review'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Admin User Modal */}
+      <AnimatePresence>
+        {showAdminModal && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setShowAdminModal(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', zIndex: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <motion.div onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              style={{ width: '100%', maxWidth: 440, background: 'var(--color-card)', border: '1.5px solid var(--color-border)', borderRadius: 20, padding: 22, boxShadow: '0 20px 50px rgba(0,0,0,0.25)' }}>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+                <h3 style={{ fontWeight: 800, fontSize: 17 }}>Add Other Admin Account</h3>
+                <button onClick={() => setShowAdminModal(false)} style={{ background: 'var(--color-surface)', border: 'none', borderRadius: 99, width: 30, height: 30, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                    Username *
+                  </label>
+                  <input className="input-field" type="text" placeholder="e.g. manager, cashier2"
+                    value={adminForm.username} onChange={(e) => setAdminForm({ ...adminForm, username: e.target.value })} />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                    Password *
+                  </label>
+                  <input className="input-field" type="password" placeholder="Enter secure password"
+                    value={adminForm.password} onChange={(e) => setAdminForm({ ...adminForm, password: e.target.value })} />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+                    Staff / Admin Name (Optional)
+                  </label>
+                  <input className="input-field" type="text" placeholder="e.g. Amit Kumar"
+                    value={adminForm.name} onChange={(e) => setAdminForm({ ...adminForm, name: e.target.value })} />
+                </div>
+
+                <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                  <button type="button" onClick={() => setShowAdminModal(false)} className="btn-secondary" style={{ flex: 1, padding: 12 }}>
+                    Cancel
+                  </button>
+                  <button type="button" onClick={saveAdminUser} disabled={savingAdmin} className="btn-primary" style={{ flex: 1, padding: 12 }}>
+                    {savingAdmin ? 'Saving…' : 'Create Admin'}
                   </button>
                 </div>
               </div>

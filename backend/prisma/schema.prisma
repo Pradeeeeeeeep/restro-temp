@@ -83,3 +83,21 @@ model Combo {
   available     Boolean  @default(true)
   createdAt     DateTime @default(now())
 }
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  author    String
+  rating    Int      @default(5)
+  comment   String
+  avatar    String?
+  createdAt DateTime @default(now())
+}
+
+model AdminUser {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+}
+
