@@ -11,7 +11,6 @@ import api from '../api/axios';
 import useCustomerStore from '../store/useCustomerStore';
 import useCartStore from '../store/useCartStore';
 import { getFestivalPalette, getCornerRadius } from '../theme/festivalThemes';
-import { FastFoodComboCards } from '../components/FastFoodFeatures';
 
 /* ─── Status config ─── */
 const STATUS_CONFIG = {
@@ -287,9 +286,6 @@ export default function Home() {
                   <ShoppingBag size={18} /> Order Now
                 </button>
               </div>
-
-              {/* Fast Food Combos Section */}
-              <FastFoodComboCards />
 
               {/* My Orders section */}
               <div style={{ background: 'var(--color-card)', borderRadius: 18, border: '1px solid var(--color-border)', overflow: 'hidden' }}>
