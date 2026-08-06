@@ -19,19 +19,31 @@ const placeOrder = async (req, res, next) => {
     if (!customer) return res.status(404).json({ error: 'Customer not found' });
 
     // Fetch menu items & calculate total
-    const menuItemIds = items.map((i) => i.menuItemId);
-    const menuItems = await prisma.menuItem.findMany({
-      where: { id: { in: menuItemIds }, available: true },
-    });
+    const numericItemIds = items
+      .filter((i) => typeof i.menuItemId === 'number' || (!isNaN(parseInt(i.menuItemId)) && !String(i.menuItemId).startsWith('combo-')))
+      .map((i) => parseInt(i.menuItemId));
 
-    if (menuItems.length !== menuItemIds.length) {
-      return res.status(400).json({ error: 'One or more items are unavailable or not found' });
-    }
+    const menuItems = numericItemIds.length > 0
+      ? await prisma.menuItem.findMany({ where: { id: { in: numericItemIds } } })
+      : [];
 
     let subtotal = 0;
     const orderItemsData = items.map((i) => {
-      const menuItem = menuItems.find((m) => m.id === i.menuItemId);
-      const itemPrice = i.price && !isNaN(i.price) ? parseFloat(i.price) : menuItem.price;
+      const isCombo = String(i.menuItemId).startsWith('combo-') || i.isCombo;
+      let menuItemId = null;
+      let name = i.name || 'Order Item';
+      let itemPrice = parseFloat(i.price) || 0;
+
+      if (!isCombo) {
+        const idNum = parseInt(i.menuItemId);
+        const menuItem = menuItems.find((m) => m.id === idNum);
+        if (menuItem) {
+          menuItemId = menuItem.id;
+          name = menuItem.name;
+          if (!itemPrice) itemPrice = menuItem.price;
+        }
+      }
+
       const lineTotal = itemPrice * i.quantity;
       subtotal += lineTotal;
 
@@ -41,7 +53,8 @@ const placeOrder = async (req, res, next) => {
       }
 
       return {
-        menuItemId: i.menuItemId,
+        menuItemId,
+        name,
         quantity: i.quantity,
         price: itemPrice,
         customizations: custStr,
