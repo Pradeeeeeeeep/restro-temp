@@ -178,11 +178,18 @@ export default function AdminSettings() {
   const fetchMenuItems = async () => {
     try {
       const [menuRes, comboRes] = await Promise.all([
-        api.get('/menu'),
-        api.get('/combos').catch(() => ({ data: { combos: [] } }))
+        api.get('/admin/menu').catch(() => ({ data: { items: [] } })),
+        api.get('/admin/combos').catch(() => ({ data: { combos: [] } }))
       ]);
-      const items = (menuRes.data.items || []).map((i) => ({ id: `item-${i.id}`, name: i.name, isCombo: false }));
-      const combos = (comboRes.data.combos || []).map((c) => ({ id: `combo-${c.id}`, name: c.name, isCombo: true }));
+
+      let items = [];
+      if (menuRes.data?.items) {
+        items = menuRes.data.items.map((i) => ({ id: `item-${i.id}`, name: i.name, isCombo: false }));
+      } else if (menuRes.data?.categories) {
+        items = menuRes.data.categories.flatMap((cat) => cat.items || []).map((i) => ({ id: `item-${i.id}`, name: i.name, isCombo: false }));
+      }
+
+      const combos = (comboRes.data?.combos || []).map((c) => ({ id: `combo-${c.id}`, name: c.name, isCombo: true }));
       setMenuItemsList([...items, ...combos]);
     } catch {}
   };
