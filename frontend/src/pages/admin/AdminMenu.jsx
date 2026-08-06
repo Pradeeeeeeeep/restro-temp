@@ -212,6 +212,16 @@ const parseCustomizations = (cust) => {
     setEditCatName(cat.name);
   };
 
+  const saveEditCat = async () => {
+    if (!editCatName.trim()) return toast.error('Name is required');
+    try {
+      await api.put(`/admin/categories/${editCat.id}`, { name: editCatName.trim() });
+      toast.success('Category renamed!');
+      setEditCat(null); setEditCatName('');
+      fetchData();
+    } catch (err) { toast.error(err.response?.data?.error || 'Failed to rename'); }
+  };
+
   /* ── combos helpers ── */
   const toggleCombosSectionMaster = () => {
     const nextState = !combosEnabled;
@@ -439,6 +449,82 @@ const parseCustomizations = (cust) => {
               )}
             </motion.div>
           )}
+
+        {/* ══════════════════ COMBOS TAB ══════════════════ */}
+        {tab === 'combos' && (
+          <motion.div key="combos" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}>
+            {/* Master Toggle Header Card */}
+            <div style={{ background: 'var(--color-card)', border: '1.5px solid var(--color-border)', borderRadius: 16, padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #dc2626, #b91c1c)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Flame size={22} fill="#fff" />
+                </div>
+                <div>
+                  <p style={{ fontWeight: 800, fontSize: 16, color: 'var(--color-text)' }}>Fast Food Combo Meals Section</p>
+                  <p style={{ fontSize: 12, color: 'var(--color-muted)' }}>Show or hide combo cards on customer pages</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={toggleCombosSectionMaster}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 7, color: combosEnabled ? '#15803d' : 'var(--color-muted)' }}
+              >
+                <span style={{ fontWeight: 800, fontSize: 13 }}>{combosEnabled ? 'ENABLED' : 'DISABLED'}</span>
+                {combosEnabled ? <ToggleRight size={36} /> : <ToggleLeft size={36} />}
+              </button>
+            </div>
+
+            {/* Combos list */}
+            {combosList.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--color-muted)' }}>
+                <Flame size={44} style={{ margin: '0 auto 12px', display: 'block', opacity: 0.3 }} />
+                <p style={{ fontWeight: 600, marginBottom: 10 }}>No combos yet</p>
+                <button className="btn-primary" onClick={openAddCombo} style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                  <Plus size={15} /> Add your first combo
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {combosList.map((combo) => (
+                  <div key={combo.id} style={{ background: 'var(--color-card)', border: '1.5px solid var(--color-border)', borderRadius: 16, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, opacity: combo.available !== false ? 1 : 0.55 }}>
+                    <div style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', background: 'var(--color-surface)', flexShrink: 0 }}>
+                      <img src={combo.image || 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'} alt={combo.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <p style={{ fontWeight: 800, fontSize: 15 }}>{combo.name}</p>
+                        {combo.badge && (
+                          <span style={{ fontSize: 10, fontWeight: 900, background: '#dc2626', color: '#fff', padding: '2px 8px', borderRadius: 99 }}>
+                            {combo.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>{combo.desc || combo.description}</p>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                        <span style={{ fontWeight: 900, fontSize: 15, color: '#dc2626' }}>₹{combo.comboPrice}</span>
+                        {combo.originalPrice && <span style={{ fontSize: 12, color: 'var(--color-muted)', textDecoration: 'line-through' }}>₹{combo.originalPrice}</span>}
+                        {combo.savings && <span style={{ fontSize: 11, fontWeight: 800, color: '#16a34a' }}>Save ₹{combo.savings}!</span>}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                      <button onClick={() => toggleSingleComboActive(combo.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: combo.available !== false ? '#15803d' : 'var(--color-muted)', padding: 0 }} title={combo.available !== false ? 'Deactivate' : 'Activate'}>
+                        {combo.available !== false ? <ToggleRight size={32} /> : <ToggleLeft size={32} />}
+                      </button>
+                      <button onClick={() => openEditCombo(combo)} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, padding: 6, cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex' }}>
+                        <Edit3 size={15} />
+                      </button>
+                      <button onClick={() => deleteSingleCombo(combo.id)} style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: 6, cursor: 'pointer', color: '#dc2626', display: 'flex' }}>
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
 
           {/* ══════════════════ CATEGORIES TAB ══════════════════ */}
           {tab === 'categories' && (
